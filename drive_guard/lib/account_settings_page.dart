@@ -7,6 +7,8 @@ import 'login_page.dart';
 // - Implement account deletion
 // - Integrate with backend for user settings updates
 class AccountSettingsPage extends StatelessWidget {
+  const AccountSettingsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
