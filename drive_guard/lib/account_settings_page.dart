@@ -37,7 +37,6 @@ class AccountSettingsPage extends StatelessWidget {
                   (route) => false, // Remove all previous routes
                 );
               },
-              child: Text('Logout'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFF7AC143), // Accent color for buttons
                 padding: EdgeInsets.symmetric(vertical: 15),
@@ -47,6 +46,7 @@ class AccountSettingsPage extends StatelessWidget {
                 ),
                 elevation: 5,
               ),
+              child: Text('Logout'),
             ),
           ],
         ),

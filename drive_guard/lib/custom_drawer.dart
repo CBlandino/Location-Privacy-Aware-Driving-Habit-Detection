@@ -5,7 +5,7 @@ import 'login_page.dart';
 class CustomDrawer extends StatelessWidget {
   final String role;
 
-  CustomDrawer({required this.role});
+  const CustomDrawer({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {

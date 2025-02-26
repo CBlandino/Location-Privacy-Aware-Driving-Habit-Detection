@@ -8,7 +8,7 @@ import 'custom_drawer.dart';
 // - Improve UI with additional widgets
 class HomePage extends StatelessWidget {
   final String role; // Role of the logged-in user, used to customize the UI
-  HomePage({required this.role});
+  const HomePage({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {
