@@ -142,18 +142,16 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    // Get screen width and height using MediaQuery
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      // Gradient background from bottom-left (blue) to top-right (magenta)
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.bottomLeft,
             end: Alignment.topRight,
-            colors: [Colors.blue, Colors.pink], // Blue to Magenta
+            colors: [Colors.blue, Colors.pink],
           ),
         ),
         child: SafeArea(
@@ -162,7 +160,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Container(
-                  width: screenWidth * 0.8, // Make container width responsive (80% of screen width)
+                  width: screenWidth * 0.8,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -178,7 +176,6 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Header with Welcome Message
                       Align(
                         alignment: Alignment.center,
                         child: Column(
@@ -186,47 +183,27 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                             Text(
                               isSignupMode ? 'Create an Account' : 'Login to Your Account',
                               style: TextStyle(
-                                fontSize: screenWidth * 0.08, // Font size is responsive
+                                fontSize: screenWidth * 0.08,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black, // Black text for better contrast
+                                color: Colors.black,
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(height: screenHeight * 0.02), // Responsive spacing
+                            SizedBox(height: screenHeight * 0.02),
                             Text(
                               'Welcome back! Please log in to continue.',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                              ),
+                              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                               textAlign: TextAlign.center,
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.05), // More responsive spacing
-                      // TabBar for Login and Signup
+                      SizedBox(height: screenHeight * 0.05),
                       TabBar(
                         controller: _tabController,
                         tabs: [
-                          Tab(
-                            child: Text(
-                              'Sign In',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Tab(
-                            child: Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
+                          Tab(child: Text('Sign In')),
+                          Tab(child: Text('Sign Up')),
                         ],
                         onTap: (index) {
                           setState(() {
@@ -235,12 +212,10 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                         },
                       ),
                       SizedBox(height: screenHeight * 0.02),
-                      // Form Start
                       Form(
                         key: _formKey,
                         child: Column(
                           children: [
-                            // Role Selection Dropdown
                             DropdownButtonFormField<String>(
                               value: _selectedRole,
                               items: [
@@ -255,49 +230,20 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                               },
                               decoration: InputDecoration(
                                 labelText: 'Select Role',
-                                labelStyle: TextStyle(
-                                  color: Colors.blue,
-                                ),
+                                labelStyle: TextStyle(color: Colors.blue),
                                 border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.blue),
-                                ),
+                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
                               ),
                               validator: (value) => value == null ? 'Please select a role' : null,
                             ),
                             SizedBox(height: screenHeight * 0.02),
-                            // Email Field
-                            TextFormField(
-                              controller: emailController,
-                              decoration: InputDecoration(
-                                labelText: 'Email',
-                                labelStyle: TextStyle(
-                                  color: Colors.blue,
-                                ),
-                                border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: BorderSide(color: Colors.blue),
-                                ),
-                              ),
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value == null || value.isEmpty || !value.contains('@')) {
-                                  return 'Please enter a valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            SizedBox(height: screenHeight * 0.02),
-                            // Role-Specific Fields
+                            _buildTextField('Email', emailController, Icons.email),
                             _getRoleSpecificFields(),
                             SizedBox(height: screenHeight * 0.03),
-
-                            // Row with Login and Forgot Password buttons
                             Row(
                               children: [
-                                // Login Button (smaller)
                                 SizedBox(
-                                  width: screenWidth * 0.4, // Set a fixed width for the Login button
+                                  width: screenWidth * 0.4,
                                   child: ElevatedButton(
                                     onPressed: () {
                                       if (_formKey.currentState!.validate()) {
@@ -310,11 +256,11 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                                     },
                                     child: Text(
                                       isSignupMode ? 'Sign Up' : 'Login',
-                                      style: TextStyle(fontSize: 18, color: Colors.black), // Black text
+                                      style: TextStyle(fontSize: 18, color: Colors.black),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue, // Same color for both buttons
-                                      foregroundColor: Colors.black, // Black text
+                                      backgroundColor: Colors.blue,
+                                      foregroundColor: Colors.black,
                                       padding: EdgeInsets.symmetric(vertical: 16),
                                       textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                                       shape: RoundedRectangleBorder(
@@ -324,9 +270,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 10), // Space between buttons
-                                
-                                // Forgot Password Button (takes remaining space)
+                                SizedBox(width: 10),
                                 Expanded(
                                   child: TextButton(
                                     onPressed: () {
@@ -344,7 +288,6 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.02),
-                      // Toggle between Login and Signup
                       TextButton(
                         onPressed: () {
                           setState(() {
@@ -373,169 +316,61 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
       return Column(
         children: [
           if (isSignupMode) ...[
-            TextFormField(
-              controller: firstNameController,
-              decoration: InputDecoration(
-                labelText: 'First Name',
-                labelStyle: TextStyle(
-                  color: Colors.blue,
-                ),
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
-              validator: (value) => value == null || value.isEmpty ? 'Please enter your first name' : null,
-            ),
+            _buildTextField('First Name', firstNameController, Icons.person),
             SizedBox(height: 20),
-            TextFormField(
-              controller: lastNameController,
-              decoration: InputDecoration(
-                labelText: 'Last Name',
-                labelStyle: TextStyle(
-                  color: Colors.blue,
-                ),
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
-              validator: (value) => value == null || value.isEmpty ? 'Please enter your last name' : null,
-            ),
+            _buildTextField('Last Name', lastNameController, Icons.person),
             SizedBox(height: 20),
           ],
-          TextFormField(
-            controller: passwordController,
-            decoration: InputDecoration(
-              labelText: 'Password',
-              labelStyle: TextStyle(
-                color: Colors.blue,
-              ),
-              border: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-            ),
-            obscureText: true,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a password';
-              }
-              return null;
-            },
-          ),
+          _buildTextField('Password', passwordController, Icons.lock),
         ],
       );
     } else if (_selectedRole == 'Insurance Provider') {
       return Column(
         children: [
           if (isSignupMode) ...[
-            TextFormField(
-              controller: insuranceProviderController,
-              decoration: InputDecoration(
-                labelText: 'Insurance Provider Name',
-                labelStyle: TextStyle(
-                  color: Colors.blue,
-                ),
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
-              validator: (value) => value == null || value.isEmpty ? 'Please enter the insurance provider name' : null,
-            ),
+            _buildTextField('Insurance Provider Name', insuranceProviderController, Icons.business),
             SizedBox(height: 20),
-            TextFormField(
-              controller: stateController,
-              decoration: InputDecoration(
-                labelText: 'State',
-                labelStyle: TextStyle(
-                  color: Colors.blue,
-                ),
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
-              validator: (value) => value == null || value.isEmpty ? 'Please enter your state' : null,
-            ),
+            _buildTextField('State', stateController, Icons.location_city),
             SizedBox(height: 20),
           ],
-          TextFormField(
-            controller: idController,
-            decoration: InputDecoration(
-              labelText: 'ID',
-              labelStyle: TextStyle(
-                color: Colors.blue,
-              ),
-              border: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-            ),
-            validator: (value) => value == null || value.isEmpty ? 'Please enter your ID' : null,
-          ),
+          _buildTextField('ID', idController, Icons.card_membership),
         ],
       );
     } else if (_selectedRole == 'Service Provider') {
       return Column(
         children: [
           if (isSignupMode) ...[
-            TextFormField(
-              controller: emailController,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                labelStyle: TextStyle(
-                  color: Colors.blue,
-                ),
-                border: OutlineInputBorder(),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.blue),
-                ),
-              ),
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty || !value.contains('@')) {
-                  return 'Please enter a valid email';
-                }
-                return null;
-              },
-            ),
+            _buildTextField('Email', emailController, Icons.email),
             SizedBox(height: 20),
           ],
-          TextFormField(
-            controller: serverNumberController,
-            decoration: InputDecoration(
-              labelText: 'Server Number',
-              labelStyle: TextStyle(
-                color: Colors.blue,
-              ),
-              border: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-            ),
-            keyboardType: TextInputType.number,
-            validator: (value) => value == null || value.isEmpty ? 'Please enter a server number' : null,
-          ),
+          _buildTextField('Server Number', serverNumberController, Icons.computer),
           SizedBox(height: 20),
-          TextFormField(
-            controller: idController,
-            decoration: InputDecoration(
-              labelText: 'ID',
-              labelStyle: TextStyle(
-                color: Colors.blue,
-              ),
-              border: OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-            ),
-            validator: (value) => value == null || value.isEmpty ? 'Please enter your ID' : null,
-          ),
+          _buildTextField('ID', idController, Icons.card_membership),
         ],
       );
     }
     return SizedBox.shrink();
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: Colors.blue),
+          prefixIcon: Icon(icon, color: Colors.blue),
+          border: OutlineInputBorder(),
+          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter a valid $label';
+          }
+          return null;
+        },
+      ),
+    );
   }
 }
