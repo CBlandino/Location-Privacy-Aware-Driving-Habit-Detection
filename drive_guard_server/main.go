@@ -31,7 +31,7 @@ func signupUser(c *gin.Context) {
         log.Fatal(err)
     }
 
-    log.Println("USER:", newUser)
+    log.Println("USER CREATED:", newUser.Email, "fname:", newUser.Firstname, "lname:", newUser.Lastname)
 
     Users = append(Users, newUser)
     c.IndentedJSON(http.StatusCreated, newUser)
@@ -46,12 +46,10 @@ func loginUser(c *gin.Context) {
         log.Fatal(err)
     }
 
-    log.Println("USER:", loggedUser)
-
     for _, user := range Users {
-        if user.Username == loggedUser.Username && user.Password == loggedUser.Password {
+        if user.Email == loggedUser.Email && user.Password == loggedUser.Password {
             c.IndentedJSON(http.StatusAccepted, user)
-            log.Println("USER FOUND:", user, "RESPONSE:", http.StatusAccepted)
+            log.Println("USER FOUND: EMAIL:", user.Email, "RESPONSE:", http.StatusAccepted)
             return
         }
     }
@@ -62,6 +60,8 @@ func loginUser(c *gin.Context) {
 
 
 type User struct {
-    Username string `json:"username"`
+    Email string `json:"email"`
     Password string `json:"password"`
+    Firstname string `json:"first_name"`
+    Lastname string `json:"last_name"`
 }

@@ -32,7 +32,28 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     _tabController = TabController(length: 2, vsync: this);
   }
 
-  Future<void> _handleAuth(String url, Map<String, dynamic> data) async {
+  // Function to handle signup
+  Future<void> _signup() async {
+    final String url = 'http://10.0.2.2:6969/signup'; // Use 10.0.2.2 to connect to the host machine
+
+    // Prepare the data for signup based on the selected role
+    Map<String, dynamic> data = {
+      'email': emailController.text,
+      'password': passwordController.text,
+    };
+
+    if (_selectedRole == 'User') {
+      data['first_name'] = firstNameController.text;
+      data['last_name'] = lastNameController.text;
+    } else if (_selectedRole == 'Service Provider') {
+      data['server_number'] = serverNumberController.text;
+      data['id'] = idController.text;
+    } else if (_selectedRole == 'Insurance Provider') {
+      data['insurance_provider_name'] = insuranceProviderController.text;
+      data['state'] = stateController.text;
+      data['id'] = idController.text;
+    }
+
     try {
       final response = await http.post(
         Uri.parse(url),
@@ -40,7 +61,8 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         body: json.encode(data),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
+        // Success: Navigate to home page or show success message
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -85,7 +107,8 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
   }
 
   Future<void> _login() async {
-    final String url = 'http://localhost:6969/login';
+    final String url = 'http://10.0.2.2:6969/login'; // use 10.0.2.2 to connect to the host machine
+
     Map<String, dynamic> data = {
       'email': controllers['email']!.text,
       'password': controllers['password']!.text,
@@ -97,15 +120,36 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         'id': controllers['id']!.text,
       });
     } else if (_selectedRole == 'Insurance Provider') {
-      data.addAll({
-        'id': controllers['id']!.text,
-        'insurance_provider_name': controllers['insurance_provider']!.text,
-      });
+      data['id'] = idController.text;
+      data['insurance_provider_name'] = insuranceProviderController.text;
     }
 
-    _handleAuth(url, data);
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(data),
+      );
+
+      if (response.statusCode == 202) {
+        // Success: Navigate to home page or show success message
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(role: _selectedRole!),
+          ),
+        );
+      } else {
+        // Error: Show error message
+        final responseData = json.decode(response.body);
+        _showErrorDialog(responseData['message']);
+      }
+    } catch (error) {
+      _showErrorDialog('An error occurred. Please try again later.');
+    }
   }
 
+  // Function to show error dialog
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
