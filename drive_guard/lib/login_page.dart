@@ -32,7 +32,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
   // Function to handle signup
   Future<void> _signup() async {
-    final String url = 'http://localhost:6969/signup'; // Use localhost with port 6969 for signup
+    final String url = 'http://10.0.2.2:6969/signup'; // Use 10.0.2.2 to connect to the host machine
 
     // Prepare the data for signup based on the selected role
     Map<String, dynamic> data = {
@@ -59,7 +59,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         body: json.encode(data),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         // Success: Navigate to home page or show success message
         Navigator.push(
           context,
@@ -79,7 +79,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
   // Function to handle login
   Future<void> _login() async {
-    final String url = 'http://localhost:6969/login'; // Use localhost with port 6969 for login
+    final String url = 'http://10.0.2.2:6969/login'; // use 10.0.2.2 to connect to the host machine
 
     Map<String, dynamic> data = {
       'email': emailController.text,
@@ -101,7 +101,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         body: json.encode(data),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 202) {
         // Success: Navigate to home page or show success message
         Navigator.push(
           context,
