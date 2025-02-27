@@ -14,16 +14,14 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
   final _formKey = GlobalKey<FormState>();
   bool isSignupMode = false; // Toggle between Login and Signup
   String? _selectedRole = 'User'; // Default role selection
-  Map<String, TextEditingController> controllers = {
-    'email': TextEditingController(),
-    'first_name': TextEditingController(),
-    'last_name': TextEditingController(),
-    'password': TextEditingController(),
-    'insurance_provider': TextEditingController(),
-    'state': TextEditingController(),
-    'server_number': TextEditingController(),
-    'id': TextEditingController(),
-  };
+  TextEditingController emailController = TextEditingController();
+  TextEditingController firstNameController = TextEditingController();
+  TextEditingController lastNameController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController insuranceProviderController = TextEditingController();
+  TextEditingController stateController = TextEditingController();
+  TextEditingController serverNumberController = TextEditingController();
+  TextEditingController idController = TextEditingController();
   late TabController _tabController;
 
   @override
@@ -70,6 +68,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
           ),
         );
       } else {
+        // Error: Show error message
         final responseData = json.decode(response.body);
         _showErrorDialog(responseData['message']);
       }
@@ -78,47 +77,18 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     }
   }
 
-  Future<void> _signup() async {
-    final String url = 'http://localhost:6969/signup';
-    Map<String, dynamic> data = {
-      'email': controllers['email']!.text,
-      'password': controllers['password']!.text,
-    };
-
-    if (_selectedRole == 'User') {
-      data.addAll({
-        'first_name': controllers['first_name']!.text,
-        'last_name': controllers['last_name']!.text,
-      });
-    } else if (_selectedRole == 'Service Provider') {
-      data.addAll({
-        'server_number': controllers['server_number']!.text,
-        'id': controllers['id']!.text,
-      });
-    } else if (_selectedRole == 'Insurance Provider') {
-      data.addAll({
-        'insurance_provider_name': controllers['insurance_provider']!.text,
-        'state': controllers['state']!.text,
-        'id': controllers['id']!.text,
-      });
-    }
-
-    _handleAuth(url, data);
-  }
-
+  // Function to handle login
   Future<void> _login() async {
     final String url = 'http://10.0.2.2:6969/login'; // use 10.0.2.2 to connect to the host machine
 
     Map<String, dynamic> data = {
-      'email': controllers['email']!.text,
-      'password': controllers['password']!.text,
+      'email': emailController.text,
+      'password': passwordController.text,
     };
 
     if (_selectedRole == 'Service Provider') {
-      data.addAll({
-        'server_number': controllers['server_number']!.text,
-        'id': controllers['id']!.text,
-      });
+      data['server_number'] = serverNumberController.text;
+      data['id'] = idController.text;
     } else if (_selectedRole == 'Insurance Provider') {
       data['id'] = idController.text;
       data['insurance_provider_name'] = insuranceProviderController.text;
@@ -170,70 +140,20 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     );
   }
 
-  Widget _getRoleSpecificFields() {
-    List<Widget> fields = [
-      _buildTextField('Password', controllers['password']!, Icons.lock),
-    ];
-
-    if (_selectedRole == 'User') {
-      fields.insertAll(0, [
-        if (isSignupMode) _buildTextField('First Name', controllers['first_name']!, Icons.person),
-        if (isSignupMode) _buildTextField('Last Name', controllers['last_name']!, Icons.person),
-      ]);
-    } else if (_selectedRole == 'Insurance Provider') {
-      fields.insertAll(0, [
-        if (isSignupMode) _buildTextField('Insurance Provider Name', controllers['insurance_provider']!, Icons.business),
-        if (isSignupMode) _buildTextField('State', controllers['state']!, Icons.location_city),
-      ]);
-    } else if (_selectedRole == 'Service Provider') {
-      fields.insertAll(0, [
-        if (isSignupMode) _buildTextField('Server Number', controllers['server_number']!, Icons.computer),
-      ]);
-    }
-
-    return Column(children: fields);
-  }
-
-  Widget _buildTextField(String label, TextEditingController controller, IconData? icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: Colors.blue,
-            fontWeight: FontWeight.bold,
-          ),
-          hintText: 'Enter $label',
-          hintStyle: TextStyle(color: Colors.grey),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.blue, width: 2),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.blue, width: 2),
-          ),
-          prefixIcon: icon != null ? Icon(icon, color: Colors.blue) : null, // Add icon here
-        ),
-        validator: (value) => value == null || value.isEmpty ? 'Please enter a valid $label' : null,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Get screen width and height using MediaQuery
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      // Gradient background from bottom-left (blue) to top-right (magenta)
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.bottomLeft,
             end: Alignment.topRight,
-            colors: [Colors.blue, Colors.pink],
+            colors: [Colors.blue, Colors.pink], // Blue to Magenta
           ),
         ),
         child: SafeArea(
@@ -242,7 +162,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Container(
-                  width: screenWidth * 0.8,
+                  width: screenWidth * 0.8, // Make container width responsive (80% of screen width)
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -258,6 +178,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Header with Welcome Message
                       Align(
                         alignment: Alignment.center,
                         child: Column(
@@ -265,27 +186,47 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                             Text(
                               isSignupMode ? 'Create an Account' : 'Login to Your Account',
                               style: TextStyle(
-                                fontSize: screenWidth * 0.08,
+                                fontSize: screenWidth * 0.08, // Font size is responsive
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black,
+                                color: Colors.black, // Black text for better contrast
                               ),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(height: screenHeight * 0.02),
+                            SizedBox(height: screenHeight * 0.02), // Responsive spacing
                             Text(
                               'Welcome back! Please log in to continue.',
-                              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(height: screenHeight * 0.05),
+                      SizedBox(height: screenHeight * 0.05), // More responsive spacing
+                      // TabBar for Login and Signup
                       TabBar(
                         controller: _tabController,
                         tabs: [
-                          Tab(child: Text('Sign In')),
-                          Tab(child: Text('Sign Up')),
+                          Tab(
+                            child: Text(
+                              'Sign In',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          Tab(
+                            child: Text(
+                              'Sign Up',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         ],
                         onTap: (index) {
                           setState(() {
@@ -294,10 +235,12 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                         },
                       ),
                       SizedBox(height: screenHeight * 0.02),
+                      // Form Start
                       Form(
                         key: _formKey,
                         child: Column(
                           children: [
+                            // Role Selection Dropdown
                             DropdownButtonFormField<String>(
                               value: _selectedRole,
                               items: [
@@ -312,36 +255,66 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                               },
                               decoration: InputDecoration(
                                 labelText: 'Select Role',
-                                labelStyle: TextStyle(color: Colors.blue),
+                                labelStyle: TextStyle(
+                                  color: Colors.blue,
+                                ),
                                 border: OutlineInputBorder(),
-                                focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.blue),
+                                ),
                               ),
                               validator: (value) => value == null ? 'Please select a role' : null,
                             ),
                             SizedBox(height: screenHeight * 0.02),
-                            _buildTextField('Email', controllers['email']!, Icons.email),
+                            // Email Field
+                            TextFormField(
+                              controller: emailController,
+                              decoration: InputDecoration(
+                                labelText: 'Email',
+                                labelStyle: TextStyle(
+                                  color: Colors.blue,
+                                ),
+                                border: OutlineInputBorder(),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.blue),
+                                ),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty || !value.contains('@')) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
+                            ),
+                            SizedBox(height: screenHeight * 0.02),
+                            // Role-Specific Fields
                             _getRoleSpecificFields(),
                             SizedBox(height: screenHeight * 0.03),
+
+                            // Row with Login and Forgot Password buttons
                             Row(
                               children: [
+                                // Login Button (smaller)
                                 SizedBox(
-                                  width: screenWidth * 0.4,
+                                  width: screenWidth * 0.4, // Set a fixed width for the Login button
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      if (_formKey.currentState?.validate() ?? false) {
+                                      if (_formKey.currentState!.validate()) {
                                         if (isSignupMode) {
-                                          _signup();  // Proceed to signup if form is valid
+                                          _signup();
                                         } else {
-                                          _login();  // Proceed to login if form is valid
+                                          _login();
                                         }
-                                      } else {
-                                        print("Form is not valid"); // For debugging purposes
                                       }
                                     },
-                                    child: Text(isSignupMode ? 'Sign Up' : 'Login'),
+                                    child: Text(
+                                      isSignupMode ? 'Sign Up' : 'Login',
+                                      style: TextStyle(fontSize: 18, color: Colors.black), // Black text
+                                    ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue,
-                                      foregroundColor: Colors.black,
+                                      backgroundColor: Colors.blue, // Same color for both buttons
+                                      foregroundColor: Colors.black, // Black text
                                       padding: EdgeInsets.symmetric(vertical: 16),
                                       textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                                       shape: RoundedRectangleBorder(
@@ -351,10 +324,14 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 10),
+                                SizedBox(width: 10), // Space between buttons
+                                
+                                // Forgot Password Button (takes remaining space)
                                 Expanded(
                                   child: TextButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      // Handle Forgot Password action here
+                                    },
                                     child: Text(
                                       'Forgot Password?',
                                       style: TextStyle(fontSize: 16, color: Colors.blue),
@@ -367,6 +344,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                         ),
                       ),
                       SizedBox(height: screenHeight * 0.02),
+                      // Toggle between Login and Signup
                       TextButton(
                         onPressed: () {
                           setState(() {
@@ -387,5 +365,177 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         ),
       ),
     );
+  }
+
+  // Function to Show Role-Specific Fields
+  Widget _getRoleSpecificFields() {
+    if (_selectedRole == 'User') {
+      return Column(
+        children: [
+          if (isSignupMode) ...[
+            TextFormField(
+              controller: firstNameController,
+              decoration: InputDecoration(
+                labelText: 'First Name',
+                labelStyle: TextStyle(
+                  color: Colors.blue,
+                ),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              validator: (value) => value == null || value.isEmpty ? 'Please enter your first name' : null,
+            ),
+            SizedBox(height: 20),
+            TextFormField(
+              controller: lastNameController,
+              decoration: InputDecoration(
+                labelText: 'Last Name',
+                labelStyle: TextStyle(
+                  color: Colors.blue,
+                ),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              validator: (value) => value == null || value.isEmpty ? 'Please enter your last name' : null,
+            ),
+            SizedBox(height: 20),
+          ],
+          TextFormField(
+            controller: passwordController,
+            decoration: InputDecoration(
+              labelText: 'Password',
+              labelStyle: TextStyle(
+                color: Colors.blue,
+              ),
+              border: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+            ),
+            obscureText: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a password';
+              }
+              return null;
+            },
+          ),
+        ],
+      );
+    } else if (_selectedRole == 'Insurance Provider') {
+      return Column(
+        children: [
+          if (isSignupMode) ...[
+            TextFormField(
+              controller: insuranceProviderController,
+              decoration: InputDecoration(
+                labelText: 'Insurance Provider Name',
+                labelStyle: TextStyle(
+                  color: Colors.blue,
+                ),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              validator: (value) => value == null || value.isEmpty ? 'Please enter the insurance provider name' : null,
+            ),
+            SizedBox(height: 20),
+            TextFormField(
+              controller: stateController,
+              decoration: InputDecoration(
+                labelText: 'State',
+                labelStyle: TextStyle(
+                  color: Colors.blue,
+                ),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              validator: (value) => value == null || value.isEmpty ? 'Please enter your state' : null,
+            ),
+            SizedBox(height: 20),
+          ],
+          TextFormField(
+            controller: idController,
+            decoration: InputDecoration(
+              labelText: 'ID',
+              labelStyle: TextStyle(
+                color: Colors.blue,
+              ),
+              border: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+            ),
+            validator: (value) => value == null || value.isEmpty ? 'Please enter your ID' : null,
+          ),
+        ],
+      );
+    } else if (_selectedRole == 'Service Provider') {
+      return Column(
+        children: [
+          if (isSignupMode) ...[
+            TextFormField(
+              controller: emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                labelStyle: TextStyle(
+                  color: Colors.blue,
+                ),
+                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.blue),
+                ),
+              ),
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.isEmpty || !value.contains('@')) {
+                  return 'Please enter a valid email';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 20),
+          ],
+          TextFormField(
+            controller: serverNumberController,
+            decoration: InputDecoration(
+              labelText: 'Server Number',
+              labelStyle: TextStyle(
+                color: Colors.blue,
+              ),
+              border: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+            ),
+            keyboardType: TextInputType.number,
+            validator: (value) => value == null || value.isEmpty ? 'Please enter a server number' : null,
+          ),
+          SizedBox(height: 20),
+          TextFormField(
+            controller: idController,
+            decoration: InputDecoration(
+              labelText: 'ID',
+              labelStyle: TextStyle(
+                color: Colors.blue,
+              ),
+              border: OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Colors.blue),
+              ),
+            ),
+            validator: (value) => value == null || value.isEmpty ? 'Please enter your ID' : null,
+          ),
+        ],
+      );
+    }
+    return SizedBox.shrink();
   }
 }
