@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
+import 'login_page.dart'; // Ensure LoginPage is imported
 
-// This page manages account settings for the user.
-// Future Enhancements:
-// - Add options for changing password
-// - Implement account deletion
-// - Integrate with backend for user settings updates
 class AccountSettingsPage extends StatelessWidget {
-  const AccountSettingsPage({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,14 +22,14 @@ class AccountSettingsPage extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // TODO: Implement logout functionality properly
-                // Future: Ensure session handling is cleared on logout
+                // Implement logout functionality
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  MaterialPageRoute(builder: (context) => LoginPageWidget()),
                   (route) => false, // Remove all previous routes
                 );
               },
+              child: Text('Logout'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFF7AC143), // Accent color for buttons
                 padding: EdgeInsets.symmetric(vertical: 15),
@@ -46,7 +39,6 @@ class AccountSettingsPage extends StatelessWidget {
                 ),
                 elevation: 5,
               ),
-              child: Text('Logout'),
             ),
           ],
         ),

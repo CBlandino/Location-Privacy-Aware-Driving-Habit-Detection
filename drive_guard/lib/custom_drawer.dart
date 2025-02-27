@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'account_settings_page.dart';
-import 'login_page.dart';
+import 'login_page.dart'; // Ensure LoginPage is imported
 
 class CustomDrawer extends StatelessWidget {
   final String role;
 
-  const CustomDrawer({super.key, required this.role});
+  CustomDrawer({required this.role});
 
   @override
   Widget build(BuildContext context) {
@@ -40,41 +39,13 @@ class CustomDrawer extends StatelessWidget {
             title: Text('Profile'),
             onTap: () {},
           ),
-          if (role == 'User') ...[
-            ListTile(
-              leading: Icon(Icons.directions_car),
-              title: Text('Car Models'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: Icon(Icons.history),
-              title: Text('Previous Trips'),
-              onTap: () {},
-            ),
-          ],
-          // Add a Spacer widget to push the rest to the top
-          Spacer(),
-          Divider(), // Divider for separation
-          // Account Settings and Logout are now at the bottom
-          ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Account Settings'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AccountSettingsPage(),
-                ),
-              );
-            },
-          ),
           ListTile(
             leading: Icon(Icons.exit_to_app),
             title: Text('Logout'),
             onTap: () {
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => LoginPage()),
+                MaterialPageRoute(builder: (context) => LoginPageWidget()),
                 (route) => false, // Remove all previous routes
               );
             },

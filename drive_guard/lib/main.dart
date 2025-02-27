@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart';
+import 'login_page.dart'; // Ensure you import the correct file
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -16,7 +14,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: LoginPage(),
+      home: LoginPageWidget(), // Correct the reference here
     );
   }
 }
