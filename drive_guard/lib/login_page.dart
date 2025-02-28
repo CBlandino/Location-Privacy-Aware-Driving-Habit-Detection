@@ -202,7 +202,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                       TabBar(
                         controller: _tabController,
                         tabs: [
-                          Tab(child: Text('Sign In')),
+                          Tab(child: Text('Log In')),
                           Tab(child: Text('Sign Up')),
                         ],
                         onTap: (index) {
