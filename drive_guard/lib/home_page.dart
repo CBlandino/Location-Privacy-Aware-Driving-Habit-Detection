@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'custom_drawer.dart';
-import 'package:geolocator/geolocator.dart';
-import 'dart:math';
+import 'current_trip_page.dart';
+import 'previous_trips_page.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-// Home page where users land after logging in.
-// Future Enhancements:
-// - Add role-based dashboard customization
-// - Implement notifications and dynamic content
-// - Improve UI with additional widgets
 class HomePage extends StatelessWidget {
-  final String role; // Role of the logged-in user, used to customize the UI
+  final String role;
   const HomePage({super.key, required this.role});
+
+  Future<List<dynamic>> fetchPreviousTrips() async {
+    final String url = 'http://10.0.2.2:6969/previous_trips'; // Example URL for your server
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to load trips');
+      }
+    } catch (error) {
+      throw Exception('Failed to load trips: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +32,51 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.blue.shade700,
       ),
       drawer: CustomDrawer(role: role), // Custom drawer for navigation
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Text(
-            'Welcome, $role! Here you can manage your account.',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
+      body: Column(
+        children: <Widget>[
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CurrentTripPage()),
+              );
+            },
+            child: Text('Start New Trip'),
           ),
-        ),
+          Expanded(
+            child: FutureBuilder<List<dynamic>>(
+              future: fetchPreviousTrips(), // Provide the future here
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No previous trips available'));
+                }
+
+                List<dynamic> trips = snapshot.data!;
+                return ListView.builder(
+                  itemCount: trips.length,
+                  itemBuilder: (context, index) {
+                    var trip = trips[index];
+                    return ListTile(
+                      title: Text('Trip #${trip['id']}'),
+                      subtitle: Text('Duration: ${trip['elapsed_time']} seconds'),
+                      onTap: () {
+                        // Navigate to detailed trip page
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

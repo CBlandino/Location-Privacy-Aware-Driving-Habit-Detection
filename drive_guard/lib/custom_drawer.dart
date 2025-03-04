@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'login_page.dart'; // Ensure LoginPage is imported
+import 'login_page.dart';
+import 'current_trip_page.dart'; // Import StartTripPage
+import 'previous_trips_page.dart'; // Import PreviousTripsPage
+import 'score_page.dart'; // Import ScorePage
 
 class CustomDrawer extends StatelessWidget {
   final String role;
@@ -12,13 +15,13 @@ class CustomDrawer extends StatelessWidget {
     String accountEmail = '';
 
     if (role == 'User') {
-      accountName = 'John Doe'; // Name for the User
+      accountName = 'John Doe';
       accountEmail = 'john.doe@example.com';
     } else if (role == 'Insurance Provider') {
-      accountName = 'Insurance Co.'; // Provider Name
+      accountName = 'Insurance Co.';
       accountEmail = 'provider@example.com';
     } else if (role == 'Service Provider') {
-      accountName = 'Server #1234'; // Server number as the first name
+      accountName = 'Server #1234';
       accountEmail = 'service.provider@example.com';
     }
 
@@ -34,9 +37,79 @@ class CustomDrawer extends StatelessWidget {
             ),
             decoration: BoxDecoration(color: Colors.blue.shade700),
           ),
+          if (role == 'User') ...[
+            ListTile(
+              leading: Icon(Icons.play_arrow),
+              title: Text('Start Trip'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CurrentTripPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.history),
+              title: Text('Previous Trips'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PreviousTripsPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.star),
+              title: Text('Your Score'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ScorePage()),
+                );
+              },
+            ),
+          ] else if (role == 'Insurance Provider') ...[
+            ListTile(
+              leading: Icon(Icons.person_search),
+              title: Text('User Lookup'),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: Icon(Icons.directions_car),
+              title: Text('User Trips'),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: Icon(Icons.score),
+              title: Text('User Score'),
+              onTap: () {},
+            ),
+          ] else if (role == 'Service Provider') ...[
+            ListTile(
+              leading: Icon(Icons.create),
+              title: Text('ID Generator'),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: Icon(Icons.info),
+              title: Text('Server Information'),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: Icon(Icons.person_search),
+              title: Text('User Lookup'),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: Icon(Icons.business),
+              title: Text('Insurance Lookup'),
+              onTap: () {},
+            ),
+          ],
+          Spacer(),
           ListTile(
-            leading: Icon(Icons.account_circle),
-            title: Text('Profile'),
+            leading: Icon(Icons.settings),
+            title: Text('Settings'),
             onTap: () {},
           ),
           ListTile(
@@ -46,7 +119,7 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => LoginPageWidget()),
-                (route) => false, // Remove all previous routes
+                (route) => false,
               );
             },
           ),
