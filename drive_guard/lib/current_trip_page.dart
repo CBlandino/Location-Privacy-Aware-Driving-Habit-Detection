@@ -20,6 +20,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   int? _previousLatitude, _previousLongitude; // Use nullable types to avoid late initialization error
   List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps
   int _pointCounter = 0; // To track the number of delta points calculated
+  final String server = 'http://10.0.2.2:8080';
 
   @override
   void initState() {
@@ -181,7 +182,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
 
   // Send delta-compressed data to the server
   Future<void> sendTripData() async {
-    final String url = 'http://10.0.2.2:6969/trip'; // Example URL for your server
+    final String url = '$server/trip'; // Example URL for your server
     Map<String, dynamic> data = {
       'start_time': DateTime.now().toIso8601String(),
       'elapsed_time': _elapsedTime,

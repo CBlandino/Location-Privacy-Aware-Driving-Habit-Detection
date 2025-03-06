@@ -10,6 +10,8 @@ class PreviousTripsPage extends StatefulWidget {
 class _PreviousTripsPageState extends State<PreviousTripsPage> {
   List<dynamic> trips = [];
 
+  final String server = 'http://10.0.2.2:8080';
+
   @override
   void initState() {
     super.initState();
@@ -17,7 +19,7 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
   }
 
   Future<void> fetchPreviousTrips() async {
-    final String url = 'http://10.0.2.2:6969/previous_trips'; // Example URL for your server
+    final String url = '$server/previous_trips'; // Example URL for your server
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {

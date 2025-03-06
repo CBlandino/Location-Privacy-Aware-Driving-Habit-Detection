@@ -8,9 +8,10 @@ import 'package:http/http.dart' as http;
 class HomePage extends StatelessWidget {
   final String role;
   const HomePage({super.key, required this.role});
+  final String server = 'http://10.0.2.2:8080';
 
   Future<List<dynamic>> fetchPreviousTrips() async {
-    final String url = 'http://10.0.2.2:6969/previous_trips'; // Example URL for your server
+    final String url = '$server/previous_trips'; // Example URL for your server
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
