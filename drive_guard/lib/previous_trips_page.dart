@@ -17,7 +17,7 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
   }
 
   Future<void> fetchPreviousTrips() async {
-    final String url = 'http://10.0.2.2:6969/previous_trips'; // Example URL for your server
+    final String url = 'http://10.0.2.2:6969/previous_trips'; // Server URL
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {

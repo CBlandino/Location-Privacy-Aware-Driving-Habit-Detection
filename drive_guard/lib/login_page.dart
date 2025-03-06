@@ -115,7 +115,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         _showErrorDialog(responseData['message']);
       }
     } catch (error) {
-      _showErrorDialog('An error occurred. Please try again later.');
+      _showErrorDialog('The Server is down. Please try again later.');
     }
   }
 
