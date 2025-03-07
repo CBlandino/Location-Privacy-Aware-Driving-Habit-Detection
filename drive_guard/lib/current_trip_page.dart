@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
-import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';  // Import shared_preferences
 
 class CurrentTripPage extends StatefulWidget {
   @override
@@ -17,14 +17,16 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   late Timer _sendDataTimer;
   int _elapsedTime = 0; // Timer in seconds
   late Position _currentPosition;
-  int? _previousLatitude, _previousLongitude; // Use nullable types to avoid late initialization error
+  int? _previousMaskedLatitude, _previousMaskedLongitude; // Masked lat/lon of the previous location
   List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps
   int _pointCounter = 0; // To track the number of delta points calculated
+  int? _firstMaskedLatitude, _firstMaskedLongitude; // Store the first masked latitude and longitude
   final String server = 'http://10.0.2.2:8080';
 
   @override
   void initState() {
     super.initState();
+    _loadFirstPoint(); // Load the first point when the app starts
   }
 
   // Request location permissions at runtime
@@ -87,6 +89,26 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
     }
   }
 
+  // Load the first masked latitude and longitude from shared preferences
+  Future<void> _loadFirstPoint() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _firstMaskedLatitude = prefs.getInt('first_latitude');
+      _firstMaskedLongitude = prefs.getInt('first_longitude');
+    });
+  }
+
+  // Store the first masked latitude and longitude to shared preferences
+  Future<void> _storeFirstPoint(int maskedLatitude, int maskedLongitude) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('first_latitude', maskedLatitude);
+    await prefs.setInt('first_longitude', maskedLongitude);
+    setState(() {
+      _firstMaskedLatitude = maskedLatitude;
+      _firstMaskedLongitude = maskedLongitude;
+    });
+  }
+
   // Method to start the trip
   void startTrip() {
     setState(() {
@@ -146,13 +168,20 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
       int maskedLatitude = (position.latitude * 6).round();
       int maskedLongitude = (position.longitude * 6).round();
 
+      // If it's the first point, store it
+      if (_firstMaskedLatitude == null || _firstMaskedLongitude == null) {
+        await _storeFirstPoint(maskedLatitude, maskedLongitude); // Store the first point
+      }
+
       // Delta compression: Calculate the difference from the previous point
-      if (_previousLatitude != null && _previousLongitude != null) {
-        double deltaDistance = calculateDistance(_previousLatitude!, _previousLongitude!, maskedLatitude, maskedLongitude);
+      if (_previousMaskedLatitude != null && _previousMaskedLongitude != null) {
+        // Calculate delta latitude and delta longitude
+        int deltaLat = maskedLatitude - _previousMaskedLatitude!;
+        int deltaLon = maskedLongitude - _previousMaskedLongitude!;
+
         Map<String, dynamic> deltaData = {
-          'latitude': maskedLatitude,
-          'longitude': maskedLongitude,
-          'delta_distance': deltaDistance,
+          'delta_latitude': deltaLat,
+          'delta_longitude': deltaLon,
           'timestamp': DateTime.now().toIso8601String(),
           'point_number': _pointCounter,
         };
@@ -160,24 +189,12 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
       }
 
       // Update the previous coordinates for the next delta compression
-      _previousLatitude = maskedLatitude;
-      _previousLongitude = maskedLongitude;
+      _previousMaskedLatitude = maskedLatitude;
+      _previousMaskedLongitude = maskedLongitude;
     } else {
       // Permission not granted, notify the user
       print("Location permission is required to access the location.");
     }
-  }
-
-  // Simple distance calculation using Haversine formula (delta compression)
-  double calculateDistance(int lat1, int lon1, int lat2, int lon2) {
-    const double earthRadius = 6371; // Earth's radius in kilometers
-    double dLat = (lat2 - lat1) * pi / 180;
-    double dLon = (lon2 - lon1) * pi / 180;
-    double a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(lat1 * pi / 180) * cos(lat2 * pi / 180) *
-        sin(dLon / 2) * sin(dLon / 2);
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return earthRadius * c; // Return distance in kilometers
   }
 
   // Send delta-compressed data to the server
