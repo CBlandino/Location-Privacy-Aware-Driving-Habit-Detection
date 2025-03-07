@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart'; // Ensure you import the correct file
+import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
-void main() {
+
+void main()  async{
   runApp(MyApp());
+    await Settings.init(cacheProvider: SharePreferenceCache());
 }
+
 
 class MyApp extends StatelessWidget {
   @override

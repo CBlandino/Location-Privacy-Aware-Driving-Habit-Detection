@@ -3,6 +3,7 @@ import 'login_page.dart';
 import 'current_trip_page.dart'; // Import StartTripPage
 import 'previous_trips_page.dart'; // Import PreviousTripsPage
 import 'score_page.dart'; // Import ScorePage
+import 'settings_page.dart'; // Import SettingsPage
 
 class CustomDrawer extends StatelessWidget {
   final String role;
@@ -110,7 +111,15 @@ class CustomDrawer extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.settings),
             title: Text('Settings'),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                    SettingsPage()
+                ),
+              );
+            },
           ),
           ListTile(
             leading: Icon(Icons.exit_to_app),
