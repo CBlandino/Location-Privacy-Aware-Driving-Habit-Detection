@@ -1,9 +1,10 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
-import 'package:shared_preferences/shared_preferences.dart';  // Import shared_preferences
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CurrentTripPage extends StatefulWidget {
   @override
@@ -15,18 +16,81 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   late Timer _deltaTimer;
   late Timer _elapsedTimeTimer;
   late Timer _sendDataTimer;
-  int _elapsedTime = 0; // Timer in seconds
-  late Position _currentPosition;
-  int? _previousMaskedLatitude, _previousMaskedLongitude; // Masked lat/lon of the previous location
-  List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps
-  int _pointCounter = 0; // To track the number of delta points calculated
-  int? _firstMaskedLatitude, _firstMaskedLongitude; // Store the first masked latitude and longitude
+
+  // Timer in seconds
+  int _elapsedTime = 0; 
+
+   // Masked lat/lon of the previous location
+  int? _previousMaskedLatitude, _previousMaskedLongitude;
+
+  // Store delta-compressed data with timestamps
+  List<Map<String, dynamic>> deltaPoints = []; 
+
+  // To track the number of delta points calculated
+  int _pointCounter = 0; 
+
+  // Store the first masked latitude and longitude
+  int? _firstMaskedLatitude, _firstMaskedLongitude; 
+
   final String server = 'http://10.0.2.2:8080';
+
+  // Test data generation (Starts here)
+  Random rand = Random();
+
+  // Random starting point (latitude and longitude)
+  late double _initialLatitude = (rand.nextDouble() * (90 - (-90))) - 90; // Random latitude between -90 and 90
+  late double _initialLongitude = (rand.nextDouble() * (180 - (-180))) - 180; // Random longitude between -180 and 180
+  // Test data generation (Ends here)
 
   @override
   void initState() {
     super.initState();
-    _loadFirstPoint(); // Load the first point when the app starts
+
+    // Load the first point when the app starts
+    _loadFirstPoint(); 
+  }
+
+  // Method to start the trip
+  void startTrip() {
+    setState(() {
+      isTripStarted = true;
+    });
+
+    // Request location permissions when the trip starts
+    _requestPermissions();
+
+    // Start the timer that triggers every 0.25 seconds for calculating delta points
+    _deltaTimer = Timer.periodic(Duration(milliseconds: 250), (timer) {
+      _pointCounter++;
+      _getSimulatedLocation();  // Simulating location instead of using actual GPS
+    });
+
+    // Start the elapsed time timer that increments every second to show the user the time in seconds
+    _elapsedTimeTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _elapsedTime++;
+      });
+    });
+
+    // Start the timer that triggers every 1 minute to send delta points to the server
+    _sendDataTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+      sendTripData();
+    });
+  }
+
+  // Method to stop the trip
+  void stopTrip() async {
+    setState(() {
+      isTripStarted = false;
+    });
+
+    // Stop the delta point calculation, elapsed time, and data sending timers
+    _deltaTimer.cancel();
+    _elapsedTimeTimer.cancel();
+    _sendDataTimer.cancel();
+
+    // Send the remaining delta points to the server
+    await sendTripData();
   }
 
   // Request location permissions at runtime
@@ -109,92 +173,42 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
     });
   }
 
-  // Method to start the trip
-  void startTrip() {
-    setState(() {
-      isTripStarted = true;
-    });
+  // Method to simulate location changes (Test data generation)
+  void _getSimulatedLocation() {
+    // Simulate a larger random movement near the previous point
+    double randomLatChange = (rand.nextDouble() - 0.5) * 0.001; // Random change between -0.0005 and 0.0005
+    double randomLonChange = (rand.nextDouble() - 0.5) * 0.001; // Random change between -0.0005 and 0.0005
 
-    // Request location permissions when the trip starts
-    _requestPermissions();
+    double newLatitude = _initialLatitude + randomLatChange;
+    double newLongitude = _initialLongitude + randomLonChange;
 
-    // Start the timer that triggers every 0.25 seconds for calculating delta points
-    _deltaTimer = Timer.periodic(Duration(milliseconds: 250), (timer) {
-      _pointCounter++;
-      _getLocation();
-    });
+    // Mask the new coordinates by multiplying by 6
+    int maskedLatitude = (newLatitude * 6).round();
+    int maskedLongitude = (newLongitude * 6).round();
 
-    // Start the elapsed time timer that increments every second to show the user the time in seconds
-    _elapsedTimeTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _elapsedTime++;
-      });
-    });
-
-    // Start the timer that triggers every 1 minute to send delta points to the server
-    _sendDataTimer = Timer.periodic(Duration(minutes: 1), (timer) {
-      sendTripData();
-    });
-  }
-
-  // Method to stop the trip
-  void stopTrip() async {
-    setState(() {
-      isTripStarted = false;
-    });
-
-    // Stop the delta point calculation, elapsed time, and data sending timers
-    _deltaTimer.cancel();
-    _elapsedTimeTimer.cancel();
-    _sendDataTimer.cancel();
-
-    // Send the remaining delta points to the server
-    await sendTripData();
-  }
-
-  // Method to get the user's location
-  Future<void> _getLocation() async {
-    // Check if permission is granted before fetching location
-    LocationPermission permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-      // Fetch the location if permission is granted
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      setState(() {
-        _currentPosition = position;
-      });
-
-      // Mask location by multiplying by 6 to get whole numbers
-      int maskedLatitude = (position.latitude * 6).round();
-      int maskedLongitude = (position.longitude * 6).round();
-
-      // If it's the first point, store it
-      if (_firstMaskedLatitude == null || _firstMaskedLongitude == null) {
-        await _storeFirstPoint(maskedLatitude, maskedLongitude); // Store the first point
-      }
-
-      // Delta compression: Calculate the difference from the previous point
-      if (_previousMaskedLatitude != null && _previousMaskedLongitude != null) {
-        // Calculate delta latitude and delta longitude
-        int deltaLat = maskedLatitude - _previousMaskedLatitude!;
-        int deltaLon = maskedLongitude - _previousMaskedLongitude!;
-
-        Map<String, dynamic> deltaData = {
-          'delta_latitude': deltaLat,
-          'delta_longitude': deltaLon,
-          'timestamp': DateTime.now().toIso8601String(),
-          'point_number': _pointCounter,
-        };
-        deltaPoints.add(deltaData); // Store the delta-compressed point with timestamp
-      }
-
-      // Update the previous coordinates for the next delta compression
-      _previousMaskedLatitude = maskedLatitude;
-      _previousMaskedLongitude = maskedLongitude;
-    } else {
-      // Permission not granted, notify the user
-      print("Location permission is required to access the location.");
+    // If it's the first point, store it
+    if (_firstMaskedLatitude == null || _firstMaskedLongitude == null) {
+      _storeFirstPoint(maskedLatitude, maskedLongitude); // Store the first point
     }
+
+    // Delta compression: Calculate the difference from the previous point
+    if (_previousMaskedLatitude != null && _previousMaskedLongitude != null) {
+      // Calculate delta latitude and delta longitude
+      int deltaLat = maskedLatitude - _previousMaskedLatitude!;
+      int deltaLon = maskedLongitude - _previousMaskedLongitude!;
+
+      Map<String, dynamic> deltaData = {
+        'delta_latitude': deltaLat,
+        'delta_longitude': deltaLon,
+        'timestamp': DateTime.now().toIso8601String(),
+        'point_number': _pointCounter,
+      };
+      deltaPoints.add(deltaData); // Store the delta-compressed point with timestamp
+    }
+
+    // Update the previous coordinates for the next delta compression
+    _previousMaskedLatitude = maskedLatitude;
+    _previousMaskedLongitude = maskedLongitude;
   }
 
   // Send delta-compressed data to the server
