@@ -14,6 +14,7 @@ func main() {
     server := gin.Default()
     server.POST("/signup", signupUser) 
     server.POST("/login", loginUser)
+    server.POST("/trip", transmitPoints)
 
     server.Run(addr)
 }
