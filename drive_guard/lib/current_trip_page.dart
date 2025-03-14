@@ -1,10 +1,10 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:geolocator/geolocator.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart'; // Import Geolocator package
+import 'package:shared_preferences/shared_preferences.dart';  // Import shared_preferences
 
 class CurrentTripPage extends StatefulWidget {
   @override
@@ -16,38 +16,31 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   late Timer _deltaTimer;
   late Timer _elapsedTimeTimer;
   late Timer _sendDataTimer;
-
-  // Timer in seconds
-  int _elapsedTime = 0; 
-
-   // Masked lat/lon of the previous location
-  int? _previousMaskedLatitude, _previousMaskedLongitude;
-
-  // Store delta-compressed data with timestamps
-  List<Map<String, dynamic>> deltaPoints = []; 
-
-  // To track the number of delta points calculated
-  int _pointCounter = 0; 
-
-  // Store the first masked latitude and longitude
-  int? _firstMaskedLatitude, _firstMaskedLongitude; 
-
+  int _elapsedTime = 0; // Timer in seconds
+  int? _previousMaskedLatitude, _previousMaskedLongitude; // Masked lat/lon of the previous location
+  List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps
+  int _pointCounter = 0; // To track the number of delta points calculated
+  int? _firstMaskedLatitude, _firstMaskedLongitude; // Store the first masked latitude and longitude
   final String server = 'http://10.0.2.2:8080';
 
   // Test data generation (Starts here)
   Random rand = Random();
 
-  // Random starting point (latitude and longitude)
-  late double _initialLatitude = (rand.nextDouble() * (90 - (-90))) - 90; // Random latitude between -90 and 90
-  late double _initialLongitude = (rand.nextDouble() * (180 - (-180))) - 180; // Random longitude between -180 and 180
+  // Variables for random starting point
+  late double _initialLatitude;
+  late double _initialLongitude;
+
   // Test data generation (Ends here)
 
   @override
   void initState() {
     super.initState();
+    
+    // Initialize random latitude and longitude
+    _initialLatitude = (rand.nextDouble() * (90 - (-90))) - 90; // Random latitude between -90 and 90
+    _initialLongitude = (rand.nextDouble() * (180 - (-180))) - 180; // Random longitude between -180 and 180
 
-    // Load the first point when the app starts
-    _loadFirstPoint(); 
+    _loadFirstPoint(); // Load the first point when the app starts
   }
 
   // Method to start the trip
@@ -249,19 +242,70 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
     return Scaffold(
       appBar: AppBar(title: Text("Current Trip")),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Time: $_elapsedTime seconds',  // Timer shown in seconds
-              style: TextStyle(fontSize: 24),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: isTripStarted ? stopTrip : startTrip,
-              child: Text(isTripStarted ? 'Stop Trip' : 'Start Trip'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                'Trip Status: ${isTripStarted ? "Ongoing" : "Stopped"}',
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.timer, color: Colors.blue, size: 30),
+                  SizedBox(width: 10),
+                  Text(
+                    'Elapsed Time: ${_elapsedTime}s',
+                    style: TextStyle(fontSize: 24),
+                  ),
+                ],
+              ),
+              SizedBox(height: 40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.route, color: Colors.blue, size: 30),
+                  SizedBox(width: 10),
+                  Text(
+                    'Delta Latitude: ${_previousMaskedLatitude ?? "N/A"}',
+                    style: TextStyle(fontSize: 24),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.route, color: Colors.blue, size: 30),
+                  SizedBox(width: 10),
+                  Text(
+                    'Delta Longitude: ${_previousMaskedLongitude ?? "N/A"}',
+                    style: TextStyle(fontSize: 24),
+                  ),
+                ],
+              ),
+              SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: isTripStarted ? stopTrip : startTrip,
+                child: Text(
+                  isTripStarted ? 'Stop Trip' : 'Start Trip',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 5,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
