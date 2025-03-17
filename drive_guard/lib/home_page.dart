@@ -247,7 +247,112 @@ class _HomePageState extends State<HomePage> {
                           ),
           ],
         ),
+      drawer: CustomDrawer(role: role), // Custom drawer for navigation
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Center(
+            child: Container(
+              padding: EdgeInsets.all(10),      
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  stops: [0.0 , 0.5, 1.0],
+                  colors: [Colors.white, Colors.white, Colors.grey]
+                )  
+              ),
+              child: RawMaterialButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CurrentTripPage()),
+                  );
+                },
+                shape: CircleBorder(),
+                elevation: 2.0,
+                fillColor: Colors.white,
+                padding: const EdgeInsets.all(85.0),
+
+                child: Text(
+                  "Start Trip",
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<List<dynamic>>(
+              future: fetchPreviousTrips(), // Provide the future here
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No previous trips available'));
+                }
+
+                List<dynamic> trips = snapshot.data!;
+                return ListView.builder(
+                  itemCount: trips.length,
+                  itemBuilder: (context, index) {
+                    var trip = trips[index];
+                    return ListTile(
+                      title: Text('Trip #${trip['id']}'),
+                      subtitle: Text('Duration: ${trip['elapsed_time']} seconds'),
+                      onTap: () {
+                        // Navigate to detailed trip page
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
+
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            backgroundColor: Colors.grey[400],
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_car),
+            label: 'Current Trip',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Previous Trips',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle_outline_outlined),
+            label: 'Score',
+          ),
+        ],
+        onTap: (value) {
+          
+        },
+
+
+
+      ),
+
+
     );
   }
 }
+
