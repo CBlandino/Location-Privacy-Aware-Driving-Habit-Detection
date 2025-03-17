@@ -34,15 +34,43 @@ class HomePage extends StatelessWidget {
       ),
       drawer: CustomDrawer(role: role), // Custom drawer for navigation
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CurrentTripPage()),
-              );
-            },
-            child: Text('Start New Trip'),
+          Center(
+            child: Container(
+              padding: EdgeInsets.all(10),      
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                  stops: [0.0 , 0.5, 1.0],
+                  colors: [Colors.white, Colors.white, Colors.grey]
+                )  
+              ),
+              child: RawMaterialButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CurrentTripPage()),
+                  );
+                },
+                shape: CircleBorder(),
+                elevation: 2.0,
+                fillColor: Colors.white,
+                padding: const EdgeInsets.all(85.0),
+
+                child: Text(
+                  "Start Trip",
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ),
           Expanded(
             child: FutureBuilder<List<dynamic>>(
@@ -82,3 +110,4 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
