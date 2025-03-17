@@ -107,6 +107,36 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
+
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            backgroundColor: Colors.grey[400],
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_car),
+            label: 'Current Trip',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Previous Trips',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle_outline_outlined),
+            label: 'Score',
+          ),
+        ],
+        onTap: (value) {
+          
+        },
+
+
+
+      ),
+
+
     );
   }
 }
