@@ -18,16 +18,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<dynamic> trips = [];
   bool isLoading = true;
-  String errorMessage = ''; // Variable to store the error message
-  
-  // Simulate a function to load trips from the server
+  String errorMessage = '';
+
   Future<void> _loadTrips() async {
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8080/trips')); // Replace with your server URL
-      
+      final response = await http.get(Uri.parse('http://10.0.2.2:8080/trips'));
       if (response.statusCode == 200) {
         setState(() {
-          trips = json.decode(response.body); // Assuming the response is a JSON array
+          trips = json.decode(response.body);
           isLoading = false;
         });
       } else {
@@ -47,7 +45,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadTrips(); // Load trips when the page is loaded
+    _loadTrips();
   }
 
   @override
@@ -58,14 +56,13 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         backgroundColor: Colors.blue,
       ),
-      drawer: CustomDrawer(role: widget.role), // Add CustomDrawer
+      drawer: CustomDrawer(role: widget.role),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header for the page
               Text(
                 'Welcome to Your Dashboard',
                 style: TextStyle(
@@ -75,8 +72,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               SizedBox(height: 30),
-
-              // Start Trip Section
               _buildSection(
                 title: 'Start New Trip',
                 icon: Icons.directions_car,
@@ -91,37 +86,72 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               ),
-              SizedBox(height: 30), // Increased spacing between sections
-
-              // Previous Trips Section (Improved card with last 3 trips)
+              SizedBox(height: 30),
               _buildPreviousTripsSection(),
-              SizedBox(height: 30), // Increased spacing between sections
-
-              // Score Section (Add Score logic here)
+              SizedBox(height: 30),
               _buildSection(
                 title: 'Score',
                 icon: Icons.star,
                 buttonText: 'Check Score',
                 description: 'View your trip completion score and progress.',
                 onTap: () {
-                  // Navigate to Score page or display score-related information
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ScorePage(), // Replace with your score page
+                      builder: (context) => ScorePage(),
                     ),
                   );
                 },
               ),
-              SizedBox(height: 30), // Increased spacing between sections
             ],
           ),
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_car),
+            label: 'Current Trip',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Previous Trips',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle_outline_outlined),
+            label: 'Score',
+          ),
+        ],
+        onTap: (index) {
+          switch (index) {
+            case 1:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CurrentTripPage()),
+              );
+              break;
+            case 2:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => PreviousTripsPage()),
+              );
+              break;
+            case 3:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ScorePage()),
+              );
+              break;
+          }
+        },
+      ),
     );
   }
 
-  // Helper method to build the sections (Start Trip, Previous Trips, Score)
   Widget _buildSection({
     required String title,
     required IconData icon,
@@ -134,14 +164,12 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
       ),
       elevation: 10,
-      margin: EdgeInsets.symmetric(vertical: 10),
       color: Colors.blueAccent,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             ListTile(
-              contentPadding: EdgeInsets.all(0),
               leading: Icon(icon, color: Colors.white, size: 40),
               title: Text(
                 title,
@@ -160,7 +188,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            SizedBox(height: 10), // Space between title and description
+            SizedBox(height: 10),
             Text(
               description,
               style: TextStyle(fontSize: 16, color: Colors.white70),
@@ -170,16 +198,17 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  
   }
 
-  // Build the Previous Trips Section with the last 3 trips
+  
+
   Widget _buildPreviousTripsSection() {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
       elevation: 10,
-      margin: EdgeInsets.symmetric(vertical: 10),
       color: Colors.lightBlueAccent,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -191,7 +220,6 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
             ),
             SizedBox(height: 10),
-            // Show loading indicator or error message for trips
             isLoading
                 ? Center(child: CircularProgressIndicator())
                 : errorMessage.isNotEmpty
@@ -210,149 +238,25 @@ class _HomePageState extends State<HomePage> {
                           )
                         : Column(
                             children: List.generate(
-                              trips.length > 3 ? 3 : trips.length, // Display up to 3 trips
+                              trips.length > 3 ? 3 : trips.length,
                               (index) {
                                 var trip = trips[index];
-                                return Card(
-                                  margin: EdgeInsets.symmetric(vertical: 8),
+                                return ListTile(
+                                  tileColor: Colors.white,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  elevation: 5,
-                                  color: Colors.white,
-                                  child: ListTile(
-                                    contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 16),
-                                    title: Text(
-                                      'Trip ${trip['id']}',
-                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                    ),
-                                    subtitle: Text(
-                                      'Duration: ${trip['duration']} minutes\nDate: ${trip['date']}',
-                                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                                    ),
-                                    trailing: Icon(Icons.arrow_forward),
-                                    onTap: () {
-                                      // Navigate to Trip Details or Current Trip
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => CurrentTripPage(),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                                  title: Text('Trip ${trip['id']}'),
+                                  subtitle: Text('Duration: ${trip['duration']} minutes\nDate: ${trip['date']}'),
+                                  trailing: Icon(Icons.arrow_forward),
+                                  onTap: () {},
                                 );
                               },
                             ),
                           ),
           ],
         ),
-      drawer: CustomDrawer(role: role), // Custom drawer for navigation
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Center(
-            child: Container(
-              padding: EdgeInsets.all(10),      
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  stops: [0.0 , 0.5, 1.0],
-                  colors: [Colors.white, Colors.white, Colors.grey]
-                )  
-              ),
-              child: RawMaterialButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CurrentTripPage()),
-                  );
-                },
-                shape: CircleBorder(),
-                elevation: 2.0,
-                fillColor: Colors.white,
-                padding: const EdgeInsets.all(85.0),
-
-                child: Text(
-                  "Start Trip",
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: FutureBuilder<List<dynamic>>(
-              future: fetchPreviousTrips(), // Provide the future here
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No previous trips available'));
-                }
-
-                List<dynamic> trips = snapshot.data!;
-                return ListView.builder(
-                  itemCount: trips.length,
-                  itemBuilder: (context, index) {
-                    var trip = trips[index];
-                    return ListTile(
-                      title: Text('Trip #${trip['id']}'),
-                      subtitle: Text('Duration: ${trip['elapsed_time']} seconds'),
-                      onTap: () {
-                        // Navigate to detailed trip page
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
       ),
-
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            backgroundColor: Colors.grey[400],
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Current Trip',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Previous Trips',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline_outlined),
-            label: 'Score',
-          ),
-        ],
-        onTap: (value) {
-          
-        },
-
-
-
-      ),
-
-
     );
   }
 }
-
