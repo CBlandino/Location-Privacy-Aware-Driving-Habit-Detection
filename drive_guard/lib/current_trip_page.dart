@@ -260,7 +260,9 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
                   SizedBox(width: 10),
                   Text(
                     'Elapsed Time: ${_elapsedTime}s',
-                    style: TextStyle(fontSize: 24),
+                    style: TextStyle(
+                      fontSize: 24,
+                    ),
                   ),
                 ],
               ),

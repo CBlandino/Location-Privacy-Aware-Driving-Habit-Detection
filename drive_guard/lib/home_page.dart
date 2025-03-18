@@ -16,6 +16,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+    int _selectedIndex = 0;
+
+    final List<Widget> _pages = [
+      // HomePage(),      // Home Dashboard
+      CurrentTripPage(),    // Current Trip
+      PreviousTripsPage(),  // Previous Trips
+      ScorePage(),          // Score Page
+    ];
+
+    void _onItemTapped(int index) {
+      setState(() {
+        _selectedIndex = index; // Switches pages     
+      });
+    }
+
+
   List<dynamic> trips = [];
   bool isLoading = true;
   String errorMessage = '';
@@ -108,25 +124,17 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
         items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Current Trip',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Previous Trips',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline_outlined),
-            label: 'Score',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+          BottomNavigationBarItem(icon: Icon(Icons.directions_car), label: 'Current Trip'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Previous Trips'),
+          BottomNavigationBarItem(icon: Icon(Icons.check_circle_outline_outlined), label: 'Score'),
         ],
-        onTap: (index) {
+        /*onTap: (index) {
           switch (index) {
             case 1:
               Navigator.push(
@@ -147,7 +155,7 @@ class _HomePageState extends State<HomePage> {
               );
               break;
           }
-        },
+        },*/
       ),
     );
   }
