@@ -4,8 +4,8 @@ import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
 
 void main()  async{
-  runApp(MyApp());
-    await Settings.init(cacheProvider: SharePreferenceCache());
+  await Settings.init(cacheProvider: SharePreferenceCache());
+  runApp(MyApp());  
 }
 
 

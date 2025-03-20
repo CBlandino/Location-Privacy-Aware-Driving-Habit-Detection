@@ -18,31 +18,42 @@ class SettingsPage extends StatelessWidget {
         backgroundColor: Colors.blue[500],
       ),
       
-      body: ListView(
-          padding: EdgeInsets.all(24),
-          children: [
-            SettingsGroup(
-              title: 'GENERAL',
-              children: <Widget>[
-                const SizedBox(height: 8),
-                AccountPage(),
-                buildReviewDriving(context),
+      body: Stack(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ListView(
+                    children: [
+                      SettingsGroup(
+                        title: 'GENERAL',
+                        children: <Widget>[
+                          const SizedBox(height: 8),
+                          AccountPage(),
+                          buildReviewDriving(context),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      SettingsGroup(
+                        title: 'FEEDBACK',
+                        children: <Widget>[
+                          const SizedBox(height: 8),
+                          buildReportBug(context),
+                          buildsendFeedback(context),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                buildLogout(context), 
+                SizedBox(height: 20), 
               ],
             ),
-            const SizedBox(height: 32),
-            SettingsGroup(
-              title: 'FEEDBACK',
-              children: <Widget> [
-                const SizedBox(height: 8),
-                buildReportBug(context),
-                buildsendFeedback(context),
-              ],
-            ),
-            const SizedBox(height: 200),
-            buildLogout(),
-          ],
-
-
+          ),
+        ],
       ),
     );
   }
@@ -63,16 +74,19 @@ class SettingsPage extends StatelessWidget {
 
 
 
-Widget buildLogout() => SimpleSettingsTile(
+Widget buildLogout(BuildContext context) => SimpleSettingsTile(
   title: 'Logout',
-
   leading: Icon(
     Icons.logout,
-    color: Colors.grey[600],
+    color: Colors.redAccent,
   ),
   subtitle: '',
   onTap: () {
-    
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPageWidget()),
+      (route) => false,
+    );
   },
 );
 

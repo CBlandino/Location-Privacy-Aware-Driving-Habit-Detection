@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'privacy_page.dart';
 
 class AccountPage extends StatefulWidget {
   static const keyLanguage = 'key-language';
@@ -17,7 +18,7 @@ class _AccountPageState extends State<AccountPage> {
   File? _profileImage;
 
   @override
-  void initSate() {
+  void initState() {
     super.initState();
     _loadProfileImage();
   }
@@ -70,6 +71,7 @@ class _AccountPageState extends State<AccountPage> {
                 _pickImage(ImageSource.camera);
               },
             ),
+            SizedBox(height: 80),
           ],
         );
       },
@@ -84,8 +86,7 @@ class _AccountPageState extends State<AccountPage> {
         child: SettingsScreen(
           children: <Widget>[
             buildProfilePicture(context),
-            buildPrivacy(context),
-            buildPassword(context),
+            PrivacyPage(),
             buildChooseLang(),
           ],
         ),
@@ -111,17 +112,7 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  Widget buildPassword(BuildContext context) => TextInputSettingsTile(
-        title: 'Password',
-        settingKey: AccountPage.keyPassword,
-      );
-
-  Widget buildPrivacy(BuildContext context) => SimpleSettingsTile(
-        title: 'Privacy',
-        leading: Icon(Icons.privacy_tip, color: Colors.red),
-        onTap: () {},
-      );
-
+  // Possible implement functionality in the future
   Widget buildChooseLang() => DropDownSettingsTile(
         title: 'Language',
         settingKey: AccountPage.keyLanguage,
