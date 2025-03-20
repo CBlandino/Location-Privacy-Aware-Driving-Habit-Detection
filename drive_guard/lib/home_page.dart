@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> {
                     alignment: Alignment.centerRight,
                     child: CircleAvatar(
                       radius: 20,
-                      backgroundColor: Colors.grey[400],
+                      backgroundColor: Colors.blue[300],
                       backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
                       child: _profileImage == null 
                         ? Text(
