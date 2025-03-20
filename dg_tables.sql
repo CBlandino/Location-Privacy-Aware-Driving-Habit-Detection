@@ -1,0 +1,30 @@
+CREATE ROLE dg_API_user WITH LOGIN PASSWORD 'secure';
+GRANT CONNECT ON DATABASE dg_db TO dg_API_user;
+GRANT USAGE ON SCHEMA public TO dg_API_user;
+GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO dg_API_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT ON TABLES TO dg_API_user;
+
+CREATE TABLE Users (
+    user_id SERIAL PRIMARY KEY,        
+    first_name VARCHAR(100) NOT NULL, 
+    last_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Trips (
+    trip_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Data (
+    trip_id INT NOT NULL,
+    point_number INT NOT NULL,
+    lat INT NOT NULL,
+    long INT NOT NULL,
+    time TIMESTAMP NOT NULL,
+    PRIMARY KEY (trip_id, point_number),
+    FOREIGN KEY (trip_id) REFERENCES Trips(trip_id) ON DELETE CASCADE
+);
+
