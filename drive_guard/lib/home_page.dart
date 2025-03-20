@@ -8,7 +8,7 @@ import 'custom_drawer.dart'; // Import CustomDrawer
 import 'current_trip_page.dart'; // For navigation to CurrentTripPage
 import 'previous_trips_page.dart';
 import 'score_page.dart';
-import 'account_page.dart';
+import 'settings_page.dart';
 
 class HomePage extends StatefulWidget {
   final String role;
@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
       CurrentTripPage(),    // Current Trip
       PreviousTripsPage(),  // Previous Trips
       ScorePage(),          // Score Page
+      SettingsPage(),        // Account Page
     ];
 
     void _onItemTapped(int index) {
@@ -92,199 +93,175 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.blue,
       ),
       drawer: CustomDrawer(role: widget.role),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(width: 50),
-                      Expanded(
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Text(
-                                'Welcome to Your Dashboard',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
+
+      body: _selectedIndex == 0 // If Home is selected, show the custom UI; otherwise, switch pages
+          ? Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Welcome Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(width: 50),
+                        Expanded(
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Welcome to Your Dashboard',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
                                 ),
-                              ),
-                            
-            
-                              Text(
-                                'John Doe!',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
+                                Text(
+                                  'John Doe!',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Profile Image or Initials
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Colors.blue[300],
+                            backgroundImage:
+                                _profileImage != null ? FileImage(_profileImage!) : null,
+                            child: _profileImage == null
+                                ? Text(
+                                    'JD', // Replace with user's initials dynamically
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 60),
+
+                    // Start Trip Button
+                    Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.4),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.blue.shade700, Colors.blue.shade400],
+                          ),
+                        ),
+                        child: RawMaterialButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedIndex = 0;
+                            });
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => CurrentTripPage()),
+                            );
+                          },
+                          shape: CircleBorder(),
+                          elevation: 5.0,
+                          fillColor: Colors.transparent, // Transparent to let gradient show
+                          padding: const EdgeInsets.all(95.0),
+                          child: Text(
+                            "Start Trip",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black26,
+                                  offset: Offset(2, 2),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                  
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.blue[300],
-                      backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-                      child: _profileImage == null 
-                        ? Text(
-                          'JD', // Replace with user's initials dynamically
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                        )
-                        : null,
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 60),
-              Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.blue.withOpacity(0.4),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.blue.shade700, Colors.blue.shade400],
-                    ),
-                  ),
-                  child: RawMaterialButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => CurrentTripPage()),
-                      );
-                    },
-                    shape: CircleBorder(),
-                    elevation: 5.0,
-                    fillColor: Colors.transparent, // Transparent to let gradient show
-                    padding: const EdgeInsets.all(95.0),
-                    child: Text(
-                      "Start Trip",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black26,
-                            offset: Offset(2, 2),
-                            blurRadius: 4,
+                    SizedBox(height: 60),
+
+                    // Section with Previous Trips and Score
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color.fromARGB(255, 1, 84, 143),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                            offset: Offset(0, 4), // Soft shadow
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 60),
-              // SizedBox(height: 30),
-              // _buildSection(
-              //   title: 'Start New Trip',
-              //   icon: Icons.directions_car,
-              //   buttonText: 'Start Trip',
-              //   description: 'Tap to begin a new trip and track your progress.',
-              //   onTap: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (context) => CurrentTripPage(),
-              //       ),
-              //     );
-              //   },
-              // ),
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 1, 84, 143), 
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                      offset: Offset(0, 4), // Soft shadow
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(height: 30),
-                    _buildPreviousTripsSection(),
-                    SizedBox(height: 30),
-                    _buildSection(
-                      title: 'Score',
-                      icon: Icons.star,
-                      buttonText: 'Check Score',
-                      //description: 'View your trip completion score and progress.',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ScorePage(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(height: 30),
+                          _buildPreviousTripsSection(),
+                          SizedBox(height: 30),
+                          _buildSection(
+                            title: 'Score',
+                            icon: Icons.star,
+                            buttonText: 'Check Score',
+                            onTap: () {
+                              setState(() {
+                                _selectedIndex = 2;
+                              });
+                            },
                           ),
-                        );
-                      },
+                          SizedBox(height: 30),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: 30),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            )
+          : _pages[_selectedIndex], // Switch to other pages dynamically
+
+      // Bottom Navigation Bar
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
+        currentIndex: _selectedIndex, // Keeps track of the selected tab
         elevation: 10,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: Colors.blue, // Highlight the selected tab
         unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        onTap: _onItemTapped, // Handle switching pages
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.directions_car), label: 'Current Trip'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Previous Trips'),
-          BottomNavigationBarItem(icon: Icon(Icons.check_circle_outline_outlined), label: 'Score'),
+          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Score'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Account'),
         ],
-        /*onTap: (index) {
-          switch (index) {
-            case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CurrentTripPage()),
-              );
-              break;
-            case 2:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PreviousTripsPage()),
-              );
-              break;
-            case 3:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ScorePage()),
-              );
-              break;
-          }
-        },*/
       ),
     );
   }
