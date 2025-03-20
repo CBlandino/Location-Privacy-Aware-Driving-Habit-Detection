@@ -13,7 +13,7 @@ func transmitPoints(c *gin.Context) {
     log.Println("RECIEVING POINTS")
 
 
-    var data map[string]interface{}
+    var data map[string]any
 
     if err := c.ShouldBindJSON(&data); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
