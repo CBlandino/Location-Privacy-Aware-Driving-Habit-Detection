@@ -98,53 +98,71 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey[400],
-                  backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
-                  child: _profileImage == null 
-                    ? Text(
-                      'JD', // Replace with user's initials dynamically
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                    )
-                    : null,
-                ),
-              ),
-              Center(
-                child: Text(
-                  'Welcome to Your Dashboard',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(width: 50),
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                'Welcome to Your Dashboard',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            
+            
+                              Text(
+                                'John Doe!',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[400],
+                      backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
+                      child: _profileImage == null 
+                        ? Text(
+                          'JD', // Replace with user's initials dynamically
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                        )
+                        : null,
+                    ),
                   ),
-                ),
-              ),
-              Center(
-                child: Text(
-                  'John Doe!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
-                  ),
-                ),
+                ],
               ),
               SizedBox(height: 60),
               Center(
                 child: Container(
-                  padding: EdgeInsets.all(10),      
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.grey.shade400, blurRadius: 15, spreadRadius: 2)],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blue.withOpacity(0.4),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
                     gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      stops: [0.0 , 0.5, 1.0],
-                      colors: [Colors.white, Colors.white, Colors.grey.shade300]
-                    )  
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.blue.shade700, Colors.blue.shade400],
+                    ),
                   ),
                   child: RawMaterialButton(
                     onPressed: () {
@@ -154,16 +172,22 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                     shape: CircleBorder(),
-                    elevation: 2.0,
-                    fillColor: Colors.white,
-                    padding: const EdgeInsets.all(85.0),
-
+                    elevation: 5.0,
+                    fillColor: Colors.transparent, // Transparent to let gradient show
+                    padding: const EdgeInsets.all(95.0),
                     child: Text(
                       "Start Trip",
                       style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 16,
+                        color: Colors.white,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black26,
+                            offset: Offset(2, 2),
+                            blurRadius: 4,
+                          ),
+                        ],
                       ),
                     ),
                   ),
