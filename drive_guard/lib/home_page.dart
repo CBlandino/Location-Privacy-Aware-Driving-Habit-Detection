@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'custom_drawer.dart'; // Import CustomDrawer
 import 'current_trip_page.dart'; // For navigation to CurrentTripPage
 import 'previous_trips_page.dart';
 import 'score_page.dart';
+import 'account_page.dart';
 
 class HomePage extends StatefulWidget {
   final String role;
@@ -17,6 +21,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
     int _selectedIndex = 0;
+    File? _profileImage;
 
     final List<Widget> _pages = [
       // HomePage(),      // Home Dashboard
@@ -35,6 +40,8 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> trips = [];
   bool isLoading = true;
   String errorMessage = '';
+  
+
 
   Future<void> _loadTrips() async {
     try {
@@ -58,10 +65,22 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final imagePath = prefs.getString('profile_image');
+    if (imagePath != null) {
+      setState(() {
+        _profileImage = File(imagePath);
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _loadTrips();
+    _loadProfileImage();
   }
 
   @override
@@ -84,10 +103,13 @@ class _HomePageState extends State<HomePage> {
                 child: CircleAvatar(
                   radius: 20,
                   backgroundColor: Colors.grey[400],
-                  child: Text(
-                    'JD', // Replace with user's initials dynamically
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
+                  backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
+                  child: _profileImage == null 
+                    ? Text(
+                      'JD', // Replace with user's initials dynamically
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                    )
+                    : null,
                 ),
               ),
               Center(

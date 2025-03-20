@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your gallery to set your profile picture.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to take a profile picture.</string>
 </dict>
 </plist>
