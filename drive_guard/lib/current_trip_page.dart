@@ -16,6 +16,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   late Timer _deltaTimer;
   late Timer _elapsedTimeTimer;
   late Timer _sendDataTimer;
+  DateTime? tripStartTime;
   int _elapsedTime = 0; // Timer in seconds
   int? _previousMaskedLatitude, _previousMaskedLongitude; // Masked lat/lon of the previous location
   List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps
@@ -158,36 +159,44 @@ void dispose() {
     }
   }
 
-  // Start the trip simulation
-  void startTrip() {
+// Start the trip simulation
+void startTrip() {
+  setState(() {
+    // Reset all trip-related data for a new session
+    isTripStarted = true;
+    deltaPoints.clear(); // Clear previous trip data
+    _elapsedTime = 0; // Reset elapsed time
+    _pointCounter = 0; // Reset point counter
+    tripStartTime = DateTime.now(); // Mark new trip start time
+
+    _previousMaskedLatitude = _initialLatitude.toInt();
+    _previousMaskedLongitude = _initialLongitude.toInt();
+  });
+
+  // Request location permissions when the trip starts
+  _requestPermissions();
+
+  // Start the timer for calculating delta points every 0.25 seconds
+  _deltaTimer = Timer.periodic(Duration(milliseconds: 250), (timer) {
+    _pointCounter++;
+    _getSimulatedLocation();  // Simulated GPS updates
+  });
+
+  // Start the timer for tracking elapsed time
+  _elapsedTimeTimer = Timer.periodic(Duration(seconds: 1), (timer) {
     setState(() {
-      isTripStarted = true;
+      _elapsedTime++;
     });
+  });
 
-    // Request location permissions when the trip starts
-    _requestPermissions();
+  // Start the timer for sending data every minute
+  _sendDataTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+    sendTripData();
+  });
 
-    // Start the timer for calculating delta points every 0.25 seconds
-    _deltaTimer = Timer.periodic(Duration(milliseconds: 250), (timer) {
-      _pointCounter++;
-      _getSimulatedLocation();  // Simulated GPS updates
-    });
-
-    // Start the timer for tracking elapsed time
-    _elapsedTimeTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _elapsedTime++;
-      });
-    });
-
-    // Start the timer for sending data every minute
-    _sendDataTimer = Timer.periodic(Duration(minutes: 1), (timer) {
-      sendTripData();
-    });
-
-    //Forces UI refresh without clearing anything
-    setState(() {});
-  }
+  // Ensure UI refresh
+  setState(() {});
+}
 
 // Stop the trip but KEEP delta points visible
 void stopTrip() async {
@@ -201,7 +210,7 @@ void stopTrip() async {
   _sendDataTimer.cancel();
 
   // Send remaining data but DO NOT clear `deltaPoints` or reset UI
-  await sendTripData();
+  sendTripData();
 
   // Forces UI refresh without clearing data
   setState(() {});
