@@ -53,13 +53,14 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
 @override
 void initState() {
   super.initState();
-  
-  // Ensure data only resets when the page is re-entered, NOT when stopping a trip
+
+  // Only reset when page is reopened, NOT when stopping/starting trip
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (!isTripStarted) {
+      // Removed clearing of data on trip stop
       setState(() {
         _elapsedTime = 0;
-        deltaPoints.clear(); // Clear only when the page is reopened
+        // deltaPoints.clear();  DO NOT CLEAR
       });
     }
   });
@@ -67,17 +68,19 @@ void initState() {
   _initialLatitude = (rand.nextDouble() * 180) - 90;
   _initialLongitude = (rand.nextDouble() * 360) - 180;
 
-  _loadFirstPoint();
+_loadFirstPoint().then((_) {
+    setState(() {});  // Ensure UI updates when data is loaded
+  });
 }
 
 @override
 void dispose() {
-  // Only stop timers but do NOT clear delta points
+  // Only stop timers but do NOT clear delta points or reset UI
   _deltaTimer.cancel();
   _elapsedTimeTimer.cancel();
   _sendDataTimer.cancel();
 
-  super.dispose(); // Properly disposes of the widget without modifying state
+  super.dispose();
 }
 
   // Method to format the elapsed time into HH:MM:SS, MM:SS, or just seconds
@@ -181,12 +184,15 @@ void dispose() {
     _sendDataTimer = Timer.periodic(Duration(minutes: 1), (timer) {
       sendTripData();
     });
+
+    //Forces UI refresh without clearing anything
+    setState(() {});
   }
 
-// Stop the trip but keep delta points visible
+// Stop the trip but KEEP delta points visible
 void stopTrip() async {
   setState(() {
-    isTripStarted = false;
+    isTripStarted = false; // Stops the trip but keeps everything visible
   });
 
   // Stop all timers
@@ -194,10 +200,10 @@ void stopTrip() async {
   _elapsedTimeTimer.cancel();
   _sendDataTimer.cancel();
 
-  // Send remaining data but DO NOT clear deltaPoints
+  // Send remaining data but DO NOT clear `deltaPoints` or reset UI
   await sendTripData();
 
-  // Force UI refresh so the delta points remain visible
+  // Forces UI refresh without clearing data
   setState(() {});
 }
 
@@ -218,8 +224,6 @@ void stopTrip() async {
     if (_firstMaskedLatitude == null || _firstMaskedLongitude == null) {
       _storeFirstPoint(maskedLatitude, maskedLongitude);
     }
-
-
 
     // Compute delta changes
     if (_previousMaskedLatitude != null && _previousMaskedLongitude != null) {
@@ -267,9 +271,9 @@ void stopTrip() async {
       print('Error: $error');
     }
 
-    setState(() {
-      deltaPoints.clear();
-    });
+    //setState(() {
+    //  deltaPoints.clear();
+    //});
   }
 
 @override
@@ -349,7 +353,7 @@ Widget _buildTimerCard() {
   );
 }
 
-// Build delta points section that remains visible after stopping trip
+// Keep delta points visible after stopping trip
 Widget _buildDeltaList() {
   return Container(
     height: 150,
@@ -361,6 +365,7 @@ Widget _buildDeltaList() {
         padding: EdgeInsets.all(8),
         child: deltaPoints.isNotEmpty
             ? ListView.builder(
+                key: ValueKey(deltaPoints.length), // Ensures widget rebuilds correctly
                 itemCount: deltaPoints.length,
                 itemBuilder: (context, index) {
                   var delta = deltaPoints[index];
@@ -383,6 +388,7 @@ Widget _buildDeltaList() {
     ),
   );
 }
+
 
 // Build map visualization that persists after stopping trip
 Widget _buildMapView() {
