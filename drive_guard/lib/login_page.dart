@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'home_page.dart';
@@ -37,7 +38,8 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     final String url = '$server/signup'; // Use 10.0.2.2 to connect to the host machine
 
     // Prepare the data for signup based on the selected role
-    Map<String, dynamic> data = {
+    Map<String, dynamic> data = 
+    {
       'email': emailController.text,
       'password': passwordController.text,
     };
@@ -57,11 +59,23 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     try {
       final response = await http.post(
         Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          },
         body: json.encode(data),
       );
 
       if (response.statusCode == 201) {
+
+        final responseData = json.decode(response.body);
+        String token = responseData['access_token'];
+
+        // Save token for authentication
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+        //await prefs.setString('user_name', userName ?? 'Unknown User');
+        //await prefs.setString('user_email', userEmail ?? 'No Email');
+
         // Success: Navigate to home page or show success message
         Navigator.push(
           context,
@@ -75,6 +89,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         _showErrorDialog(responseData['message']);
       }
     } catch (error) {
+       _showErrorDialog('Error: $error');
       _showErrorDialog('An error occurred. Please try again later.');
     }
   }
@@ -103,7 +118,18 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         body: json.encode(data),
       );
 
+      
+
       if (response.statusCode == 202) {
+        final responseData = json.decode(response.body);
+
+       //print('ResponseData Token : ${responseData['token']}');
+       String token = responseData['access_token'];
+
+       // Save token to shared preferences
+       SharedPreferences prefs = await SharedPreferences.getInstance();
+       await prefs.setString('auth_token', token);
+
         // Success: Navigate to home page or show success message
         Navigator.push(
           context,
@@ -117,6 +143,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         _showErrorDialog(responseData['message']);
       }
     } catch (error) {
+       _showErrorDialog('Error: $error');
       _showErrorDialog('The Server is down. Please try again later.');
     }
   }

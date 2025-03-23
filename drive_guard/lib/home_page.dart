@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,48 +41,87 @@ class _HomePageState extends State<HomePage> {
   List<dynamic> trips = [];
   bool isLoading = true;
   String errorMessage = '';
-  
 
+Future<void> _loadTrips() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
 
-  Future<void> _loadTrips() async {
-    try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:8080/trips'));
-      if (response.statusCode == 200) {
-        setState(() {
-          trips = json.decode(response.body);
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          errorMessage = 'Failed to load trips. Please try again later.';
-          isLoading = false;
-        });
-      }
-    } catch (e) {
+  if (token == null) {
+    setState(() {
+      errorMessage = 'Unauthorized access. Please log in again.';
+      isLoading = false;
+    });
+    _redirectToLogin();
+    return;
+  }
+
+  try {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/trips'),
+      headers: {
+        'Authorization': 'Bearer $token', // Include the token
+      },
+    );
+
+    if (response.statusCode == 200) {
       setState(() {
-        errorMessage = 'Error loading trips: $e';
+        trips = json.decode(response.body);
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        errorMessage = 'Failed to load trips. Please try again later.';
         isLoading = false;
       });
     }
+  } catch (e) {
+    setState(() {
+      errorMessage = 'Error loading trips: $e';
+      isLoading = false;
+    });
+  }
+}
+
+Future<void> _loadProfileImage() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
+
+  if (token == null) {
+    _redirectToLogin();
+    return;
   }
 
-
-  Future<void> _loadProfileImage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final imagePath = prefs.getString('profile_image');
-    if (imagePath != null) {
-      setState(() {
-        _profileImage = File(imagePath);
-      });
-    }
+  final imagePath = prefs.getString('profile_image');
+  if (imagePath != null) {
+    setState(() {
+      _profileImage = File(imagePath);
+    });
   }
+}
 
   @override
   void initState() {
     super.initState();
     _loadTrips();
     _loadProfileImage();
+    _checkAuthToken();
   }
+
+Future<void> _checkAuthToken() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
+
+  if (token == null) {
+    _redirectToLogin();
+  }
+}
+
+void _redirectToLogin() {
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -316,8 +355,6 @@ class _HomePageState extends State<HomePage> {
     );
   
   }
-
-  
 
   Widget _buildPreviousTripsSection() {
     return Card(

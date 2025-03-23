@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'login_page.dart';
 import 'package:geolocator/geolocator.dart'; // Import Geolocator package
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
 
@@ -54,6 +55,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
 @override
 void initState() {
   super.initState();
+  _checkAuthToken();
 
   // Only reset when page is reopened, NOT when stopping/starting trip
   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -72,6 +74,18 @@ void initState() {
 _loadFirstPoint().then((_) {
     setState(() {});  // Ensure UI updates when data is loaded
   });
+}
+
+Future<void> _checkAuthToken() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
+
+  if (token == null) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPageWidget()),
+    );
+  }
 }
 
 @override
@@ -258,16 +272,29 @@ void stopTrip() async {
   // Send trip data to the server
   Future<void> sendTripData() async {
     final String url = '$server/trip';
+      // Retrieve token from shared preferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('auth_token');
+
+    if (token == null) {
+      print("No authentication token found.");
+      return;
+    }
+   
     Map<String, dynamic> data = {
       'start_time': DateTime.now().toIso8601String(),
       'elapsed_time': _elapsedTime,
       'delta_points': deltaPoints,
+      'Authorization': 'Bearer $token',
     };
 
     try {
       final response = await http.post(
         Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Include token
+        },
         body: json.encode(data),
       );
 

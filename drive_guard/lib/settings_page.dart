@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart'; // Ensure LoginPage is imported
 import 'account_page.dart';
 
 class SettingsPage extends StatelessWidget {
-
 
   @override
   Widget build(BuildContext context) {
@@ -71,9 +71,6 @@ class SettingsPage extends StatelessWidget {
 //   },
 // );
 
-
-
-
 Widget buildLogout(BuildContext context) => SimpleSettingsTile(
   title: 'Logout',
   leading: Icon(
@@ -81,16 +78,17 @@ Widget buildLogout(BuildContext context) => SimpleSettingsTile(
     color: Colors.redAccent,
   ),
   subtitle: '',
-  onTap: () {
+  onTap: () async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token'); // Remove stored authentication token
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => LoginPageWidget()),
-      (route) => false,
+      (route) => false, // Remove all previous routes
     );
   },
 );
-
-
 
 Widget buildReportBug(BuildContext context) => SimpleSettingsTile(
   title: 'Report A Bug',
@@ -104,7 +102,6 @@ Widget buildReportBug(BuildContext context) => SimpleSettingsTile(
   },
 );
 
-
 Widget buildsendFeedback(BuildContext context) => SimpleSettingsTile(
   title: 'Send Feedback',
   subtitle: '',
@@ -116,9 +113,6 @@ Widget buildsendFeedback(BuildContext context) => SimpleSettingsTile(
     
   },
 );
-
-
-
 
 Widget buildReviewDriving(BuildContext context) => SimpleSettingsTile(
   title: 'Review Driving',
