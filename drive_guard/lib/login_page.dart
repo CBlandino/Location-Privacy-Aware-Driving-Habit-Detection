@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'home_page.dart';
@@ -38,8 +37,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     final String url = '$server/signup'; // Use 10.0.2.2 to connect to the host machine
 
     // Prepare the data for signup based on the selected role
-    Map<String, dynamic> data = 
-    {
+    Map<String, dynamic> data = {
       'email': emailController.text,
       'password': passwordController.text,
     };
@@ -59,23 +57,11 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     try {
       final response = await http.post(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          },
+        headers: {'Content-Type': 'application/json'},
         body: json.encode(data),
       );
 
       if (response.statusCode == 201) {
-
-        final responseData = json.decode(response.body);
-        String token = responseData['access_token'];
-
-        // Save token for authentication
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-        //await prefs.setString('user_name', userName ?? 'Unknown User');
-        //await prefs.setString('user_email', userEmail ?? 'No Email');
-
         // Success: Navigate to home page or show success message
         Navigator.push(
           context,
@@ -89,7 +75,6 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         _showErrorDialog(responseData['message']);
       }
     } catch (error) {
-       _showErrorDialog('Error: $error');
       _showErrorDialog('An error occurred. Please try again later.');
     }
   }
@@ -118,18 +103,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         body: json.encode(data),
       );
 
-      
-
       if (response.statusCode == 202) {
-        final responseData = json.decode(response.body);
-
-       //print('ResponseData Token : ${responseData['token']}');
-       String token = responseData['access_token'];
-
-       // Save token to shared preferences
-       SharedPreferences prefs = await SharedPreferences.getInstance();
-       await prefs.setString('auth_token', token);
-
         // Success: Navigate to home page or show success message
         Navigator.push(
           context,
@@ -143,7 +117,6 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         _showErrorDialog(responseData['message']);
       }
     } catch (error) {
-       _showErrorDialog('Error: $error');
       _showErrorDialog('The Server is down. Please try again later.');
     }
   }
@@ -186,13 +159,13 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 15,
-                      spreadRadius: 5,
-                    ),
-                  ],
+                  // boxShadow: [
+                  //   BoxShadow(
+                  //     color: Colors.black.withOpacity(0.2),
+                  //     blurRadius: 15,
+                  //     spreadRadius: 5,
+                  //   ),
+                  // ],
                 ),
                 padding: EdgeInsets.all(24),
                 child: Column(
@@ -253,7 +226,9 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                             decoration: InputDecoration(
                               labelText: 'Select Role',
                               labelStyle: TextStyle(color: Colors.blue),
-                              border: OutlineInputBorder(),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(22),
+                              ),
                               focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
                             ),
                             validator: (value) => value == null ? 'Please select a role' : null,
@@ -264,43 +239,33 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                           SizedBox(height: screenHeight * 0.03),
                           Row(
                             children: [
-                              SizedBox(
-                                width: screenWidth * 0.4,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      if (isSignupMode) {
-                                        _signup();
-                                      } else {
-                                        _login();
+                              Center(
+                                child: SizedBox(
+                                  width: screenWidth * 0.69,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      if (_formKey.currentState!.validate()) {
+                                        if (isSignupMode) {
+                                          _signup();
+                                        } else {
+                                          _login();
+                                        }
                                       }
-                                    }
-                                  },
-                                  child: Text(
-                                    isSignupMode ? 'Sign Up' : 'Login',
-                                    style: TextStyle(fontSize: 18, color: Colors.black),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
-                                    foregroundColor: Colors.black,
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                    },
+                                    child: Text(
+                                      isSignupMode ? 'Sign Up' : 'Login',
+                                      style: TextStyle(fontSize: 18, color: Colors.black),
                                     ),
-                                    elevation: 5,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Expanded(
-                                child: TextButton(
-                                  onPressed: () {
-                                    // Handle Forgot Password action here
-                                  },
-                                  child: Text(
-                                    'Forgot Password?',
-                                    style: TextStyle(fontSize: 16, color: Colors.blue),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      foregroundColor: Colors.black,
+                                      padding: EdgeInsets.symmetric(vertical: 16),
+                                      textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(22),
+                                      ),
+                                      elevation: 5,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -333,14 +298,14 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
   // Function to Show Role-Specific Fields
   Widget _getRoleSpecificFields() {
+    final screenHeight = MediaQuery.of(context).size.height;
+
     if (_selectedRole == 'User') {
       return Column(
         children: [
           if (isSignupMode) ...[
             _buildTextField('First Name', firstNameController, Icons.person),
-            SizedBox(height: 20),
             _buildTextField('Last Name', lastNameController, Icons.person),
-            SizedBox(height: 20),
           ],
           _buildTextField('Password', passwordController, Icons.lock),
         ],
@@ -350,9 +315,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         children: [
           if (isSignupMode) ...[
             _buildTextField('Insurance Provider Name', insuranceProviderController, Icons.business),
-            SizedBox(height: 20),
             _buildTextField('State', stateController, Icons.location_city),
-            SizedBox(height: 20),
           ],
           _buildTextField('ID', idController, Icons.card_membership),
         ],
@@ -362,10 +325,8 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
         children: [
           if (isSignupMode) ...[
             _buildTextField('Email', emailController, Icons.email),
-            SizedBox(height: 20),
           ],
           _buildTextField('Server Number', serverNumberController, Icons.computer),
-          SizedBox(height: 20),
           _buildTextField('ID', idController, Icons.card_membership),
         ],
       );
@@ -382,7 +343,9 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
           labelText: label,
           labelStyle: TextStyle(color: Colors.blue),
           prefixIcon: Icon(icon, color: Colors.blue),
-          border: OutlineInputBorder(),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(22)
+          ),
           focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
         ),
         validator: (value) {
@@ -395,3 +358,16 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     );
   }
 }
+
+
+// Expanded(
+//   child: TextButton(
+//     onPressed: () {
+//       // Handle Forgot Password action here
+//     },
+//     child: Text(
+//       'Forgot Password?',
+//       style: TextStyle(fontSize: 16, color: Colors.blue),
+//     ),
+//   ),
+// ),
