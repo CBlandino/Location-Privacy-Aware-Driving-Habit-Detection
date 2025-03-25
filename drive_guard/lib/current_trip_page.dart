@@ -14,9 +14,9 @@ class CurrentTripPage extends StatefulWidget {
 
 class _CurrentTripPageState extends State<CurrentTripPage> {
   bool isTripStarted = false; // Flag to track if the trip is ongoing
-  late Timer? _deltaTimer;
-  late Timer _elapsedTimeTimer;
-  late Timer _sendDataTimer;
+  Timer? _deltaTimer;
+  Timer? _elapsedTimeTimer;
+  Timer? _sendDataTimer;
   DateTime? tripStartTime;
   int _elapsedTime = 0; // Timer in seconds
   int? _previousMaskedLatitude, _previousMaskedLongitude; // Masked lat/lon of the previous location
@@ -92,8 +92,8 @@ Future<void> _checkAuthToken() async {
 void dispose() {
   // Only stop timers but do NOT clear delta points or reset UI
   _deltaTimer?.cancel();
-  _elapsedTimeTimer.cancel();
-  _sendDataTimer.cancel();
+  _elapsedTimeTimer?.cancel();
+  _sendDataTimer?.cancel();
 
   super.dispose();
 }
@@ -220,8 +220,8 @@ void stopTrip() async {
 
   // Stop all timers
   _deltaTimer?.cancel();
-  _elapsedTimeTimer.cancel();
-  _sendDataTimer.cancel();
+  _elapsedTimeTimer?.cancel();
+  _sendDataTimer?.cancel();
 
   // Send remaining data but DO NOT clear `deltaPoints` or reset UI
   sendTripData();

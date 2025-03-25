@@ -22,8 +22,8 @@ func transmitPoints(c *gin.Context) {
     }
 
     
-    for key, data := range data {
-        log.Println("Key:", key, "Data:", data) 
+    for key, dat := range data {
+        log.Println("Key:", key, "Data:", dat) 
     }
 
     c.Status(http.StatusOK)
