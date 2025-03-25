@@ -62,6 +62,13 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
       );
 
       if (response.statusCode == 201) {
+        
+        String token = responseData['access_token'];
+
+        // Save token for authentication
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+        
         // Success: Navigate to home page or show success message
         Navigator.push(
           context,
@@ -104,6 +111,13 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
       );
 
       if (response.statusCode == 202) {
+
+       String token = responseData['access_token'];
+
+       // Save token to shared preferences
+       SharedPreferences prefs = await SharedPreferences.getInstance();
+       await prefs.setString('auth_token', token);
+        
         // Success: Navigate to home page or show success message
         Navigator.push(
           context,
