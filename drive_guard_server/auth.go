@@ -1,18 +1,24 @@
 package main
 
 import (
-    "log" 
-    "net/http"
-    "github.com/gin-gonic/gin"
-    "github.com/golang-jwt/jwt"
+	"crypto/rand"
+	"crypto/sha256"
+	"database/sql"
+	"log"
+	"net/http"
+    "bytes"
+    "errors"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
+	_ "github.com/lib/pq"
 )
 
-// this will be updated eventually 
+// this will be updated eventually
 // use crypto/rand
 var signingKey = []byte("SUPERSECRETSIGNINGKEY")
-var Users []User = make([]User, 0)
 
-func signupUser(c *gin.Context) {
+func signupUser(c *gin.Context, db *sql.DB) {
     log.Println("POST: signup user")
     var newUser User 
     err := c.BindJSON(&newUser)
@@ -20,21 +26,46 @@ func signupUser(c *gin.Context) {
         log.Fatal(err)
     }
 
+    result, err := insertUser(newUser, db)
+    if err != nil {
+        // if an error occurs during db insert reject the signup
+        c.Status(http.StatusNotAcceptable)
+        return
+    }
+
+    log.Println("RESULT:", result)
+
+    // instead of passing the users email in the JWT, u can isntead pass their users table ID
     jwt, status := newJWT([]string{ newUser.Email })
     if status != http.StatusAccepted {
+        // if token creation fails send back abd response
         c.Status(status)
         return
     }
 
     log.Println("USER CREATED:", newUser.Email, "fname:", newUser.Firstname, "lname:", newUser.Lastname)
-    Users = append(Users, newUser)
-
     log.Println("USER JWT:", jwt)
     c.IndentedJSON(http.StatusCreated, &authResponse{jwt})
     log.Println("RESPONSE:", http.StatusCreated)
 }
 
-func loginUser(c *gin.Context) {
+func insertUser(newUser User, db *sql.DB) (sql.Result, error) {
+    salt := make([]byte, 50) 
+    rand.Read(salt)
+
+    pass_hash := sha256.Sum256(append([]byte(newUser.Password), salt...))
+    insertStmnt := "INSERT INTO users VALUES (DEFAULT, $1, $2, $3, $4, $5)"
+    result, err := db.Exec(insertStmnt, newUser.Firstname, newUser.Lastname, newUser.Email, pass_hash[:], salt) 
+    // TODO: check for duplicate email
+    if err != nil {
+        log.Println(err)
+        return result, err
+    }
+
+    return result, nil
+}
+
+func loginUser(c *gin.Context, db *sql.DB) {
     log.Println("POST: login user")
     var loggedUser User 
     err := c.BindJSON(&loggedUser)
@@ -42,21 +73,35 @@ func loginUser(c *gin.Context) {
         log.Fatal(err)
     }
 
-    for _, user := range Users {
-        if user.Email == loggedUser.Email && user.Password == loggedUser.Password {
-            log.Println("USER FOUND: EMAIL:", user.Email)
-            jwt, status := newJWT([]string{user.Email})
-            if status != http.StatusAccepted { 
-                log.Println("USER:", user.Email, "NOT ACCEPTED")
-                c.Status(status)
-            }
-            c.IndentedJSON(http.StatusAccepted, &authResponse{jwt})
-            return
-        }
+    //TODO better error handling... either user email is not registered or incorrect password
+    err = verifyLogin(loggedUser, db)
+    if err != nil {
+        log.Println(err)
+        log.Println("USER NOT FOUND. STATUS:", http.StatusNotAcceptable)
+        c.Status(http.StatusNotAcceptable)
+        return
     }
 
-    c.Status(http.StatusNotAcceptable)
-    log.Println("USER NOT FOUND. STATUS:", http.StatusNotAcceptable)
+    jwt, status := newJWT([]string{loggedUser.Email})
+    if status != http.StatusAccepted { 
+        log.Println("USER:", loggedUser.Email, "NOT ACCEPTED")
+        c.Status(status)
+    }
+    c.IndentedJSON(http.StatusAccepted, &authResponse{jwt})
+}
+
+func verifyLogin(logUser User, db *sql.DB) error {
+    var pass, salt []byte
+    usrRow := db.QueryRow("SELECT password_hash, salt FROM users WHERE email = $1", logUser.Email)
+    if err := usrRow.Scan(&pass, &salt); err != nil {
+        return err
+    }
+
+    loginHash := sha256.Sum256(append([]byte(logUser.Password), salt...)) 
+    if !bytes.Equal(pass, loginHash[:]){
+        return errors.New("passwords do not match")
+    }
+    return nil
 }
 
 

@@ -8,36 +8,51 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+    "os"
+    "context"
+
 )
 
 var (
-	db  *sql.DB
     addr string = "localhost:8080"
 )
 
 func main() {
     log.Println("STARTING SERVER")
 
-    db_conn := "user=dg_api_user dbname=dg_db sslmode=disable"
+    db_conn := "user=dg_api dbname=dg_db sslmode=disable"
 
     db, err := sql.Open("postgres", db_conn)
     if err != nil {
         log.Fatal(err)
     }
+    db.SetMaxIdleConns(50)
+	db.SetMaxOpenConns(50)
 
 
-    if err := db.Ping(); err != nil {
+    if err := db.PingContext(context.Background()); err != nil {
         log.Println("DATABASE CONNECTION UNSUCCESSFUL")
 	} else {
         log.Println("DATABASE CONNECTION SUCCESSFUL")
     }
 
     server := gin.Default()
-    server.POST("/signup", signupUser) 
-    server.POST("/login", loginUser)
+    server.POST("/signup", func(c *gin.Context) {
+        signupUser(c, db)
+    }) 
+    server.POST("/login", func(c *gin.Context) {
+        loginUser(c, db)
+    })
     server.POST("/trip", transmitPoints)
+    server.POST("/shutdown", shutdown)
 
     server.Run(addr)
+    log.Println("main thread dead")
+}
+
+
+func shutdown(c *gin.Context) {
+    os.Exit(0)
 }
 
 
