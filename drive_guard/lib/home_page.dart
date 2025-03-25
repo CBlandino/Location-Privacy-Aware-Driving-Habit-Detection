@@ -66,7 +66,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
+  // loads users profile image, if none is selected
   Future<void> _loadProfileImage() async {
     final prefs = await SharedPreferences.getInstance();
     final imagePath = prefs.getString('profile_image');
