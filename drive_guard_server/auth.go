@@ -104,42 +104,45 @@ func verifyLogin(logUser User, db *sql.DB) error {
     return nil
 }
 
+// make id added to that
+// make an experation date for session token
+// 2 tokens, one is shorter that will log out user after 2 hours, the other is longer and will continually refresh the shorter
 
 func newJWT(claimsList []string) (string, int) {
 
-    // create user claims... this can all be expanded upon based on user class 
-    // different inputs etc.
-    // for now its just email
-    claims := &UserClaims{
-        // add more claims later (adjust parameters)
-        claimsList[0], 
-        jwt.StandardClaims{},
-    }
+	// create user claims... this can all be expanded upon based on user class
+	// different inputs etc.
+	// for now its just email
+	claims := &UserClaims{
+		// add more claims later (adjust parameters)
+		claimsList[0],
+		jwt.StandardClaims{},
+	}
 
-    // create the token
-    userJWT := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    // sign the token... signing algo likely to change
-    signedJWT, err := userJWT.SignedString(signingKey)
-    // if we fail to sign the token
-    if err != nil {
-        return "", http.StatusNotAcceptable
-    }
+	// create the token
+	userJWT := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	// sign the token... signing algo likely to change
+	signedJWT, err := userJWT.SignedString(signingKey)
+	// if we fail to sign the token
+	if err != nil {
+		return "", http.StatusNotAcceptable
+	}
 
-    return signedJWT, http.StatusAccepted
+	return signedJWT, http.StatusAccepted
 }
 
 type authResponse struct {
-    AccToken string `json:"access_token"`
+	AccToken string `json:"access_token"`
 }
 
 type User struct {
-    Email string `json:"email"`
-    Password string `json:"password"`
-    Firstname string `json:"first_name"`
-    Lastname string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	Firstname string `json:"first_name"`
+	Lastname  string `json:"last_name"`
 }
 
 type UserClaims struct {
-    Email string `json:"email"`
-    jwt.StandardClaims
+	Email string `json:"email"`
+	jwt.StandardClaims
 }
