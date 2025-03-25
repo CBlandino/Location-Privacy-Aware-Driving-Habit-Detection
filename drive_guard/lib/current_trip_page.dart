@@ -14,7 +14,7 @@ class CurrentTripPage extends StatefulWidget {
 
 class _CurrentTripPageState extends State<CurrentTripPage> {
   bool isTripStarted = false; // Flag to track if the trip is ongoing
-  late Timer _deltaTimer;
+  late Timer? _deltaTimer;
   late Timer _elapsedTimeTimer;
   late Timer _sendDataTimer;
   DateTime? tripStartTime;
@@ -91,7 +91,7 @@ Future<void> _checkAuthToken() async {
 @override
 void dispose() {
   // Only stop timers but do NOT clear delta points or reset UI
-  _deltaTimer.cancel();
+  _deltaTimer?.cancel();
   _elapsedTimeTimer.cancel();
   _sendDataTimer.cancel();
 
@@ -219,7 +219,7 @@ void stopTrip() async {
   });
 
   // Stop all timers
-  _deltaTimer.cancel();
+  _deltaTimer?.cancel();
   _elapsedTimeTimer.cancel();
   _sendDataTimer.cancel();
 
@@ -261,12 +261,16 @@ void stopTrip() async {
           'timestamp': DateTime.now().toIso8601String(),
           'point_number': _pointCounter,
         });
+            //print("Total Points: ${deltaPoints.length}");
+            //print("Latest Point: ΔLat=${deltaLat}, ΔLon=${deltaLon}");
       });
     }
 
     // Update previous values
     _previousMaskedLatitude = maskedLatitude;
     _previousMaskedLongitude = maskedLongitude;
+
+    setState(() {});  // Ensure UI updates with the new data
   }
 
   // Send trip data to the server
@@ -428,6 +432,7 @@ Widget _buildDeltaList() {
 
 // Build map visualization that persists after stopping trip
 Widget _buildMapView() {
+  //print("Rendering Map with ${deltaPoints.length} points");
   return Container(
     height: 200,
     decoration: BoxDecoration(
@@ -476,7 +481,6 @@ Widget _buildActionButton() {
 }
 }
 
-
 class RoutePainter extends CustomPainter {
   final List<Map<String, dynamic>> points;
 
@@ -484,7 +488,7 @@ class RoutePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (points.length < 2) return; // Need at least two points to draw a path
+    if (points.length < 2) return; // Need at least two points to draw
 
     Paint pathPaint = Paint()
       ..color = Colors.blue
@@ -495,46 +499,52 @@ class RoutePainter extends CustomPainter {
       ..color = Colors.red
       ..style = PaintingStyle.fill;
 
-    // Validate and extract lat/lon values
-    List<int> latitudes = points.map((p) => p['delta_latitude'] as int).toList();
-    List<int> longitudes = points.map((p) => p['delta_longitude'] as int).toList();
+    // Convert delta values into absolute positions
+    int baseLat = 0;
+    int baseLon = 0;
 
-    if (latitudes.isEmpty || longitudes.isEmpty) return; // Ensure no crashes
+    List<Offset> offsets = [];
+    for (int i = points.length - 1; i >= 0; i--) { 
+      baseLat += points[i]['delta_latitude'] as int;
+      baseLon += points[i]['delta_longitude'] as int;
+      offsets.add(Offset(baseLon.toDouble(), -baseLat.toDouble())); 
+    }
 
-    double minLat = latitudes.isNotEmpty ? latitudes.reduce(min).toDouble() : 0;
-    double maxLat = latitudes.isNotEmpty ? latitudes.reduce(max).toDouble() : 1;
-    double minLon = longitudes.isNotEmpty ? longitudes.reduce(min).toDouble() : 0;
-    double maxLon = longitudes.isNotEmpty ? longitudes.reduce(max).toDouble() : 1;
+    if (offsets.length < 2) return; // Ensure enough points to draw
 
-    // Prevent division by zero (ensure the difference is non-zero)
-    double scaleX = (maxLon - minLon) != 0 ? size.width / (maxLon - minLon) : 1;
-    double scaleY = (maxLat - minLat) != 0 ? size.height / (maxLat - minLat) : 1;
+    // Find min/max for scaling
+    double minX = offsets.map((o) => o.dx).reduce(min);
+    double maxX = offsets.map((o) => o.dx).reduce(max);
+    double minY = offsets.map((o) => o.dy).reduce(min);
+    double maxY = offsets.map((o) => o.dy).reduce(max);
 
-    List<Offset> offsets = points.map((point) {
-      double x = ((point['delta_longitude'] as int) - minLon) * scaleX;
-double y = size.height - ((point['delta_latitude'] as int) - minLat) * scaleY;
+    double scaleX = (maxX - minX) != 0 ? size.width / (maxX - minX) : 1;
+    double scaleY = (maxY - minY) != 0 ? size.height / (maxY - minY) : 1;
+
+    // Normalize the points to fit within the canvas
+    List<Offset> scaledOffsets = offsets.map((o) {
+      double x = (o.dx - minX) * scaleX;
+      double y = size.height - (o.dy - minY) * scaleY;
       return Offset(x, y);
     }).toList();
 
-    if (offsets.length < 2) return; // Ensure there are enough points to draw
-
     Path path = Path();
-    path.moveTo(offsets.first.dx, offsets.first.dy);
-    for (var offset in offsets.skip(1)) {
+    path.moveTo(scaledOffsets.first.dx, scaledOffsets.first.dy);
+    for (var offset in scaledOffsets.skip(1)) {
       path.lineTo(offset.dx, offset.dy);
     }
 
+    // Draw the path
     canvas.drawPath(path, pathPaint);
 
-    // Draw the points on the path
-    for (var offset in offsets) {
+    // Draw the points
+    for (var offset in scaledOffsets) {
       canvas.drawCircle(offset, 4, pointPaint);
     }
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+    return true; 
   }
 }
-
