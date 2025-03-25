@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'custom_app_bar.dart';
+import 'home_page.dart';
 import 'login_page.dart';
 import 'package:geolocator/geolocator.dart'; // Import Geolocator package
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
+
+
 
 class CurrentTripPage extends StatefulWidget {
   @override
@@ -23,7 +28,8 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps
   int _pointCounter = 0; // To track the number of delta points calculated
   int? _firstMaskedLatitude, _firstMaskedLongitude; // Store the first masked latitude and longitude
-  final String server = 'http://10.0.2.2:8080'; // Server address
+  final String server = 'http://172.30.199.143:8080'; // Server address
+  int _selectedIndex = 0;
 
   // Random number generator for test data
   Random rand = Random();
@@ -40,6 +46,12 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
       _firstMaskedLongitude = prefs.getInt('first_longitude');
     });
   }
+
+      void _onItemTapped(int index) {
+      setState(() {
+        _selectedIndex = index; // Switches pages     
+      });
+    }
 
   // Store the first masked latitude and longitude to shared preferences
   Future<void> _storeFirstPoint(int maskedLatitude, int maskedLongitude) async {
@@ -79,8 +91,9 @@ _loadFirstPoint().then((_) {
 Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('auth_token');
+  Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
-  if (token == null) {
+  if (JwtDecoder.isExpired(token)) {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginPageWidget()),
@@ -279,9 +292,14 @@ void stopTrip() async {
       // Retrieve token from shared preferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('auth_token');
+  Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
-    if (token == null) {
-      print("No authentication token found.");
+    if (JwtDecoder.isExpired(token)) {
+      //print("No authentication token found.");
+      Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
+      );
       return;
     }
    
@@ -303,12 +321,12 @@ void stopTrip() async {
       );
 
       if (response.statusCode == 200) {
-        print("Trip data sent successfully!");
+        //print("Trip data sent successfully!");
       } else {
-        print('Error sending trip data');
+        //print('Error sending trip data');
       }
     } catch (error) {
-      print('Error: $error');
+      //print('Error: $error');
     }
 
     //setState(() {
@@ -318,9 +336,24 @@ void stopTrip() async {
 
 @override
 Widget build(BuildContext context) {
-  return Scaffold(
+      return WillPopScope(
+    onWillPop: () async {
+      // Navigate back to HomePage instead of the last screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(role: "user")), // Pass role 
+      );
+      return false; // Prevent default back navigation
+    },
+  child: Scaffold(
     backgroundColor: Colors.grey[200],
-    appBar: AppBar(title: Text("Current Trip")),
+    
+    // Use CustomAppBar instead of default AppBar
+    appBar: CustomAppBar(
+      selectedIndex: _selectedIndex,
+      onItemTapped: _onItemTapped,
+    ),
+
     body: Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -337,9 +370,14 @@ Widget build(BuildContext context) {
         ],
       ),
     ),
-  );
-}
 
+    // Bottom Navigation Bar from CustomAppBar
+    bottomNavigationBar: CustomAppBar(
+      selectedIndex: _selectedIndex,
+      onItemTapped: _onItemTapped,
+    ).buildBottomNavBar(context),
+  ));
+}
 
 // Build trip status card with a gradient background
 Widget _buildStatusCard() {

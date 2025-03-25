@@ -5,43 +5,51 @@ import 'previous_trips_page.dart';
 import 'score_page.dart';
 import 'settings_page.dart';
 
-class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
   const CustomAppBar({
-    super.key,
+    Key? key,
     required this.selectedIndex,
     required this.onItemTapped,
-  });
+  }) : super(key: key);
 
-  @override
-  _CustomAppBarState createState() => _CustomAppBarState();
-
-  @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
-
-  buildBottomNavBar(BuildContext context) {}
-}
-
-class _CustomAppBarState extends State<CustomAppBar> {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(_getAppBarTitle(widget.selectedIndex)),
+      title: Text(_getAppBarTitle(selectedIndex)),
       centerTitle: true,
       backgroundColor: Colors.blue,
     );
   }
 
+  @override
+  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+
+  String _getAppBarTitle(int index) {
+    switch (index) {
+      case 0:
+        return "Home";
+      case 1:
+        return "Previous Trips";
+      case 2:
+        return "Score";
+      case 3:
+        return "Account";
+      default:
+        return "Home";
+    }
+  }
+
   Widget buildBottomNavBar(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: widget.selectedIndex,
+      currentIndex: selectedIndex,
       elevation: 10,
       selectedItemColor: Colors.blue,
       unselectedItemColor: Colors.grey,
       onTap: (index) {
-        widget.onItemTapped(index); // Update selected index
+        onItemTapped(index); // Update selected index
         _navigateToPage(context, index); // Handle navigation
       },
       items: [
@@ -76,20 +84,5 @@ class _CustomAppBarState extends State<CustomAppBar> {
       context,
       MaterialPageRoute(builder: (context) => page),
     );
-  }
-
-  String _getAppBarTitle(int index) {
-    switch (index) {
-      case 0:
-        return "Home";
-      case 1:
-        return "Previous Trips";
-      case 2:
-        return "Score";
-      case 3:
-        return "Account";
-      default:
-        return "Home";
-    }
   }
 }

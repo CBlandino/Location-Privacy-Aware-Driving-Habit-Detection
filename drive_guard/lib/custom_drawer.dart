@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 import 'current_trip_page.dart';
@@ -28,6 +29,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
   // Load user data from SharedPreferences
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
+
     String? userName = prefs.getString('user_name');
     String? userEmail = prefs.getString('user_email');
 

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+
+import 'login_page.dart';
 
 class PreviousTripsPage extends StatefulWidget {
   @override
@@ -15,11 +19,24 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
   @override
   void initState() {
     super.initState();
+    _checkAuthToken();
     fetchPreviousTrips();
   }
 
+Future<void> _checkAuthToken() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
+
+  if (token == null || JwtDecoder.isExpired(token)) {
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
+    );
+  }
+}
+
   Future<void> fetchPreviousTrips() async {
-    final String url = '$server/previous_trips'; // Example URL for your server
+    final String url = '$server/previous_trips'; 
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {

@@ -2,62 +2,85 @@ import 'dart:io';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'login_page.dart'; // Ensure LoginPage is imported
+import 'custom_app_bar.dart';
+import 'home_page.dart';
+import 'login_page.dart';
 import 'account_page.dart';
 
 class SettingsPage extends StatelessWidget {
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          'Settings',
-          ),
-        backgroundColor: Colors.blue[500],
-      ),
-      
-      body: Stack(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: ListView(
-                    children: [
-                      SettingsGroup(
-                        title: 'GENERAL',
-                        children: <Widget>[
-                          const SizedBox(height: 8),
-                          AccountPage(),
-                          buildReviewDriving(context),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      SettingsGroup(
-                        title: 'FEEDBACK',
-                        children: <Widget>[
-                          const SizedBox(height: 8),
-                          buildReportBug(context),
-                          buildsendFeedback(context),
-                        ],
-                      ),
-                    ],
-                  ),
+int _selectedIndex = 3;
+
+    void _onItemTapped(int index) {
+      setState(() {
+        _selectedIndex = index; // Switches pages     
+      });
+    }
+
+@override
+Widget build(BuildContext context) {
+    return WillPopScope(
+    onWillPop: () async {
+      // Navigate back to HomePage instead of the last screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(role: "user")), // Pass role 
+      );
+      return false; // Prevent default back navigation
+    },
+
+  child: Scaffold(
+    appBar: CustomAppBar(
+      selectedIndex: 3, // Assuming index 3 is the "Settings" page
+      onItemTapped: _onItemTapped,
+    ),
+
+    body: Stack(
+      children: [
+        Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: ListView(
+                  children: [
+                    SettingsGroup(
+                      title: 'GENERAL',
+                      children: <Widget>[
+                        const SizedBox(height: 8),
+                        AccountPage(),
+                        buildReviewDriving(context),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    SettingsGroup(
+                      title: 'FEEDBACK',
+                      children: <Widget>[
+                        const SizedBox(height: 8),
+                        buildReportBug(context),
+                        buildsendFeedback(context),
+                      ],
+                    ),
+                  ],
                 ),
-                buildLogout(context), 
-                SizedBox(height: 20), 
-              ],
-            ),
+              ),
+              buildLogout(context), 
+              SizedBox(height: 20), 
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+
+    // Bottom Navigation Bar from CustomAppBar
+    bottomNavigationBar: CustomAppBar(
+      selectedIndex: 3, // Keep this in sync with settings page index
+      onItemTapped: _onItemTapped,
+    ).buildBottomNavBar(context),
+  ));
 }
+
 
 // Widget buildAccountSettings() => SimpleSettingsTile(
 //   leading: Icon(
@@ -126,6 +149,8 @@ Widget buildReviewDriving(BuildContext context) => SimpleSettingsTile(
   },
 );
 
+  void setState(Null Function() param0) {}
+
 
       // backgroundColor: Colors.white,
       // appBar: AppBar(
@@ -165,3 +190,4 @@ Widget buildReviewDriving(BuildContext context) => SimpleSettingsTile(
       //     ],
       //   ),
       // ),
+}
