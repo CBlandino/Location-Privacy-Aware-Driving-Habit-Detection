@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'login_page.dart';
 import 'privacy_page.dart';
 
 class AccountPage extends StatefulWidget {
@@ -21,7 +22,21 @@ class _AccountPageState extends State<AccountPage> {
   void initState() {
     super.initState();
     _loadProfileImage();
+     _checkAuthToken();
   }
+
+// Function to check if a user is authenticated
+Future<void> _checkAuthToken() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
+
+  if (token == null) {
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
+  );
+  }
+}
 
   // Function to pick an image
   Future<void> _pickImage(ImageSource source) async {
@@ -34,20 +49,26 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-  Future<void> _saveProfileImage(String imagePath) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('profile_image', imagePath);
+Future<void> _saveProfileImage(String imagePath) async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token'); // Get user token
+  if (token != null) {
+    await prefs.setString('profile_image_$token', imagePath); // Store image with token key
   }
+}
 
-  Future<void> _loadProfileImage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final imagePath = prefs.getString('profile_image');
+Future<void> _loadProfileImage() async {
+  final prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('auth_token');
+  if (token != null) {
+    final imagePath = prefs.getString('profile_image_$token'); // Load image for user
     if (imagePath != null) {
       setState(() {
         _profileImage = File(imagePath);
       });
     }
   }
+}
 
   void _showImagePickerDialog() {
     showModalBottomSheet(
