@@ -4,20 +4,24 @@ GRANT USAGE ON SCHEMA public TO dg_API_user;
 GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO dg_API_user;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT ON TABLES TO dg_API_user;
 
+DROP TABLE IF EXISTS Users;
 CREATE TABLE Users (
     user_id SERIAL PRIMARY KEY,        
     first_name VARCHAR(100) NOT NULL, 
     last_name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL
+    password_hash VARCHAR(255) NOT NULL, 
+    salt VARCHAR(255) NOT NULL
 );
 
+DROP TABLE IF EXISTS Trips;
 CREATE TABLE Trips (
     trip_id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS Data;
 CREATE TABLE Data (
     trip_id INT NOT NULL,
     point_number INT NOT NULL,
