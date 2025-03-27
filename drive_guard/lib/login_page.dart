@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'home_page.dart';
 
@@ -63,6 +64,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
       if (response.statusCode == 201) {
         
+        final responseData = json.decode(response.body);
         String token = responseData['access_token'];
 
         // Save token for authentication
@@ -112,6 +114,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
       if (response.statusCode == 202) {
 
+      final responseData = json.decode(response.body);
        String token = responseData['access_token'];
 
        // Save token to shared preferences
@@ -373,7 +376,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
   }
 }
 
-
+// place right below inouts, but aboce login/signup button
 // Expanded(
 //   child: TextButton(
 //     onPressed: () {
