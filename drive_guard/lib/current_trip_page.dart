@@ -232,14 +232,14 @@ void stopTrip() async {
     isTripStarted = false; // Stops the trip but keeps everything visible
   });
 
+  // Send remaining data but DO NOT clear `deltaPoints` or reset UI
+  if(_pointCounter > 20)
+  {sendTripData();}
+
   // Stop all timers
   _deltaTimer?.cancel();
   _elapsedTimeTimer?.cancel();
   _sendDataTimer?.cancel();
-
-  // Send remaining data but DO NOT clear `deltaPoints` or reset UI
-  if(_elapsedTime > 5)
-  {sendTripData();}
   
   // Forces UI refresh without clearing data
   setState(() {});
