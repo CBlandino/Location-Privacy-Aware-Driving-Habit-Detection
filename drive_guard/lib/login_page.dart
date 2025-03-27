@@ -70,7 +70,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
         // Save token for authentication
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
+        await prefs.setString('access_token', token);
         
         // Success: Navigate to home page or show success message
         Navigator.push(
@@ -120,7 +120,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
        // Save token to shared preferences
        SharedPreferences prefs = await SharedPreferences.getInstance();
-       await prefs.setString('auth_token', token);
+       await prefs.setString('access_token', token);
         
         // Success: Navigate to home page or show success message
         Navigator.push(

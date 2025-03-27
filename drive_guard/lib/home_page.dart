@@ -50,17 +50,17 @@ Future<void> _loadTrips() async {
   String? token = prefs.getString('auth_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
-  // if (JwtDecoder.isExpired(token)) {
-  //   setState(() {
-  //     errorMessage = 'Unauthorized access. Please log in again.';
-  //     isLoading = false;
-  //   });
-  //   Navigator.pushReplacement(
-  //   context,
-  //   MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
-  //   );
-  //   return;
-  // }
+  if (JwtDecoder.isExpired(token)) {
+    setState(() {
+      errorMessage = 'Unauthorized access. Please log in again.';
+      isLoading = false;
+    });
+    Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
+    );
+    return;
+  }
 
   try {
     final response = await http.get(
