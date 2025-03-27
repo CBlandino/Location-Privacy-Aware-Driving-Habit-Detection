@@ -258,34 +258,33 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                           _getRoleSpecificFields(),
                           SizedBox(height: screenHeight * 0.03),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Center(
-                                child: SizedBox(
-                                  width: screenWidth * 0.69,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      if (_formKey.currentState!.validate()) {
-                                        if (isSignupMode) {
-                                          _signup();
-                                        } else {
-                                          _login();
-                                        }
+                              SizedBox(
+                                width: screenWidth * 0.6,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (_formKey.currentState!.validate()) {
+                                      if (isSignupMode) {
+                                        _signup();
+                                      } else {
+                                        _login();
                                       }
-                                    },
-                                    child: Text(
-                                      isSignupMode ? 'Sign Up' : 'Login',
-                                      style: TextStyle(fontSize: 18, color: Colors.black),
+                                    }
+                                  },
+                                  child: Text(
+                                    isSignupMode ? 'Sign Up' : 'Login',
+                                    style: TextStyle(fontSize: 18, color: Colors.black),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    foregroundColor: Colors.black,
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(22),
                                     ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.blue,
-                                      foregroundColor: Colors.black,
-                                      padding: EdgeInsets.symmetric(vertical: 16),
-                                      textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(22),
-                                      ),
-                                      elevation: 5,
-                                    ),
+                                    elevation: 5,
                                   ),
                                 ),
                               ),
