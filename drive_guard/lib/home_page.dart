@@ -47,7 +47,7 @@ class _HomePageState extends State<HomePage> {
 
 Future<void> _loadTrips() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('auth_token');
+  String? token = prefs.getString('access_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
   if (JwtDecoder.isExpired(token)) {
@@ -91,7 +91,7 @@ Future<void> _loadTrips() async {
 
 Future<void> _loadProfileImage() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('auth_token');
+  String? token = prefs.getString('access_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
   // if (JwtDecoder.isExpired(token)) {
@@ -120,7 +120,7 @@ Future<void> _loadProfileImage() async {
 
 Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('auth_token');
+  String? token = prefs.getString('access_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
   // if (JwtDecoder.isExpired(token)) {
