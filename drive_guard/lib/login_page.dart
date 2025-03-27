@@ -115,8 +115,10 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
 
       if (response.statusCode == 202) {
 
+      print("Response Body: ${response.body}");
       final responseData = json.decode(response.body);
-       String token = responseData['access_token'];
+      String token = responseData['access_token'];
+      print("Token: ${token}");
 
        // Save token to shared preferences
        SharedPreferences prefs = await SharedPreferences.getInstance();
