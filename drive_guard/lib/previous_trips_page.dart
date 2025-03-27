@@ -27,12 +27,12 @@ Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('auth_token');
 
-  if (token == null || JwtDecoder.isExpired(token)) {
-    Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
-    );
-  }
+  // if (token == null || JwtDecoder.isExpired(token)) {
+  //   Navigator.pushReplacement(
+  //   context,
+  //   MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
+  //   );
+  // }
 }
 
   Future<void> fetchPreviousTrips() async {

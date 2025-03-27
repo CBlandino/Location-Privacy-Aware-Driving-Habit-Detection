@@ -94,12 +94,12 @@ Future<void> _checkAuthToken() async {
   String? token = prefs.getString('auth_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
-  if (JwtDecoder.isExpired(token)) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPageWidget()),
-    );
-  }
+  // if (JwtDecoder.isExpired(token)) {
+  //   Navigator.pushReplacement(
+  //     context,
+  //     MaterialPageRoute(builder: (context) => LoginPageWidget()),
+  //   );
+  // }
 }
 
 @override
@@ -296,14 +296,14 @@ void stopTrip() async {
     String? token = prefs.getString('auth_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
-    if (JwtDecoder.isExpired(token)) {
-      //print("No authentication token found.");
-      Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
-      );
-      return;
-    }
+    // if (JwtDecoder.isExpired(token)) {
+    //   //print("No authentication token found.");
+    //   Navigator.pushReplacement(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
+    //   );
+    //   return;
+    // }
    
     Map<String, dynamic> data = {
       'isStart' : isTripStarted,
@@ -329,7 +329,7 @@ void stopTrip() async {
         //print('Error sending trip data');
       }
     } catch (error) {
-      //print('Error: $error');
+      print('Error: $error');
     }
 
     //setState(() {
