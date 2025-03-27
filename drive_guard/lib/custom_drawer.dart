@@ -93,6 +93,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
             Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()));
           }),
           _buildDrawerItem(Icons.exit_to_app, 'Logout', () => _logout(context)),
+          // update to be dynamic in the future
+          SizedBox(height: 60),
         ],
       ),
     );
