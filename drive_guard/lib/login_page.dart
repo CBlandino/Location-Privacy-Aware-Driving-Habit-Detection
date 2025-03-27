@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'home_page.dart';
+import 'ipconfig.dart';
 
 class LoginPageWidget extends StatefulWidget {
   const LoginPageWidget({super.key});
@@ -25,7 +26,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
   TextEditingController idController = TextEditingController();
   late TabController _tabController;
 
-  final String server = 'http://10.0.2.2:8080';
+  final String server = AppConfig.server;
 
   @override
   void initState() {

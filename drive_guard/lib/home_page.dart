@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:jwt_decoder/jwt_decoder.dart';
-
+import 'ipconfig.dart';
 import 'custom_app_bar.dart';
 import 'login_page.dart';
 import 'package:flutter/material.dart';
@@ -64,7 +64,7 @@ Future<void> _loadTrips() async {
 
   try {
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:8080/trips'),
+      Uri.parse(AppConfig.server),
       headers: {
         'Authorization': 'Bearer $token', // Include the token
       },

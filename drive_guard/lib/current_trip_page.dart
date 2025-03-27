@@ -9,6 +9,7 @@ import 'home_page.dart';
 import 'login_page.dart';
 import 'package:geolocator/geolocator.dart'; // Import Geolocator package
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
+import 'ipconfig.dart';
 
 
 
@@ -28,7 +29,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps
   int _pointCounter = 0; // To track the number of delta points calculated
   int? _firstMaskedLatitude, _firstMaskedLongitude; // Store the first masked latitude and longitude
-  final String server = 'http://172.30.199.143:8080'; // Server address
+  final String server = AppConfig.server; // Server address
   int _selectedIndex = 0;
 
   // Random number generator for test data
@@ -237,8 +238,9 @@ void stopTrip() async {
   _sendDataTimer?.cancel();
 
   // Send remaining data but DO NOT clear `deltaPoints` or reset UI
-  sendTripData();
-
+  if(_elapsedTime > 5)
+  {sendTripData();}
+  
   // Forces UI refresh without clearing data
   setState(() {});
 }
@@ -304,10 +306,11 @@ void stopTrip() async {
     }
    
     Map<String, dynamic> data = {
+      'isStart' : isTripStarted,
       'start_time': DateTime.now().toIso8601String(),
       'elapsed_time': _elapsedTime,
       'delta_points': deltaPoints,
-      'Authorization': 'Bearer $token',
+      'isEnd' : isTripStarted,
     };
 
     try {

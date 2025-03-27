@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-
+import 'ipconfig.dart';
 import 'login_page.dart';
 
 class PreviousTripsPage extends StatefulWidget {
@@ -14,7 +14,7 @@ class PreviousTripsPage extends StatefulWidget {
 class _PreviousTripsPageState extends State<PreviousTripsPage> {
   List<dynamic> trips = [];
 
-  final String server = 'http://10.0.2.2:8080';
+  final String server = AppConfig.server;
 
   @override
   void initState() {
