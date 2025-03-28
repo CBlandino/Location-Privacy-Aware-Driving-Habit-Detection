@@ -1,0 +1,59 @@
+package main
+
+import (
+	"context"
+	"database/sql"
+	"log"
+	"os"
+
+	"github.com/gin-gonic/gin"
+)
+
+var (
+	addr    = "0.0.0.0:8080"
+	DB_HOST = "psql-database.cvacgce46w44.us-east-2.rds.amazonaws.com"
+	DB_NAME = "postgres"
+	DB_USER = "postgres"
+	DB_PASS = "postgres1!"
+)
+
+func main() {
+	log.Println("STARTING SERVER")
+
+	dbConnStr := "host=" + DB_HOST + " user=" + DB_USER + " password=" + DB_PASS + " dbname=" + DB_NAME + " sslmode=require"
+
+	db, err := sql.Open("postgres", dbConnStr)
+	if err != nil {
+		log.Fatal("Failed to open database connection:", err)
+	}
+
+	defer db.Close()
+	db.SetMaxIdleConns(50)
+	db.SetMaxOpenConns(50)
+
+	if err := db.PingContext(context.Background()); err != nil {
+		log.Fatal("DATABASE CONNECTION FAILED:", err)
+	} else {
+		log.Println("DATABASE CONNECTION SUCCESSFUL")
+	}
+
+	server := gin.Default()
+	server.POST("/signup", func(c *gin.Context) {
+		signupUser(c, db)
+	})
+	server.POST("/login", func(c *gin.Context) {
+		loginUser(c, db)
+	})
+	server.POST("/trip", transmitPoints)
+	server.POST("/shutdown", shutdown)
+
+	log.Println("Server is running on", addr)
+	if err := server.Run(addr); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
+}
+
+func shutdown(c *gin.Context) {
+	log.Println("Shutting down server...")
+	os.Exit(0)
+}
