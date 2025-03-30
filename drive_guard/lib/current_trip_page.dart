@@ -91,7 +91,7 @@ _loadFirstPoint().then((_) {
 
 Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('auth_token');
+  String? token = prefs.getString('access_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
   // if (JwtDecoder.isExpired(token)) {
@@ -293,7 +293,7 @@ void stopTrip() async {
     final String url = '$server/trip';
       // Retrieve token from shared preferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('auth_token');
+    String? token = prefs.getString('access_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
     // if (JwtDecoder.isExpired(token)) {

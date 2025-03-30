@@ -28,7 +28,7 @@ class _AccountPageState extends State<AccountPage> {
 // Function to check if a user is authenticated
 Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('auth_token');
+  String? token = prefs.getString('access_token');
 
   if (token == null) {
     Navigator.pushReplacement(
@@ -51,7 +51,7 @@ Future<void> _checkAuthToken() async {
 
 Future<void> _saveProfileImage(String imagePath) async {
   final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('auth_token'); // Get user token
+  String? token = prefs.getString('access_token'); // Get user token
   if (token != null) {
     await prefs.setString('profile_image_$token', imagePath); // Store image with token key
   }

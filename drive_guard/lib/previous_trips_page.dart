@@ -25,7 +25,7 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
 
 Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('auth_token');
+  String? token = prefs.getString('access_token');
 
   // if (token == null || JwtDecoder.isExpired(token)) {
   //   Navigator.pushReplacement(
