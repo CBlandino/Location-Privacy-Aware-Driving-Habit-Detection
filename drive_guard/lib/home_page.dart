@@ -48,19 +48,19 @@ class _HomePageState extends State<HomePage> {
 Future<void> _loadTrips() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
-  Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+  // Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
-  if (JwtDecoder.isExpired(token)) {
-    setState(() {
-      errorMessage = 'Unauthorized access. Please log in again.';
-      isLoading = false;
-    });
-    Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
-    );
-    return;
-  }
+  // if (JwtDecoder.isExpired(token)) {
+  //   setState(() {
+  //     errorMessage = 'Unauthorized access. Please log in again.';
+  //     isLoading = false;
+  //   });
+  //   Navigator.pushReplacement(
+  //   context,
+  //   MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
+  //   );
+  //   return;
+  // }
 
   try {
     final response = await http.get(
