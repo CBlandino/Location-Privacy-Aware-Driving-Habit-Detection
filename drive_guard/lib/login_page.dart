@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,10 +13,15 @@ class LoginPageWidget extends StatefulWidget {
   State<LoginPageWidget> createState() => _LoginPageWidgetState();
 }
 
-class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderStateMixin {
+class _LoginPageWidgetState extends State<LoginPageWidget>
+  with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  bool isSignupMode = false; // Toggle between Login and Signup
-  String? _selectedRole = 'User'; // Default role selection
+
+  late SharedPreferences _prefs;
+  bool isSignupMode = false;
+  bool _isProcessing = false;
+  String? _selectedRole = 'User';
+
   TextEditingController emailController = TextEditingController();
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
@@ -32,112 +38,126 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    SharedPreferences.getInstance().then((prefs) {
+      setState(() {
+        _prefs = prefs;
+      });
+    });
+  }
+
+    @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    lastNameController.dispose();
+    passwordController.dispose();
+    insuranceProviderController.dispose();
+    stateController.dispose();
+    serverNumberController.dispose();
+    idController.dispose();
+
+    super.dispose();
+  }
+
+  Future<Map<String, dynamic>> parseJson(String responseBody) async {
+    await Future.delayed(Duration(milliseconds: 100));
+    return compute(json.decode(responseBody), responseBody);
   }
 
   // Function to handle signup
   Future<void> _signup() async {
-    final String url = '$server/signup'; // Use 10.0.2.2 to connect to the host machine
-
-    // Prepare the data for signup based on the selected role
-    Map<String, dynamic> data = {
-      'email': emailController.text,
-      'password': passwordController.text,
-    };
-
-    if (_selectedRole == 'User') {
-      data['first_name'] = firstNameController.text;
-      data['last_name'] = lastNameController.text;
-    } else if (_selectedRole == 'Service Provider') {
-      data['server_number'] = serverNumberController.text;
-      data['id'] = idController.text;
-    } else if (_selectedRole == 'Insurance Provider') {
-      data['insurance_provider_name'] = insuranceProviderController.text;
-      data['state'] = stateController.text;
-      data['id'] = idController.text;
-    }
+    if (_isProcessing) return;
+    _isProcessing = true;
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(data),
-      );
+      final String url = '$server/signup'; // Use 10.0.2.2 to connect to the host machine
 
-      if (response.statusCode == 201) {
-        
-        final responseData = json.decode(response.body);
-        String token = responseData['access_token'];
+      // Prepare the data for signup based on the selected role
+      Map<String, dynamic> data = {
+        'email': emailController.text,
+        'password': passwordController.text,
+      };
 
-        // Save token for authentication
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('access_token', token);
-        
-        // Success: Navigate to home page or show success message
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(role: _selectedRole!),
-          ),
-        );
-      } else {
-        // Error: Show error message
-        final responseData = json.decode(response.body);
-        _showErrorDialog(responseData['message']);
+      if (_selectedRole == 'User') {
+        data['first_name'] = firstNameController.text;
+        data['last_name'] = lastNameController.text;
+      } else if (_selectedRole == 'Service Provider') {
+        data['server_number'] = serverNumberController.text;
+        data['id'] = idController.text;
+      } else if (_selectedRole == 'Insurance Provider') {
+        data['insurance_provider_name'] = insuranceProviderController.text;
+        data['state'] = stateController.text;
+        data['id'] = idController.text;
       }
+
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(data),
+        );
+
+        if (response.statusCode == 201) {
+        final responseData = json.decode(response.body);
+        await _prefs.setString('access_token', responseData['access_token']);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage(role: _selectedRole!)),
+        );
+        } else {
+          final responseData = await parseJson(response.body);
+          _showErrorDialog(responseData['message']);
+        }
     } catch (error) {
       _showErrorDialog('An error occurred. Please try again later.');
+    } finally {
+      setState(() => _isProcessing = false);
     }
   }
 
   // Function to handle login
   Future<void> _login() async {
-    final String url = '$server/login'; // use 10.0.2.2 to connect to the host machine
-
-    Map<String, dynamic> data = {
-      'email': emailController.text,
-      'password': passwordController.text,
-    };
-
-    if (_selectedRole == 'Service Provider') {
-      data['server_number'] = serverNumberController.text;
-      data['id'] = idController.text;
-    } else if (_selectedRole == 'Insurance Provider') {
-      data['id'] = idController.text;
-      data['insurance_provider_name'] = insuranceProviderController.text;
-    }
+    if (_isProcessing) return;
+    _isProcessing = true;
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(data),
-      );
+      final String url = '$server/login'; // use 10.0.2.2 to connect to the host machine
 
-      if (response.statusCode == 202) {
+      Map<String, dynamic> data = {
+        'email': emailController.text,
+        'password': passwordController.text,
+      };
 
-      print("Response Body: ${response.body}");
-      final responseData = json.decode(response.body);
-      String token = responseData['access_token'];
-      print("Token: ${token}");
-
-       // Save token to shared preferences
-       SharedPreferences prefs = await SharedPreferences.getInstance();
-       await prefs.setString('access_token', token);
-        
-        // Success: Navigate to home page or show success message
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(role: _selectedRole!),
-          ),
-        );
-      } else {
-        // Error: Show error message
-        final responseData = json.decode(response.body);
-        _showErrorDialog(responseData['message']);
+      if (_selectedRole == 'Service Provider') {
+        data['server_number'] = serverNumberController.text;
+        data['id'] = idController.text;
+      } else if (_selectedRole == 'Insurance Provider') {
+        data['id'] = idController.text;
+        data['insurance_provider_name'] = insuranceProviderController.text;
       }
+
+        final response = await http.post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(data),
+        );
+
+        if (response.statusCode == 202) {
+        final responseData = json.decode(response.body);
+        await _prefs.setString('access_token', responseData['access_token']);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage(role: _selectedRole!)),
+        );
+        } else {
+          // Error: Show error message
+          final responseData = await parseJson(response.body);
+          _showErrorDialog(responseData['message']);
+        }
     } catch (error) {
       _showErrorDialog('The Server is down. Please try again later.');
+    } finally {
+      setState(() => _isProcessing = false);
     }
   }
 
@@ -179,13 +199,6 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  // boxShadow: [
-                  //   BoxShadow(
-                  //     color: Colors.black.withOpacity(0.2),
-                  //     blurRadius: 15,
-                  //     spreadRadius: 5,
-                  //   ),
-                  // ],
                 ),
                 padding: EdgeInsets.all(24),
                 child: Column(
@@ -196,7 +209,9 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                       child: Column(
                         children: [
                           Text(
-                            isSignupMode ? 'Create an Account' : 'Login to Your Account',
+                            isSignupMode
+                                ? 'Create an Account'
+                                : 'Login to Your Account',
                             style: TextStyle(
                               fontSize: screenWidth * 0.08,
                               fontWeight: FontWeight.bold,
@@ -207,7 +222,10 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                           SizedBox(height: screenHeight * 0.02),
                           Text(
                             'Welcome back! Please log in to continue.',
-                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -234,9 +252,18 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                           DropdownButtonFormField<String>(
                             value: _selectedRole,
                             items: [
-                              DropdownMenuItem(value: 'User', child: Text('User')),
-                              DropdownMenuItem(value: 'Insurance Provider', child: Text('Insurance Provider')),
-                              DropdownMenuItem(value: 'Service Provider', child: Text('Service Provider')),
+                              DropdownMenuItem(
+                                value: 'User',
+                                child: Text('User'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Insurance Provider',
+                                child: Text('Insurance Provider'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Service Provider',
+                                child: Text('Service Provider'),
+                              ),
                             ],
                             onChanged: (String? value) {
                               setState(() {
@@ -249,12 +276,22 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(22),
                               ),
-                              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(color: Colors.blue),
+                              ),
                             ),
-                            validator: (value) => value == null ? 'Please select a role' : null,
+                            validator:
+                                (value) =>
+                                    value == null
+                                        ? 'Please select a role'
+                                        : null,
                           ),
                           SizedBox(height: screenHeight * 0.02),
-                          _buildTextField('Email', emailController, Icons.email),
+                          _buildTextField(
+                            'Email',
+                            emailController,
+                            Icons.email,
+                          ),
                           _getRoleSpecificFields(),
                           SizedBox(height: screenHeight * 0.03),
                           Row(
@@ -274,13 +311,19 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                                   },
                                   child: Text(
                                     isSignupMode ? 'Sign Up' : 'Login',
-                                    style: TextStyle(fontSize: 18, color: Colors.black),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.black,
+                                    ),
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.blue,
                                     foregroundColor: Colors.black,
                                     padding: EdgeInsets.symmetric(vertical: 16),
-                                    textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                                    textStyle: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(22),
                                     ),
@@ -301,7 +344,9 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
                         });
                       },
                       child: Text(
-                        isSignupMode ? 'Already have an account? Log In' : 'Don\'t have an account? Sign Up',
+                        isSignupMode
+                            ? 'Already have an account? Log In'
+                            : 'Don\'t have an account? Sign Up',
                         style: TextStyle(color: Colors.blue, fontSize: 16),
                       ),
                     ),
@@ -333,7 +378,11 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
       return Column(
         children: [
           if (isSignupMode) ...[
-            _buildTextField('Insurance Provider Name', insuranceProviderController, Icons.business),
+            _buildTextField(
+              'Insurance Provider Name',
+              insuranceProviderController,
+              Icons.business,
+            ),
             _buildTextField('State', stateController, Icons.location_city),
           ],
           _buildTextField('ID', idController, Icons.card_membership),
@@ -345,7 +394,11 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
           if (isSignupMode) ...[
             _buildTextField('Email', emailController, Icons.email),
           ],
-          _buildTextField('Server Number', serverNumberController, Icons.computer),
+          _buildTextField(
+            'Server Number',
+            serverNumberController,
+            Icons.computer,
+          ),
           _buildTextField('ID', idController, Icons.card_membership),
         ],
       );
@@ -353,7 +406,11 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
     return SizedBox.shrink();
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: TextFormField(
@@ -362,10 +419,10 @@ class _LoginPageWidgetState extends State<LoginPageWidget> with TickerProviderSt
           labelText: label,
           labelStyle: TextStyle(color: Colors.blue),
           prefixIcon: Icon(icon, color: Colors.blue),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(22)
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(22)),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.blue),
           ),
-          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue)),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
