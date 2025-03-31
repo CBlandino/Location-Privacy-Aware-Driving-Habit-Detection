@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 //import 'package:intl/intl.dart'; // Import for date formatting
-import 'package:intl/intl.dart';
+//import 'package:intl/intl.dart';
 import 'custom_app_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -95,11 +95,11 @@ List<Map<String, dynamic>> _getDummyData() {
     );
   }
 
-  // Function to format the timestamp
-String formatTimestamp(int timestamp) {
-  DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-  return DateFormat('MM/dd/yyyy HH:mm').format(date);
-}
+//   // Function to format the timestamp
+// String formatTimestamp(int timestamp) {
+//   DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+//   return DateFormat('MM/dd/yyyy HH:mm').format(date);
+// }
 
 @override
   Widget build(BuildContext context) {
@@ -125,7 +125,7 @@ String formatTimestamp(int timestamp) {
                   ],
                   rows: trips.map((trip) {
                     return DataRow(cells: [
-                      DataCell(Text(formatTimestamp(trip['timestamp']))),
+//                      DataCell(Text(formatTimestamp(trip['timestamp']))),
                       DataCell(Text(trip['distance'].toString())),
                       DataCell(
                         ElevatedButton(
@@ -139,5 +139,5 @@ String formatTimestamp(int timestamp) {
               ),
             ),
     );
-  }: _pages[_selectedIndex], // Switch to other pages dynamically
+  }
 }
