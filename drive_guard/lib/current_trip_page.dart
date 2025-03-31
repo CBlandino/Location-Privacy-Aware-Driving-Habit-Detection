@@ -307,7 +307,7 @@ void stopTrip() async {
     // }
    
     Map<String, dynamic> data = {
-      'isStart' : _elapsedTime < 30,
+      'isStart' : _elapsedTime <= 30,
       'start_time': DateTime.now().toIso8601String(),
       'elapsed_time': _elapsedTime,
       'delta_points': deltaPoints,

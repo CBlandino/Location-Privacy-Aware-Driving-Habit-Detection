@@ -92,7 +92,7 @@ func transmitPoints(c *gin.Context, db *sql.DB) {
 		return
 	}
     
-    c.Status(200)
+    c.Status(http.StatusAccepted)
 }
 
 func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
@@ -128,7 +128,7 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 		return err
 	}	
 
-	updateSTR := "UPDATE trips SET data = data || $1 ::jsonb, distance = distance + $2, done = $3 WHERE user_id = $4 AND done = FALSE"
+	updateSTR := "UPDATE trips SET data = data || $1::jsonb, distance = distance + $2, done = $3 WHERE user_id = $4 AND done = FALSE"
 	_, err = db.Exec(updateSTR, jsonPoints, 5.0, set.End, id)
 	if err != nil {
 		log.Println(err)
