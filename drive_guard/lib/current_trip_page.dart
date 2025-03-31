@@ -307,7 +307,7 @@ void stopTrip() async {
     // }
    
     Map<String, dynamic> data = {
-      'isStart' : isTripStarted || _elapsedTime < 30,
+      'isStart' : _elapsedTime < 30,
       'start_time': DateTime.now().toIso8601String(),
       'elapsed_time': _elapsedTime,
       'delta_points': deltaPoints,
@@ -324,9 +324,9 @@ void stopTrip() async {
         body: json.encode(data),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 202) {
          
-        deltaPoints.clear();
+        deltaPoints.clear(); //delta points are currently being cleared, clone the delta points into another list for the map
       
       } else {
         //print('Error sending trip data');
