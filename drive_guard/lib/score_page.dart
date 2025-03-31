@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 
-class ScorePage extends StatelessWidget {
+import 'custom_app_bar.dart';
+
+class ScorePage extends StatefulWidget {
+  @override
+  _ScorePage createState() => _ScorePage();
+}
+
+class _ScorePage extends State<ScorePage> {
   // implement functionality in future
   final double score = 85; // Example score
+  int _selectedIndex = 2;
 
-  const ScorePage({super.key});
+  //const ScorePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -108,8 +116,19 @@ class ScorePage extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: CustomAppBar(
+      selectedIndex: _selectedIndex,
+      onItemTapped: _onItemTapped,
+    )
+    .buildBottomNavBar(context),
     );
   }
+
+    void _onItemTapped(int index) {
+      setState(() {
+        _selectedIndex = index; // Switches pages     
+      });
+    }
 
   Widget _buildScoreDetail(String category, String rating) {
     return Padding(
