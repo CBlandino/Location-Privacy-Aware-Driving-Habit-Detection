@@ -325,9 +325,9 @@ void stopTrip() async {
       );
 
       if (response.statusCode == 200) {
-         setState(() {
+         
         deltaPoints.clear();
-      });
+      
       } else {
         //print('Error sending trip data');
       }
