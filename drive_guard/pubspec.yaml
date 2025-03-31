@@ -41,6 +41,7 @@ dependencies:
   http: ^0.13.4
   geolocator: ^9.0.1
   flutter_keyboard_visibility: ^6.0.0
+  intl: ^0.20.2
 
   # This allows the score page to be displayed as a percent for score
   percent_indicator: ^4.2.2
