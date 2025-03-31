@@ -218,7 +218,7 @@ void startTrip() {
   });
 
   // Start the timer for sending data every minute
-  _sendDataTimer = Timer.periodic(Duration(minutes: 1), (timer) {
+  _sendDataTimer = Timer.periodic(Duration(seconds: 30), (timer) {
     sendTripData();
   });
 
@@ -228,6 +228,7 @@ void startTrip() {
 
 // Stop the trip but KEEP delta points visible
 void stopTrip() async {
+
   setState(() {
     isTripStarted = false; // Stops the trip but keeps everything visible
   });
@@ -291,10 +292,10 @@ void stopTrip() async {
   // Send trip data to the server
   Future<void> sendTripData() async {
     final String url = '$server/trip';
-      // Retrieve token from shared preferences
+    // Retrieve token from shared preferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
-  Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+    //Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
     // if (JwtDecoder.isExpired(token)) {
     //   //print("No authentication token found.");
@@ -306,11 +307,11 @@ void stopTrip() async {
     // }
    
     Map<String, dynamic> data = {
-      'isStart' : isTripStarted,
+      'isStart' : isTripStarted || _elapsedTime < 30,
       'start_time': DateTime.now().toIso8601String(),
       'elapsed_time': _elapsedTime,
       'delta_points': deltaPoints,
-      'isEnd' : isTripStarted,
+      'isEnd' : !isTripStarted,
     };
 
     try {
@@ -324,7 +325,9 @@ void stopTrip() async {
       );
 
       if (response.statusCode == 200) {
-        //print("Trip data sent successfully!");
+         setState(() {
+        deltaPoints.clear();
+      });
       } else {
         //print('Error sending trip data');
       }
