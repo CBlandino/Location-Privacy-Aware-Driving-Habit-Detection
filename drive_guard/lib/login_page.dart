@@ -46,19 +46,19 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
     });
   }
 
-    @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    lastNameController.dispose();
-    passwordController.dispose();
-    insuranceProviderController.dispose();
-    stateController.dispose();
-    serverNumberController.dispose();
-    idController.dispose();
+  //   @override
+  // void dispose() {
+  //   emailController.dispose();
+  //   passwordController.dispose();
+  //   lastNameController.dispose();
+  //   passwordController.dispose();
+  //   insuranceProviderController.dispose();
+  //   stateController.dispose();
+  //   serverNumberController.dispose();
+  //   idController.dispose();
 
-    super.dispose();
-  }
+  //   super.dispose();
+  // }
 
   Future<Map<String, dynamic>> parseJson(String responseBody) async {
     await Future.delayed(Duration(milliseconds: 100));
