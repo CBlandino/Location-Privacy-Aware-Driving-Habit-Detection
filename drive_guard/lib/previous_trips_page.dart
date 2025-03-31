@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 //import 'package:intl/intl.dart'; // Import for date formatting
-//import 'package:intl/intl.dart';
+import 'package:intl/intl.dart';
 import 'custom_app_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -17,6 +17,7 @@ class PreviousTripsPage extends StatefulWidget {
 class _PreviousTripsPageState extends State<PreviousTripsPage> {
   List<dynamic> trips = [];
   final String server = AppConfig.server;
+  int _selectedIndex = 1;
 
   @override
   void initState() {
@@ -37,28 +38,35 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
     // }
   }
 
-  Future<void> fetchPreviousTrips() async {
+Future<void> fetchPreviousTrips() async {
   final String url = '$server/previous_trips'; 
   try {
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
-      setState(() {
-        trips = data.isNotEmpty ? data : _getDummyData();
-      });
+      if (mounted) {
+        setState(() {
+          trips = data.isNotEmpty ? data : _getDummyData();
+        });
+      }
     } else {
       print('Error fetching trips');
+      if (mounted) {
+        setState(() {
+          trips = _getDummyData();
+        });
+      }
+    }
+  } catch (error) {
+    print('Error: $error');
+    if (mounted) {
       setState(() {
         trips = _getDummyData();
       });
     }
-  } catch (error) {
-    print('Error: $error');
-    setState(() {
-      trips = _getDummyData();
-    });
   }
 }
+
 
 List<Map<String, dynamic>> _getDummyData() {
   return [
@@ -95,20 +103,24 @@ List<Map<String, dynamic>> _getDummyData() {
     );
   }
 
-//   // Function to format the timestamp
-// String formatTimestamp(int timestamp) {
-//   DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
-//   return DateFormat('MM/dd/yyyy HH:mm').format(date);
-// }
+  // Function to format the timestamp
+String formatTimestamp(int timestamp) {
+  DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+  return DateFormat('MM/dd/yyyy HH:mm').format(date);
+}
+
+    void _onItemTapped(int index) {
+      setState(() {
+        _selectedIndex = index; // Switches pages     
+      });
+    }
 
 @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
         selectedIndex: 1,
-        onItemTapped: (index) {
-          setState(() {});
-        },
+        onItemTapped: _onItemTapped,
       ),
       body: trips.isEmpty
           ? Center(child: Text("No trips available"))
@@ -125,7 +137,7 @@ List<Map<String, dynamic>> _getDummyData() {
                   ],
                   rows: trips.map((trip) {
                     return DataRow(cells: [
-//                      DataCell(Text(formatTimestamp(trip['timestamp']))),
+                      DataCell(Text(formatTimestamp(trip['timestamp']))),
                       DataCell(Text(trip['distance'].toString())),
                       DataCell(
                         ElevatedButton(
@@ -137,7 +149,12 @@ List<Map<String, dynamic>> _getDummyData() {
                   }).toList(),
                 ),
               ),
-            ),
+            ),//:_pages[_selectedIndex],
+      bottomNavigationBar: CustomAppBar(
+      selectedIndex: _selectedIndex,
+      onItemTapped: _onItemTapped,
+    )
+    .buildBottomNavBar(context),
     );
   }
 }
