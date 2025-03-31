@@ -1,29 +1,21 @@
 DROP TABLE IF EXISTS Users;
 CREATE TABLE Users (
-    user_id SERIAL PRIMARY KEY,        
-    first_name VARCHAR(100) NOT NULL, 
-    last_name VARCHAR(100) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash BYTEA NOT NULL, 
-    salt BYTEA NOT NULL
+    user_id         SERIAL PRIMARY KEY,        
+    first_name      VARCHAR(100) NOT NULL, 
+    last_name       VARCHAR(100) NOT NULL,
+    email           VARCHAR(255) UNIQUE NOT NULL,
+    password_hash   BYTEA NOT NULL, 
+    salt            BYTEA NOT NULL
 );
 
 DROP TABLE IF EXISTS Trips;
 CREATE TABLE Trips (
-    trip_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
+    trip_id         SERIAL PRIMARY KEY,
+    user_id         INT NOT NULL,
+    done            BOOLEAN NOT NULL,
+    data            JSONB NOT NULL,
 
-DROP TABLE IF EXISTS Data;
-CREATE TABLE Data (
-    trip_id INT NOT NULL,
-    point_number INT NOT NULL,
-    lat INT NOT NULL,
-    long INT NOT NULL,
-    time TIMESTAMP NOT NULL,
-    PRIMARY KEY (trip_id, point_number),
-    FOREIGN KEY (trip_id) REFERENCES Trips(trip_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
 CREATE ROLE dg_api WITH LOGIN PASSWORD 'secure';
