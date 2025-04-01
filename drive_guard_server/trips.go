@@ -102,13 +102,15 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 		return err
 	}
 
+	distance := calculateFunction(set)
+
 	jsonPoints, err := json.Marshal(set.Points) 
 	if err != nil {
 		return err
 	}
 
 	insertSTR := "INSERT INTO trips VALUES (DEFAULT, $1, $2, $3, $4, $5)"
-	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints, 5.0)
+	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints, distance)
 	if err != nil {
 		return err
 	}
@@ -123,13 +125,15 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 		return err
 	}
 
+	distance := calculateFunction(set)
+
 	jsonPoints, err := json.Marshal(set.Points)
 	if err != nil {
 		return err
 	}	
 
 	updateSTR := "UPDATE trips SET data = data || $1::jsonb, distance = distance + $2, done = $3 WHERE user_id = $4 AND done = FALSE"
-	_, err = db.Exec(updateSTR, jsonPoints, 5.0, set.End, id)
+	_, err = db.Exec(updateSTR, jsonPoints, distance, set.End, id)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -137,6 +141,13 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 
 	return nil
 }
+
+// function that passes over all of the points in a transmitted point set prior to their inclusion in the db 
+// we can calculate distance on the set here, as well as any other metrics we wanted to/needed to
+func calculateFunction(set *pointSet) float32 {
+	return float32(len(set.Points)) * 0.01
+}
+
 
 func getUserID(claimsEmail string, db *sql.DB) (int, error) {
 	var id int 
