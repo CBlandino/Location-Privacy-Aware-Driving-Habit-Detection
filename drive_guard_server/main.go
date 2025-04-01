@@ -14,7 +14,7 @@ import (
 )
 
 var (
-    addr string = "localhost:8080"
+    addr string = ":8080"
 )
 
 func main() {
@@ -43,7 +43,12 @@ func main() {
     server.POST("/login", func(c *gin.Context) {
         loginUser(c, db)
     })
-    server.POST("/trip", transmitPoints)
+    server.POST("/trip", func(c *gin.Context) {
+        transmitPoints(c, db)
+    })
+	server.GET("/previous_trips", func(c *gin.Context) {
+		previous_trips(c, db)
+	})
     server.POST("/shutdown", shutdown)
 
     server.Run(addr)
