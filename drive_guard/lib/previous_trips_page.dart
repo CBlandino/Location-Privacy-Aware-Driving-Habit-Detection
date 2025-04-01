@@ -112,8 +112,8 @@ List<Map<String, dynamic>> _getDummyData() {
   }
 
   // Function to format the timestamp
-String formatTimestamp(int timestamp) {
-  DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+String formatTimestamp(String isoTimestamp) {
+  DateTime date = DateTime.parse(isoTimestamp);
   return DateFormat('MM/dd/yyyy HH:mm').format(date);
 }
 
