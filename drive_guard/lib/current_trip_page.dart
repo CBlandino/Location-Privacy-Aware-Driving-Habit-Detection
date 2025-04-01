@@ -331,7 +331,7 @@ void stopTrip() async {
         body: json.encode(data),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 202) {
          
         deltaPoints.clear(); //delta points are currently being cleared, clone the delta points into another list for the map
       
