@@ -40,8 +40,16 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
 
 Future<void> fetchPreviousTrips() async {
   final String url = '$server/previous_trips'; 
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('access_token');
   try {
-    final response = await http.get(Uri.parse(url));
+       final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+       );
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       if (mounted) {
@@ -104,8 +112,8 @@ List<Map<String, dynamic>> _getDummyData() {
   }
 
   // Function to format the timestamp
-String formatTimestamp(int timestamp) {
-  DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+String formatTimestamp(String isoTimestamp) {
+  DateTime date = DateTime.parse(isoTimestamp);
   return DateFormat('MM/dd/yyyy HH:mm').format(date);
 }
 
