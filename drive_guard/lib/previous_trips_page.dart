@@ -84,37 +84,55 @@ List<Map<String, dynamic>> _getDummyData() {
   ];
 }
 
-  void _showTripDetails(Map<String, dynamic> trip) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Trip Details"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Start Time: ${DateTime.fromMillisecondsSinceEpoch(trip['timestamp'] * 1000)}"),
-              Text("Distance: ${trip['distance']} meters"),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text("Close"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+void _showTripDetails(Map<String, dynamic> trip) {
+  int timestamp;
+  
+  try {
+    timestamp = int.parse(trip['timestamp']); // Convert string to int
+  } catch (e) {
+    print('Error parsing timestamp: $e');
+    timestamp = 0; // Fallback in case of error
   }
 
-  // Function to format the timestamp
-String formatTimestamp(String isoTimestamp) {
-  DateTime date = DateTime.parse(isoTimestamp);
-  return DateFormat('MM/dd/yyyy HH:mm').format(date);
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Trip Details"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Start Time: ${timestamp > 0 ? DateTime.fromMillisecondsSinceEpoch(timestamp * 1000) : 'Invalid timestamp'}"),
+            Text("Distance: ${trip['distance']} meters"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text("Close"),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
+String formatTimestamp(dynamic timestamp) {
+  try {
+    // Ensure timestamp is an integer
+    int time = (timestamp is String) ? int.parse(timestamp) : timestamp;
+    
+    // Convert to DateTime and format
+    DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(time * 1000);
+    return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} "
+           "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+  } catch (e) {
+    print("Error parsing timestamp: $e");
+    return "Invalid timestamp";
+  }
 }
 
     void _onItemTapped(int index) {

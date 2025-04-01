@@ -26,7 +26,8 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   DateTime? tripStartTime;
   int _elapsedTime = 0; // Timer in seconds
   int? _previousMaskedLatitude, _previousMaskedLongitude; // Masked lat/lon of the previous location
-  List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps
+  List<Map<String, dynamic>> deltaPoints = []; // Store delta-compressed data with timestamps\
+  List<Map<String, dynamic>> deltaPointsClone = [];
   int _pointCounter = 0; // To track the number of delta points calculated
   int? _firstMaskedLatitude, _firstMaskedLongitude; // Store the first masked latitude and longitude
   final String server = AppConfig.server; // Server address
@@ -193,6 +194,7 @@ void startTrip() {
     // Reset all trip-related data for a new session
     isTripStarted = true;
     deltaPoints.clear(); // Clear previous trip data
+    deltaPointsClone.clear();
     _elapsedTime = 0; // Reset elapsed time
     _pointCounter = 0; // Reset point counter
     tripStartTime = DateTime.now(); // Mark new trip start time
@@ -277,8 +279,13 @@ void stopTrip() async {
           'timestamp': DateTime.now().toIso8601String(),
           'point_number': _pointCounter,
         });
-            //print("Total Points: ${deltaPoints.length}");
-            //print("Latest Point: ΔLat=${deltaLat}, ΔLon=${deltaLon}");
+
+        // Insert only delta_latitude and delta_longitude into deltaPointsClone
+        deltaPointsClone.insert(0, {
+          'delta_latitude': deltaLat,
+          'delta_longitude': deltaLon,
+          'point_number': _pointCounter,
+        });
       });
     }
 
@@ -324,7 +331,7 @@ void stopTrip() async {
         body: json.encode(data),
       );
 
-      if (response.statusCode == 202) {
+      if (response.statusCode == 200) {
          
         deltaPoints.clear(); //delta points are currently being cleared, clone the delta points into another list for the map
       
@@ -447,12 +454,12 @@ Widget _buildDeltaList() {
       shadowColor: Colors.black26,
       child: Padding(
         padding: EdgeInsets.all(8),
-        child: deltaPoints.isNotEmpty
+        child: deltaPointsClone.isNotEmpty
             ? ListView.builder(
-                key: ValueKey(deltaPoints.length), // Ensures widget rebuilds correctly
-                itemCount: deltaPoints.length,
+                key: ValueKey(deltaPointsClone.length), // Ensures widget rebuilds correctly
+                itemCount: deltaPointsClone.length,
                 itemBuilder: (context, index) {
-                  var delta = deltaPoints[index];
+                  var delta = deltaPointsClone[index];
                   return ListTile(
                     leading: Icon(Icons.location_on, color: Colors.redAccent),
                     title: Text("Point #${delta['point_number']}", style: TextStyle(fontWeight: FontWeight.bold)),
@@ -486,9 +493,9 @@ Widget _buildMapView() {
     ),
     child: Padding(
       padding: EdgeInsets.all(8),
-      child: deltaPoints.isNotEmpty
+      child: deltaPointsClone.isNotEmpty
           ? CustomPaint(
-              painter: RoutePainter(deltaPoints), // Use custom painter to draw route
+              painter: RoutePainter(deltaPointsClone), // Use custom painter to draw route
               child: Container(),
             )
           : Center(
