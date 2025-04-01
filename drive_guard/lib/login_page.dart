@@ -243,6 +243,9 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
                           isSignupMode = index == 1;
                         });
                       },
+                        indicatorColor: Colors.blue, 
+                        labelColor: Colors.blue, 
+                        unselectedLabelColor: Colors.grey,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     Form(
