@@ -12,6 +12,8 @@ import 'current_trip_page.dart'; // For navigation to CurrentTripPage
 import 'previous_trips_page.dart';
 import 'score_page.dart';
 import 'settings_page.dart';
+//import 'previous_trips_page.dart';
+import 'trip_helper.dart';
 
 class HomePage extends StatefulWidget {
   final String role;
@@ -21,6 +23,7 @@ class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
+
 
 class _HomePageState extends State<HomePage> {
     int _selectedIndex = 0;
@@ -41,54 +44,17 @@ class _HomePageState extends State<HomePage> {
     }
 
 
-  List<dynamic> trips = [];
-  bool isLoading = true;
+  List<dynamic> recentTrips = [];
   String errorMessage = '';
+  bool isLoading = false;
 
-Future<void> _loadTrips() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('access_token');
-  Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-  //print("DECODED TOKEN :" + decodedToken.toString());
-
-  // if (JwtDecoder.isExpired(token)) {
-  //   setState(() {
-  //     errorMessage = 'Unauthorized access. Please log in again.';
-  //     isLoading = false;
-  //   });
-  //   Navigator.pushReplacement(
-  //   context,
-  //   MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
-  //   );
-  //   return;
-  // }
-
-  try {
-    final response = await http.get(
-      Uri.parse(AppConfig.server),
-      headers: {
-        'Authorization': 'Bearer $token', // Include the token
-      },
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        trips = json.decode(response.body);
-        isLoading = false;
-      });
-    } else {
-      setState(() {
-        errorMessage = 'Failed to load trips. Please try again later.';
-        isLoading = false;
-      });
-    }
-  } catch (e) {
+  Future<void> loadRecentTrips() async {
+    List<dynamic> trips = await TripService.fetchPreviousTrips();
+    isLoading = true;
     setState(() {
-      errorMessage = 'Error loading trips: $e';
-      isLoading = false;
+      recentTrips = trips.take(3).toList(); // Get first 3 trips
     });
   }
-}
 
 Future<void> _loadProfileImage() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -114,7 +80,7 @@ Future<void> _loadProfileImage() async {
   @override
   void initState() {
     super.initState();
-    _loadTrips();
+    loadRecentTrips();
     _loadProfileImage();
     _checkAuthToken();
   }
@@ -379,7 +345,7 @@ Widget build(BuildContext context) {
                           style: TextStyle(color: Colors.red, fontSize: 18),
                         ),
                       )
-                    : trips.isEmpty
+                    : recentTrips.isEmpty
                         ? Center(
                             child: Text(
                               'No previous trips available.',
@@ -388,9 +354,9 @@ Widget build(BuildContext context) {
                           )
                         : Column(
                             children: List.generate(
-                              trips.length > 3 ? 3 : trips.length,
+                              recentTrips.length > 3 ? 3 : recentTrips.length,
                               (index) {
-                                var trip = trips[index];
+                                var trip = recentTrips[index];
                                 return ListTile(
                                   tileColor: Colors.white,
                                   shape: RoundedRectangleBorder(
