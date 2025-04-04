@@ -58,6 +58,7 @@ func transmitPoints(c *gin.Context, db *sql.DB) {
         log.Println(err)
         return
     }
+
 	// the points are recieved in reverse order. reorder them before db insertion 
 	slices.Reverse(set.Points)
 
@@ -105,11 +106,17 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 
 	distance := calculateFunction(set)
 
+	//Serialize the delta points into json array form
 	jsonPoints, err := json.Marshal(set.Points) 
 	if err != nil {
 		return err
 	}
 
+	// $1 = user_id 
+	// $2 = trip start timestamp 
+	// $3 = boolean value for if the trip is still in progress
+	// $4 = json array representation of the points
+	// $5 = total accumulated distance thus far, in miles
 	insertSTR := "INSERT INTO trips VALUES (DEFAULT, $1, $2, $3, $4, $5)"
 	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints, distance)
 	if err != nil {
@@ -156,18 +163,16 @@ func calculateFunction(set *pointSet) float64 {
 
 	//running accumulator for the haversine distance between points for every point in the batch
 	for _, dPoint := range set.Points {
-		latover2 := (float64(dPoint.Lat) * 0.0000001) / 2.0
-		latsin := math.Sin(latover2)
-		latsquared := math.Pow(latsin, 2)
+		lat_over2 := (float64(dPoint.Lat) * 0.0000001) / 2.0
+		lat_sin := math.Sin(lat_over2)
+		lat_squared := math.Pow(lat_sin, 2)
 
-		longover2 := (float64(dPoint.Long) * 0.0000001) / 2.0 
-		longsin := math.Sin(longover2) 
-		longsquared := math.Pow(longsin, 2)
+		long_over2 := (float64(dPoint.Long) * 0.0000001) / 2.0 
+		long_sin := math.Sin(long_over2) 
+		long_squared := math.Pow(long_sin, 2)
 
-		a := latsquared + Beta * longsquared
-
+		a := lat_squared + Beta * long_squared
 		c := 2.0 * math.Atan2(math.Sqrt(a), math.Sqrt(1.0 - a)) 
-
 		totalDist += R * c
 	}
 

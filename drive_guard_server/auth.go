@@ -29,7 +29,7 @@ func signupUser(c *gin.Context, db *sql.DB) {
     result, err := insertUser(newUser, db)
     if err != nil {
         // if an error occurs during db insert reject the signup
-        c.Status(http.StatusNotAcceptable)
+        c.JSON(http.StatusNotAcceptable, err)
         return
     }
 
@@ -38,7 +38,7 @@ func signupUser(c *gin.Context, db *sql.DB) {
     // instead of passing the users email in the JWT, u can isntead pass their users table ID
     jwt, status := newJWT([]string{ newUser.Email })
     if status != http.StatusAccepted {
-        // if token creation fails send back abd response
+        // if token creation fails send back bad response
         c.Status(status)
         return
     }
@@ -54,6 +54,11 @@ func insertUser(newUser User, db *sql.DB) (sql.Result, error) {
     rand.Read(salt)
 
     pass_hash := sha256.Sum256(append([]byte(newUser.Password), salt...))
+	// $1 = first name 
+	// $2 = last name 
+	// $3 = user email 
+	// $4 = password hash 
+	// $5 = password salt
     insertStmnt := "INSERT INTO users VALUES (DEFAULT, $1, $2, $3, $4, $5)"
     result, err := db.Exec(insertStmnt, newUser.Firstname, newUser.Lastname, newUser.Email, pass_hash[:], salt) 
     // TODO: check for duplicate email
@@ -97,16 +102,13 @@ func verifyLogin(logUser User, db *sql.DB) error {
         return err
     }
 
+	//compare the stored password hash to the inputted hash
     loginHash := sha256.Sum256(append([]byte(logUser.Password), salt...)) 
     if !bytes.Equal(pass, loginHash[:]){
         return errors.New("passwords do not match")
     }
     return nil
 }
-
-// make id added to that
-// make an experation date for session token
-// 2 tokens, one is shorter that will log out user after 2 hours, the other is longer and will continually refresh the shorter
 
 func newJWT(claimsList []string) (string, int) {
 
@@ -142,6 +144,7 @@ type User struct {
 	Lastname  string `json:"last_name"`
 }
 
+// TODO frontend wants more info in here for displaying in menus. add first and last name here... ALSO user role should be here as well
 type UserClaims struct {
 	Email string `json:"email"`
 	jwt.StandardClaims
