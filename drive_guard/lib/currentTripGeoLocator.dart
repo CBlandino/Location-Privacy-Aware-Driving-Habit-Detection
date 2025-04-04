@@ -11,7 +11,7 @@ import 'package:geolocator/geolocator.dart'; // Import Geolocator package
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
 import 'ipconfig.dart';
 
-
+//currently for the "Widget _buildDeltaList()" the points stay 0. Also the program is not consistant, sometimes it takes 1 to four 4 seconds to start making delta point data
 
 class CurrentTripPage extends StatefulWidget {
   @override
