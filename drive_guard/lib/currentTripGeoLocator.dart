@@ -258,6 +258,9 @@ Future<void> _getCurrentLocation() async {
           'delta_longitude': deltaLon,
           'point_number': _pointCounter,
         });
+
+        _pointCounter++;
+
       });
     }
 
