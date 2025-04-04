@@ -33,6 +33,8 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   final String server = AppConfig.server; // Server address
   int _selectedIndex = 0;
 
+
+
   // Random number generator for test data
   Random rand = Random();
 
@@ -72,6 +74,7 @@ void initState() {
   _checkAuthToken();
   _requestPermissions(); // Ensure permissions are requested on startup
   _loadFirstPoint().then((_) {
+    Geolocator.getCurrentPosition();
     setState(() {});  
   });
 }
