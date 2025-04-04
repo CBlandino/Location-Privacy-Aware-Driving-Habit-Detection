@@ -7,6 +7,7 @@ import (
 	"slices"
     "net/http"	
 	"encoding/json"
+	"math"
 
     "database/sql"
 	_ "github.com/lib/pq"
@@ -144,8 +145,36 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 
 // function that passes over all of the points in a transmitted point set prior to their inclusion in the db 
 // we can calculate distance on the set here, as well as any other metrics we wanted to/needed to
-func calculateFunction(set *pointSet) float32 {
-	return float32(len(set.Points)) * 0.01
+func calculateFunction(set *pointSet) float64 {
+
+	var totalDist float64 = 0.0
+
+	// radius of the earth in miles (6371km)
+	const R float64 = 3958.756 
+	// using beta approximation of 1 until implementation of R points is done
+	const Beta float64 = 1.0
+
+	//running accumulator for the haversine distance between points for every point in the batch
+	for _, dPoint := range set.Points {
+		latover2 := (float64(dPoint.Lat) * 0.0000001) / 2.0
+		latsin := math.Sin(latover2)
+		latsquared := math.Pow(latsin, 2)
+
+		longover2 := (float64(dPoint.Long) * 0.0000001) / 2.0 
+		longsin := math.Sin(longover2) 
+		longsquared := math.Pow(longsin, 2)
+
+		a := latsquared + Beta * longsquared
+
+		c := 2.0 * math.Atan2(math.Sqrt(a), math.Sqrt(1.0 - a)) 
+
+		totalDist += R * c
+	}
+
+	//total distance for the trip
+	log.Println(totalDist)
+
+	return totalDist
 }
 
 

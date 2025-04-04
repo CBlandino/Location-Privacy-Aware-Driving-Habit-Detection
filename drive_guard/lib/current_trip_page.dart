@@ -250,8 +250,8 @@ void stopTrip() async {
 
 void _getSimulatedLocation() {
   // Generate random lat/lon changes within a small range
-  double randomLatChange = (rand.nextDouble() - 0.5) * 0.01;
-  double randomLonChange = (rand.nextDouble() - 0.5) * 0.01;
+  double randomLatChange = (rand.nextDouble() - 0.5) * 0.0001;
+  double randomLonChange = (rand.nextDouble() - 0.5) * 0.0001;
 
   double newLatitude = (_previousMaskedLatitude ?? _initialLatitude * 1000000) / 1000000.0 + randomLatChange;
   double newLongitude = (_previousMaskedLongitude ?? _initialLongitude * 1000000) / 1000000.0 + randomLonChange;
