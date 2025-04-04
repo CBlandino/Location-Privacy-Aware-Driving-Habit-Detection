@@ -39,6 +39,33 @@ class TripService {
     }
   }
 
+static String formatTimestamp(dynamic timestamp) {
+  try {
+    print("Raw timestamp: $timestamp");
+
+    DateTime dateTime;
+
+    if (timestamp is int) {
+      dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    } else if (timestamp is String) {
+      try {
+        dateTime = DateTime.parse(timestamp); // Try ISO 8601
+      } catch (_) {
+        // Fallback to custom format
+        dateTime = DateFormat("MM/dd/yyyy HH:mm").parse(timestamp);
+      }
+    } else {
+      throw FormatException("Unknown timestamp format");
+    }
+
+    return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} "
+           "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+  } catch (e) {
+    print("Error parsing timestamp: $e");
+    return "Invalid timestamp";
+  }
+}
+
   static List<Map<String, dynamic>> _getDummyData() {
     return [
       {"timestamp": 1711910400, "distance": 10.0},

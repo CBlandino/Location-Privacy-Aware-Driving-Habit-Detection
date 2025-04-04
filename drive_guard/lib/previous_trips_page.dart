@@ -60,7 +60,9 @@ void _showTripDetails(Map<String, dynamic> trip) {
   int timestamp;
   
   try {
-    timestamp = int.parse(trip['timestamp']); // Convert string to int
+    timestamp = trip['timestamp'] is int
+    ? trip['timestamp']
+    : DateTime.parse(trip['timestamp']).millisecondsSinceEpoch ~/ 1000;
   } catch (e) {
     print('Error parsing timestamp: $e');
     timestamp = 0; // Fallback in case of error
@@ -92,20 +94,6 @@ void _showTripDetails(Map<String, dynamic> trip) {
   );
 }
 
-String formatTimestamp(dynamic timestamp) {
-  try {
-    // Ensure timestamp is an integer
-    int time = (timestamp is String) ? int.parse(timestamp) : timestamp;
-    
-    // Convert to DateTime and format
-    DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(time * 1000);
-    return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} "
-           "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
-  } catch (e) {
-    print("Error parsing timestamp: $e");
-    return "Invalid timestamp";
-  }
-}
 
     void _onItemTapped(int index) {
       setState(() {
@@ -135,7 +123,7 @@ String formatTimestamp(dynamic timestamp) {
                   ],
                   rows: trips.map((trip) {
                     return DataRow(cells: [
-                      DataCell(Text(formatTimestamp(trip['timestamp']))),
+                      DataCell(Text(TripService.formatTimestamp(trip['timestamp']))),
                       DataCell(Text(trip['distance'].toString())),
                       DataCell(
                         ElevatedButton(

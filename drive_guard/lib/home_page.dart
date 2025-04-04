@@ -48,13 +48,26 @@ class _HomePageState extends State<HomePage> {
   String errorMessage = '';
   bool isLoading = false;
 
-  Future<void> loadRecentTrips() async {
-    List<dynamic> trips = await TripService.fetchPreviousTrips();
+Future<void> loadRecentTrips() async {
+  setState(() {
     isLoading = true;
+    errorMessage = '';
+  });
+
+  try {
+    List<dynamic> trips = await TripService.fetchPreviousTrips();
     setState(() {
-      recentTrips = trips.take(3).toList(); // Get first 3 trips
+      recentTrips = trips.take(3).toList();
+      isLoading = false;
+    });
+  } catch (e) {
+    print('Error loading trips: $e');
+    setState(() {
+      isLoading = false;
+      errorMessage = 'Failed to load recent trips';
     });
   }
+}
 
 Future<void> _loadProfileImage() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -319,60 +332,85 @@ Widget build(BuildContext context) {
   
   }
 
-  Widget _buildPreviousTripsSection() {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      elevation: 10,
-      color: Colors.lightBlueAccent,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Previous Trips',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            SizedBox(height: 10),
-            isLoading
-                ? Center(child: CircularProgressIndicator())
-                : errorMessage.isNotEmpty
-                    ? Center(
-                        child: Text(
-                          errorMessage,
-                          style: TextStyle(color: Colors.red, fontSize: 18),
-                        ),
-                      )
-                    : recentTrips.isEmpty
-                        ? Center(
-                            child: Text(
-                              'No previous trips available.',
-                              style: TextStyle(fontSize: 18, color: Colors.white),
-                            ),
-                          )
-                        : Column(
-                            children: List.generate(
-                              recentTrips.length > 3 ? 3 : recentTrips.length,
-                              (index) {
-                                var trip = recentTrips[index];
-                                return ListTile(
-                                  tileColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  title: Text('Trip ${trip['id']}'),
-                                  subtitle: Text('Duration: ${trip['duration']} minutes\nDate: ${trip['date']}'),
-                                  trailing: Icon(Icons.arrow_forward),
-                                  onTap: () {},
-                                );
-                              },
-                            ),
+Widget _buildPreviousTripsSection() {
+  return Card(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    elevation: 10,
+    color: Colors.lightBlueAccent,
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recent Trips',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          SizedBox(height: 10),
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : errorMessage.isNotEmpty
+                  ? Center(
+                      child: Text(
+                        errorMessage,
+                        style: TextStyle(color: Colors.red, fontSize: 18),
+                      ),
+                    )
+                  : recentTrips.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No recent trips available.',
+                            style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
-          ],
-        ),
+                        )
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            headingRowColor: MaterialStateColor.resolveWith((states) => Colors.blue),
+                            columns: [
+                              DataColumn(
+                                label: Text(
+                                  'Date',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Distance (mi)',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Actions',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                            rows: recentTrips.take(3).map<DataRow>((trip) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text(TripService.formatTimestamp(trip['start_time']))),
+                                  DataCell(Text(trip['distance'].toStringAsFixed(2))),
+                                  DataCell(
+                                    IconButton(
+                                      icon: Icon(Icons.arrow_forward_ios),
+                                      onPressed: () {
+                                        // Optional: handle trip detail tap
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
