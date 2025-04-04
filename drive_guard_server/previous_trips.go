@@ -13,7 +13,6 @@ import (
 
 func previous_trips(c *gin.Context, db *sql.DB) {
 	// select all of the users trips in the trips table.
-	// dont think distance information has to be sent back unless they click on a trip
 
 	// Attempt to verify the JWT that should be held within the Authorization header of the request
 	token := c.GetHeader("Authorization")
@@ -37,6 +36,7 @@ func previous_trips(c *gin.Context, db *sql.DB) {
 		return
 	}
 
+	// select the all of the timestamps and distances for a users trips
 	querySTR := "SELECT start_time, distance FROM trips WHERE user_id = $1" 
 
 	rows, err := db.Query(querySTR, id)
@@ -45,9 +45,9 @@ func previous_trips(c *gin.Context, db *sql.DB) {
 		c.JSON(http.StatusBadRequest, err)
 		return
 	}
-
 	defer rows.Close() 
 
+	// serialize the trips into the json response body
 	trips := make([]PrevTrip, 0)
 	for rows.Next() {
 		var trip PrevTrip 
