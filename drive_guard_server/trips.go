@@ -163,11 +163,11 @@ func calculateFunction(set *pointSet) float64 {
 
 	//running accumulator for the haversine distance between points for every point in the batch
 	for _, dPoint := range set.Points {
-		lat_over2 := (float64(dPoint.Lat) * 0.0000001) / 2.0
+		lat_over2 := (float64(dPoint.Lat) * 0.000001) / 2.0
 		lat_sin := math.Sin(lat_over2)
 		lat_squared := math.Pow(lat_sin, 2)
 
-		long_over2 := (float64(dPoint.Long) * 0.0000001) / 2.0 
+		long_over2 := (float64(dPoint.Long) * 0.000001) / 2.0 
 		long_sin := math.Sin(long_over2) 
 		long_squared := math.Pow(long_sin, 2)
 
