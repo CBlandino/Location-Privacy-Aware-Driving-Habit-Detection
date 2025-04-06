@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'custom_app_bar.dart';
 
 class ScorePage extends StatefulWidget {
@@ -10,8 +11,55 @@ class ScorePage extends StatefulWidget {
 
 class _ScorePage extends State<ScorePage> {
   // implement functionality in future
-  final double score = 85; // Example score
+  final double score = 85;
   int _selectedIndex = 2;
+
+
+  // actual dynamic data
+  /*
+  double? score; // nullable so we can show loading
+  Map<String, String> breakdown = {};
+  bool isLoading = true;
+  String errorMessage = '';
+
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    fetchScoreData();
+  }
+
+  Future<void> fetchScoreData() async {
+    try {
+      final response = await http.get(Uri.parse('http://your-go-backend/api/score'));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          score = data['score'].toDouble();
+          breakdown = Map<String, String>.from(data['breakdown']);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = 'Failed to load score data.';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error: $e';
+        isLoading = false;
+      });
+    }
+  }
+
+  
+*/
+
+
 
   //const ScorePage({super.key});
 
