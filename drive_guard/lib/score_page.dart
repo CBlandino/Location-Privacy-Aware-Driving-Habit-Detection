@@ -10,58 +10,17 @@ class ScorePage extends StatefulWidget {
 }
 
 class _ScorePage extends State<ScorePage> {
-  // implement functionality in future
   final double score = 85;
   int _selectedIndex = 2;
 
-
-  // actual dynamic data
-  /*
-  double? score; // nullable so we can show loading
-  Map<String, String> breakdown = {};
-  bool isLoading = true;
-  String errorMessage = '';
-
-
-
-
-  @override
-  void initState() {
-    super.initState();
-    fetchScoreData();
-  }
-
-  Future<void> fetchScoreData() async {
-    try {
-      final response = await http.get(Uri.parse('http://your-go-backend/api/score'));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          score = data['score'].toDouble();
-          breakdown = Map<String, String>.from(data['breakdown']);
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          errorMessage = 'Failed to load score data.';
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Error: $e';
-        isLoading = false;
-      });
-    }
-  }
-
-  
-*/
-
-
-
-  //const ScorePage({super.key});
+  // Static data for testing
+  Map<String, String> breakdown = {
+    "Smoothness": "Good",
+    "Braking": "Needs Improvement",
+    "Acceleration": "Excellent",
+    "Cornering": "Average",
+    "Speed Control": "Good",
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +37,7 @@ class _ScorePage extends State<ScorePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: screenHeight*.07),
+            SizedBox(height: screenHeight * .07),
             Align(
               alignment: Alignment.center,
               child: CircularPercentIndicator(
@@ -96,7 +55,7 @@ class _ScorePage extends State<ScorePage> {
                 animationDuration: 1000,
               ),
             ),
-            SizedBox(height: screenHeight*.03),
+            SizedBox(height: screenHeight * .03),
             Align(
               alignment: Alignment.center,
               child: Text(
@@ -104,7 +63,7 @@ class _ScorePage extends State<ScorePage> {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ),
-            SizedBox(height: screenHeight*.04), 
+            SizedBox(height: screenHeight * .04),
             Align(
               alignment: Alignment.center,
               child: Container(
@@ -119,7 +78,7 @@ class _ScorePage extends State<ScorePage> {
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
                       spreadRadius: 2,
-                      offset: Offset(0, 4), // Soft shadow
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -152,9 +111,72 @@ class _ScorePage extends State<ScorePage> {
                         padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                        )
+                        ),
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                          ),
+                          isScrollControlled: true,
+                          builder: (BuildContext context) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    "Full Driving Report",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 12),
+                                  Divider(),
+                                  ...breakdown.entries.map((entry) => ListTile(
+                                        leading: Icon(Icons.check_circle_outline,
+                                            color: Colors.blue.shade700),
+                                        title: Text(entry.key),
+                                        trailing: Text(
+                                          entry.value,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: _ratingColor(entry.value),
+                                          ),
+                                        ),
+                                      )),
+                                  SizedBox(height: 20),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: Text("Close"),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue.shade700,
+                                      foregroundColor: Colors.white,
+                                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
                       child: Text('View Full Report'),
                     ),
                   ],
@@ -165,18 +187,17 @@ class _ScorePage extends State<ScorePage> {
         ),
       ),
       bottomNavigationBar: CustomAppBar(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
-    )
-    .buildBottomNavBar(context),
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ).buildBottomNavBar(context),
     );
   }
 
-    void _onItemTapped(int index) {
-      setState(() {
-        _selectedIndex = index; // Switches pages     
-      });
-    }
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   Widget _buildScoreDetail(String category, String rating) {
     return Padding(
@@ -197,15 +218,27 @@ class _ScorePage extends State<ScorePage> {
     );
   }
 
-
-  // Function to determine color based on score
   Color scoreColor(double score) {
     if (score >= 90) return Colors.green;
     if (score >= 50) return Colors.orange;
     return Colors.red;
   }
-}
 
+  Color _ratingColor(String rating) {
+    switch (rating.toLowerCase()) {
+      case "excellent":
+        return Colors.green;
+      case "good":
+        return Colors.orange;
+      case "average":
+        return Colors.amber;
+      case "needs improvement":
+        return Colors.red;
+      default:
+        return Colors.black;
+    }
+  }
+}
 
 
 /*
