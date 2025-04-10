@@ -11,7 +11,7 @@ import 'package:geolocator/geolocator.dart'; // Import Geolocator package
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
 import 'ipconfig.dart';
 
-//currently for the "Widget _buildDeltaList()" the points stay 0. Also the program is not consistant, sometimes it takes 1 to four 4 seconds to start making delta point data
+
 
 class CurrentTripPage extends StatefulWidget {
   @override
@@ -32,8 +32,6 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   int? _firstMaskedLatitude, _firstMaskedLongitude; // Store the first masked latitude and longitude
   final String server = AppConfig.server; // Server address
   int _selectedIndex = 0;
-
-
 
   // Random number generator for test data
   Random rand = Random();
@@ -72,13 +70,25 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
 void initState() {
   super.initState();
   _checkAuthToken();
-  _requestPermissions(); // Ensure permissions are requested on startup
-  _loadFirstPoint().then((_) {
-    Geolocator.getCurrentPosition();
-    setState(() {});  
+
+  // Only reset when page is reopened, NOT when stopping/starting trip
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!isTripStarted) {
+      // Removed clearing of data on trip stop
+      setState(() {
+        _elapsedTime = 0;
+        // deltaPoints.clear();  DO NOT CLEAR
+      });
+    }
+  });
+
+  _initialLatitude = (rand.nextDouble() * 180) - 90;
+  _initialLongitude = (rand.nextDouble() * 360) - 180;
+
+_loadFirstPoint().then((_) {
+    setState(() {});  // Ensure UI updates when data is loaded
   });
 }
-
 
 Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -178,32 +188,44 @@ void dispose() {
     }
   }
 
+// Start the trip simulation
 void startTrip() {
   setState(() {
+    // Reset all trip-related data for a new session
     isTripStarted = true;
-    deltaPoints.clear();
+    deltaPoints.clear(); // Clear previous trip data
     deltaPointsClone.clear();
-    _elapsedTime = 0;
-    _pointCounter = 0;
-    tripStartTime = DateTime.now();
+    _elapsedTime = 0; // Reset elapsed time
+    _pointCounter = 0; // Reset point counter
+    tripStartTime = DateTime.now(); // Mark new trip start time
+
+    _previousMaskedLatitude = _initialLatitude.toInt();
+    _previousMaskedLongitude = _initialLongitude.toInt();
   });
 
+  // Request location permissions when the trip starts
   _requestPermissions();
 
-  // Start listening to GPS updates
-  _deltaTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-    _getCurrentLocation();
+  // Start the timer for calculating delta points every 0.25 seconds
+  _deltaTimer = Timer.periodic(Duration(milliseconds: 250), (timer) {
+    _pointCounter++;
+    _getSimulatedLocation();  // Simulated GPS updates
   });
 
+  // Start the timer for tracking elapsed time
   _elapsedTimeTimer = Timer.periodic(Duration(seconds: 1), (timer) {
     setState(() {
       _elapsedTime++;
     });
   });
 
+  // Start the timer for sending data every minute
   _sendDataTimer = Timer.periodic(Duration(seconds: 30), (timer) {
     sendTripData();
   });
+
+  // Ensure UI refresh
+  setState(() {});
 }
 
 // Stop the trip but KEEP delta points visible
@@ -226,53 +248,64 @@ void stopTrip() async {
   setState(() {});
 }
 
-Future<void> _getCurrentLocation() async {
-  try {
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+void _getSimulatedLocation() {
+  // Generate random lat/lon changes within a small range
+  double randomLatChange = (rand.nextDouble() - 0.5) * 0.0001;
+  double randomLonChange = (rand.nextDouble() - 0.5) * 0.0001;
 
-    int maskedLatitude = (position.latitude * 1000000).toInt();
-    int maskedLongitude = (position.longitude * 1000000).toInt();
+  double newLatitude = (_previousMaskedLatitude ?? _initialLatitude * 1000000) / 1000000.0 + randomLatChange;
+  double newLongitude = (_previousMaskedLongitude ?? _initialLongitude * 1000000) / 1000000.0 + randomLonChange;
 
-    if (_firstMaskedLatitude == null || _firstMaskedLongitude == null) {
-      _storeFirstPoint(maskedLatitude, maskedLongitude);
-      _firstMaskedLatitude = maskedLatitude;
-      _firstMaskedLongitude = maskedLongitude;
-      _previousMaskedLatitude = maskedLatitude;
-      _previousMaskedLongitude = maskedLongitude;
-      return;
-    }
+  // Convert lat/lon to whole numbers for masking precision
+  int maskedLatitude = (newLatitude * 1000000).toInt();
+  int maskedLongitude = (newLongitude * 1000000).toInt();
 
-    if (_previousMaskedLatitude != null && _previousMaskedLongitude != null) {
-      int deltaLat = maskedLatitude - _previousMaskedLatitude!;
-      int deltaLon = maskedLongitude - _previousMaskedLongitude!;
+  // Store the first point if not already set
+  if (_firstMaskedLatitude == null || _firstMaskedLongitude == null) {
+    _storeFirstPoint(maskedLatitude, maskedLongitude);
 
-      setState(() {
-        deltaPoints.insert(0, {
-          'dlat': deltaLat,
-          'dlon': deltaLon,
-          't': DateTime.now().toIso8601String(),
-          'p': _pointCounter,
-        });
-
-        deltaPointsClone.insert(0, {
-          'delta_latitude': deltaLat,
-          'delta_longitude': deltaLon,
-          'point_number': _pointCounter,
-        });
-
-        _pointCounter++;
-
-      });
-    }
-
+    // Set the first masked values, but DO NOT send any data yet
+    _firstMaskedLatitude = maskedLatitude;
+    _firstMaskedLongitude = maskedLongitude;
     _previousMaskedLatitude = maskedLatitude;
     _previousMaskedLongitude = maskedLongitude;
-  } catch (e) {
-    print("Error getting location: $e");
+    
+    return;  // Exit early to prevent sending the first point
   }
+
+  // Compute delta changes only if a previous point exists
+  if (_previousMaskedLatitude != null && _previousMaskedLongitude != null) {
+    int deltaLat = maskedLatitude - _previousMaskedLatitude!;
+    int deltaLon = maskedLongitude - _previousMaskedLongitude!;
+
+    // Store delta points
+    setState(() {
+      deltaPoints.insert(0, {
+        'delta_latitude': deltaLat,
+        'delta_longitude': deltaLon,
+        'timestamp': DateTime.now().toIso8601String(),
+        'point_number': _pointCounter,
+      });
+
+      // Insert only delta_latitude and delta_longitude into deltaPointsClone
+      deltaPointsClone.insert(0, {
+        'delta_latitude': deltaLat,
+        'delta_longitude': deltaLon,
+        'point_number': _pointCounter,
+      });
+    });
+
+    // Send delta points to the server
+    //_sendLocationToServer(newLatitude, newLongitude);
+  }
+
+  // Update previous values
+  _previousMaskedLatitude = maskedLatitude;
+  _previousMaskedLongitude = maskedLongitude;
+
+  setState(() {});  // Ensure UI updates with the new data
 }
+
 
   // Send trip data to the server
   Future<void> sendTripData() async {
