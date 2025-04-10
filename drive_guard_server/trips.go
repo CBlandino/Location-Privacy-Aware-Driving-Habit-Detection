@@ -29,6 +29,7 @@ type point struct {
 	Long int `json:"dlon"`
 	Timestamp string `json:"t"`
 	Order int `json:"p"`
+	Velo float64 `json:"v"`
 }
 
 func transmitPoints(c *gin.Context, db *sql.DB) {
@@ -104,7 +105,14 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 		return err
 	}
 
-	distance := getDistance(set)
+
+	var distanceSet float64 = 0.0
+	for _, p := range set.Points {
+		d := getDistance(&p)
+		distanceSet += d
+		// velocity = distance / time. 0.00138 = 5 seconds(point capture interval) in hours
+		p.Velo = d / 0.00138
+	}
 
 	//Serialize the delta points into json array form
 	jsonPoints, err := json.Marshal(set.Points) 
@@ -118,7 +126,7 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	// $4 = json array representation of the points
 	// $5 = total accumulated distance thus far, in miles
 	insertSTR := "INSERT INTO trips VALUES (DEFAULT, $1, $2, $3, $4, $5)"
-	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints, distance)
+	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints, distanceSet)
 	if err != nil {
 		return err
 	}
@@ -133,7 +141,13 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 		return err
 	}
 
-	distance := getDistance(set)
+	var distanceSet float64 = 0.0
+	for _, p := range set.Points {
+		d := getDistance(&p)
+		distanceSet += d
+		// velocity = distance / time. 0.00138 = 5 seconds(point capture interval) in hours
+		p.Velo = d / 0.00138
+	}
 
 	jsonPoints, err := json.Marshal(set.Points)
 	if err != nil {
@@ -141,7 +155,7 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	}	
 
 	updateSTR := "UPDATE trips SET data = data || $1::jsonb, distance = distance + $2, done = $3 WHERE user_id = $4 AND done = FALSE"
-	_, err = db.Exec(updateSTR, jsonPoints, distance, set.End, id)
+	_, err = db.Exec(updateSTR, jsonPoints, distanceSet, set.End, id)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -152,7 +166,7 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 
 // function that passes over all of the points in a transmitted point set prior to their inclusion in the db 
 // we can calculate distance on the set here, as well as any other metrics we wanted to/needed to
-func getDistance(set *pointSet) float64 {
+func getDistance(p *point) float64 {
 
 	var totalDist float64 = 0.0
 
@@ -162,23 +176,21 @@ func getDistance(set *pointSet) float64 {
 	const Beta float64 = 1.0
 
 	//running accumulator for the haversine distance between points for every point in the batch
-	for _, dPoint := range set.Points {
 
-		dLat := (float64(dPoint.Lat) * 0.000001) * (math.Pi / 180.0)
-		dLong := (float64(dPoint.Long) * 0.000001) * (math.Pi / 180.0)
+	dLat := (float64(p.Lat) * 0.000001) * (math.Pi / 180.0)
+	dLong := (float64(p.Long) * 0.000001) * (math.Pi / 180.0)
 
-		lat_over2 := dLat / 2.0
-		lat_sin := math.Sin(lat_over2)
-		lat_squared := math.Pow(lat_sin, 2)
+	lat_over2 := dLat / 2.0
+	lat_sin := math.Sin(lat_over2)
+	lat_squared := math.Pow(lat_sin, 2)
 
-		long_over2 := dLong / 2.0 
-		long_sin := math.Sin(long_over2) 
-		long_squared := math.Pow(long_sin, 2)
+	long_over2 := dLong / 2.0 
+	long_sin := math.Sin(long_over2) 
+	long_squared := math.Pow(long_sin, 2)
 
-		a := lat_squared + Beta * long_squared
-		c := 2.0 * math.Atan2(math.Sqrt(a), math.Sqrt(1.0 - a)) 
-		totalDist += R * c
-	}
+	a := lat_squared + Beta * long_squared
+	c := 2.0 * math.Atan2(math.Sqrt(a), math.Sqrt(1.0 - a)) 
+	totalDist += R * c
 
 	//total distance for the trip
 	log.Println(totalDist)
