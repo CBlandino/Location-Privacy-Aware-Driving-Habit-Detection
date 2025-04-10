@@ -191,7 +191,7 @@ void startTrip() {
   _requestPermissions();
 
   // Start listening to GPS updates
-  _deltaTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+  _deltaTimer = Timer.periodic(Duration(seconds: 5), (timer) {
     _getCurrentLocation();
   });
 
