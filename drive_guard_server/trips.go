@@ -25,10 +25,10 @@ type pointSet struct {
 }
 
 type point struct {
-	Lat int `json:"delta_latitude"`
-	Long int `json:"delta_longitude"`
-	Timestamp string `json:"timestamp"`
-	Order int `json:"point_number"`
+	Lat int `json:"dlat"`
+	Long int `json:"dlon"`
+	Timestamp string `json:"t"`
+	Order int `json:"p"`
 }
 
 func transmitPoints(c *gin.Context, db *sql.DB) {
@@ -104,7 +104,7 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 		return err
 	}
 
-	distance := calculateFunction(set)
+	distance := getDistance(set)
 
 	//Serialize the delta points into json array form
 	jsonPoints, err := json.Marshal(set.Points) 
@@ -133,7 +133,7 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 		return err
 	}
 
-	distance := calculateFunction(set)
+	distance := getDistance(set)
 
 	jsonPoints, err := json.Marshal(set.Points)
 	if err != nil {
@@ -152,7 +152,7 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 
 // function that passes over all of the points in a transmitted point set prior to their inclusion in the db 
 // we can calculate distance on the set here, as well as any other metrics we wanted to/needed to
-func calculateFunction(set *pointSet) float64 {
+func getDistance(set *pointSet) float64 {
 
 	var totalDist float64 = 0.0
 
