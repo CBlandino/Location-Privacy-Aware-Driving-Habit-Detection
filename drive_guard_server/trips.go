@@ -110,8 +110,9 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	for _, p := range set.Points {
 		d := getDistance(&p)
 		distanceSet += d
-		// velocity = distance / time. 0.00138 = 5 seconds(point capture interval) in hours
-		p.Velo = d / 0.00138
+		// velocity = distance / time 
+		// units are miles per second, multiply by 3600 to conver to miles per hour 
+		p.Velo = (d / 5.0) * 3600.0
 	}
 
 	//Serialize the delta points into json array form
@@ -145,8 +146,9 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	for _, p := range set.Points {
 		d := getDistance(&p)
 		distanceSet += d
-		// velocity = distance / time. 0.00138 = 5 seconds(point capture interval) in hours
-		p.Velo = d / 0.00138
+		// velocity = distance / time
+		// units are miles per second, multiply by 3600 to conver to miles per hour 
+		p.Velo = (d / 5.0) * 3600.0
 	}
 
 	jsonPoints, err := json.Marshal(set.Points)
