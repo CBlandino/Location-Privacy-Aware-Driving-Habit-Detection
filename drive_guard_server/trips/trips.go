@@ -1,9 +1,7 @@
-package main
+package trips
 
 import (
     "log"
-	"errors"
-	"strings"
 	"slices"
     "net/http"	
 	"encoding/json"
@@ -11,28 +9,12 @@ import (
 
     "database/sql"
 	_ "github.com/lib/pq"
-	"github.com/golang-jwt/jwt"
     "github.com/gin-gonic/gin"
+
+	"drive_guard_server/tokens"
 )
 
-
-type pointSet struct {
-	Start bool `json:"isStart"`
-	End bool `json:"isEnd"`
-	Start_time string `json:"start_time"`
-	Elapsed_time int `json:"elapsed_time"`
-	Points []point `json:"delta_points"`
-}
-
-type point struct {
-	Lat int `json:"dlat"`
-	Long int `json:"dlon"`
-	Timestamp string `json:"t"`
-	Order int `json:"p"`
-	Velo float64 `json:"v"`
-}
-
-func transmitPoints(c *gin.Context, db *sql.DB) {
+func TransmitPoints(c *gin.Context, db *sql.DB) {
     log.Println("RECIEVING POINTS")
 
 	set := new(pointSet)
@@ -44,7 +26,8 @@ func transmitPoints(c *gin.Context, db *sql.DB) {
 		log.Println("No Authorization header found on request")
 		return
 	}
-	claims, err := getClaims(token)
+
+	claims, err := tokens.GetClaims(token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)	
 		log.Println("BAD REQUEST! :", err)
@@ -98,22 +81,23 @@ func transmitPoints(c *gin.Context, db *sql.DB) {
     c.Status(http.StatusAccepted)
 }
 
-func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
+func insertStartTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error {
 	log.Println("STARTING TRIP INSERT")
 	id, err := getUserID(claims.Email, db)
 	if err != nil {
 		return err
 	}
 
-
 	var distanceSet float64 = 0.0
-	for _, p := range set.Points {
+	for i, p := range set.Points {
 		d := getDistance(&p)
 		distanceSet += d
 		// velocity = distance / time 
 		// units are miles per second, multiply by 3600 to conver to miles per hour 
-		p.Velo = (d / 5.0) * 3600.0
+		set.Points[i].Velo = (d / 5.0) * 3600.0
 	}
+
+	log.Println("total distance:", distanceSet)
 
 	//Serialize the delta points into json array form
 	jsonPoints, err := json.Marshal(set.Points) 
@@ -135,7 +119,7 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	return nil
 }
 
-func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
+func updateExistingTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error {
 	log.Println("UPDATING TRIP. END?:", set.End)
 	id, err := getUserID(claims.Email, db)
 	if err != nil {
@@ -143,13 +127,15 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	}
 
 	var distanceSet float64 = 0.0
-	for _, p := range set.Points {
+	for i, p := range set.Points {
 		d := getDistance(&p)
 		distanceSet += d
 		// velocity = distance / time
 		// units are miles per second, multiply by 3600 to conver to miles per hour 
-		p.Velo = (d / 5.0) * 3600.0
+		set.Points[i].Velo = (d / 5.0) * 3600.0
 	}
+
+	log.Println("total distance:", distanceSet)
 
 	jsonPoints, err := json.Marshal(set.Points)
 	if err != nil {
@@ -194,9 +180,6 @@ func getDistance(p *point) float64 {
 	c := 2.0 * math.Atan2(math.Sqrt(a), math.Sqrt(1.0 - a)) 
 	totalDist += R * c
 
-	//total distance for the trip
-	log.Println(totalDist)
-
 	return totalDist
 }
 
@@ -210,30 +193,3 @@ func getUserID(claimsEmail string, db *sql.DB) (int, error) {
 
 	return id, nil
 }
-
-
-func getClaims(tokenStr string) (*UserClaims, error) {
-	// split "Bearer" off the header string
-	splt := strings.Split(tokenStr, " ")
-	if len(splt) != 2 && splt[0] != "Bearer" {
-		return nil, errors.New("Invalid Authorization header format")
-	}
-
-	tokenStr = splt[1]
-	claims := new(UserClaims)
-	claims.Email = "test"
-	// verify the integrity of the JWT and parse its claims into the claims struct (UserClaims type from auth.go)
-	tok, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
-		return signingKey, nil
-	})
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
-	log.Println(tok)
-
-	return claims, nil
-}
-
-
