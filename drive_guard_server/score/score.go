@@ -33,19 +33,24 @@ func getUserScore(c *gin.Context, db *sql.DB) {
 
 // struct for driving habits
 type drivingHabit struct {
-	weight float64
-	input  float64
+	weight float64 // weight
+	input  float64 // input
+
+	numHabits float64 // number of habits that occured
 }
 
 // constructor for driving habit, sets the weight and input
-func newHabit(weight float64, input float64) drivingHabit {
+func newHabit(weight float64, numHabits float64) drivingHabit {
 	return drivingHabit{
-		weight: weight,
-		input:  input,
+		weight:    weight,
+		numHabits: numHabits,
 	}
 }
 
 func calcuateScore(pointsData []float64) float64 {
+
+	// purely for test, implement later. decrements score based on number of habits that occured
+	var decrementFromInput = .2
 
 	// driving habits
 	var numBreaks float64
@@ -59,14 +64,20 @@ func calcuateScore(pointsData []float64) float64 {
 	// thresholds for habits
 	if numBreaks <= 2 {
 		harshBreak.input = 1
+	} else {
+		harshBreak.input = 1 - (decrementFromInput * (numBreaks - 2))
 	}
 
 	if numAccel <= 2 {
 		harshAcceleration.input = 1
+	} else {
+		harshAcceleration.input = 1 - (decrementFromInput * (numAccel - 2))
 	}
 
 	if timeSpeeding <= 10 {
 		speeding.input = 1
+	} else {
+		speeding.input = 1 - (decrementFromInput * (timeSpeeding - 10))
 	}
 
 	// Calculate final score
