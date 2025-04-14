@@ -146,10 +146,11 @@ Future<void> loadRecentTrips() async {
   @override
   void initState() {
     super.initState();
-    loadRecentTrips();
-    _loadProfileImage();
     _checkAuthToken();
     _loadUserInfo();
+    loadRecentTrips();
+    _loadProfileImage();
+  
     
   }
 
