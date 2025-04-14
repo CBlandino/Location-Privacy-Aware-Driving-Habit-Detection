@@ -180,50 +180,18 @@ void dispose() {
     }
   }
 
-  Future<void> _showTripStartingDialog(int seconds) async {
+Future<void> _showTripStartingDialog(int seconds) async {
   int remaining = seconds;
-  late void Function(void Function()) safeSetState;
-  late StateSetter dialogSetState;
 
-  // Start dialog
   await showDialog(
     context: context,
     barrierDismissible: false,
     builder: (BuildContext context) {
-      return StatefulBuilder(
-        builder: (BuildContext context, StateSetter setState) {
-          dialogSetState = setState;
-          safeSetState = (fn) {
-            if (Navigator.of(context).canPop()) {
-              dialogSetState(fn);
-            }
-          };
-
-          // Start countdown once builder is ready
-          Future.delayed(Duration.zero, () async {
-            for (int i = remaining; i > 0; i--) {
-              safeSetState(() => remaining = i);
-              await Future.delayed(Duration(seconds: 1));
-            }
-            Navigator.of(context).pop(); // Close dialog
-          });
-
-          return AlertDialog(
-            title: Text("Warming up GPS"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text("Starting trip in $remaining seconds..."),
-              ],
-            ),
-          );
-        },
-      );
+      return CountdownDialog(initialSeconds: remaining);
     },
   );
 }
+
 Future<void> startTrip() async {
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
@@ -657,5 +625,53 @@ class RoutePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true; 
+  }
+}
+
+class CountdownDialog extends StatefulWidget {
+  final int initialSeconds;
+
+  const CountdownDialog({super.key, required this.initialSeconds});
+
+  @override
+  _CountdownDialogState createState() => _CountdownDialogState();
+}
+
+class _CountdownDialogState extends State<CountdownDialog> {
+  late int remaining;
+
+  @override
+  void initState() {
+    super.initState();
+    remaining = widget.initialSeconds;
+    _startCountdown();
+  }
+
+  void _startCountdown() async {
+    while (remaining > 0) {
+      await Future.delayed(Duration(seconds: 1));
+      if (!mounted) return;
+      setState(() {
+        remaining--;
+      });
+    }
+    if (mounted) {
+      Navigator.of(context).pop(); // Close the dialog
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text("Warming up GPS"),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text("Starting trip in $remaining seconds..."),
+        ],
+      ),
+    );
   }
 }
