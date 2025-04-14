@@ -358,96 +358,94 @@ void _getSimulatedLocation() {
     //});
   }
 
+// Updated full widget build and related methods for screen responsiveness
 @override
 Widget build(BuildContext context) {
-      return WillPopScope(
+  final screenHeight = MediaQuery.of(context).size.height;
+  final screenWidth = MediaQuery.of(context).size.width;
+
+  return WillPopScope(
     onWillPop: () async {
-      // Navigate back to HomePage instead of the last screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePage(role: "user")), // Pass role 
+        MaterialPageRoute(builder: (context) => HomePage(role: "user")),
       );
-      return false; // Prevent default back navigation
+      return false;
     },
-  child: Scaffold(
-    backgroundColor: Colors.grey[200],
-    
-    // Use CustomAppBar instead of default AppBar
-    appBar: CustomAppBar(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
-    ),
-
-    body: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          _buildStatusCard(),
-          SizedBox(height: 20),
-          _buildTimerCard(),
-          SizedBox(height: 20),
-          _buildMapView(), // New map section
-          SizedBox(height: 10),
-          _buildDeltaList(), // Smaller delta points section
-          Spacer(),
-          _buildActionButton(), // More prominent button
-        ],
+    child: Scaffold(
+      backgroundColor: Colors.grey[200],
+      appBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
       ),
+      body: Padding(
+        padding: EdgeInsets.all(screenWidth * 0.02),
+        child: Column(
+          children: [
+            _buildStatusCard(screenWidth),
+            SizedBox(height: screenHeight * 0.02),
+            _buildTimerCard(screenWidth),
+            SizedBox(height: screenHeight * 0.02),
+            _buildMapView(screenHeight, screenWidth),
+            SizedBox(height: screenHeight * 0.01),
+            _buildDeltaList(screenHeight, screenWidth),
+            SizedBox(height: screenHeight * 0.02),
+            _buildActionButton(screenWidth),
+            SizedBox(height: screenHeight * 0.02),
+          ],
+        ),
+      ),
+      bottomNavigationBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ).buildBottomNavBar(context),
     ),
-
-    // Bottom Navigation Bar from CustomAppBar
-    bottomNavigationBar: CustomAppBar(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
-    ).buildBottomNavBar(context),
-  ));
+  );
 }
 
-// Build trip status card with a gradient background
-Widget _buildStatusCard() {
+Widget _buildStatusCard(double screenWidth) {
   return Card(
     elevation: 5,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenWidth * 0.04)),
     child: Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(screenWidth * 0.04),
         gradient: LinearGradient(
           colors: [Colors.blueAccent, Colors.lightBlue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       child: Center(
         child: Text(
           'Trip Status: ${isTripStarted ? "Ongoing" : "Stopped"}',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontSize: screenWidth * 0.055, fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
     ),
   );
 }
 
-// Build elapsed time card with better styling
-Widget _buildTimerCard() {
+Widget _buildTimerCard(double screenWidth) {
   return Card(
     elevation: 8,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenWidth * 0.04)),
     shadowColor: Colors.black38,
     child: Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(screenWidth * 0.04),
         color: Colors.white,
       ),
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(screenWidth * 0.04),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.timer, color: Colors.blue, size: 30),
-          SizedBox(width: 10),
+          Icon(Icons.timer, color: Colors.blue, size: screenWidth * 0.08),
+          SizedBox(width: screenWidth * 0.03),
           Text(
             'Elapsed Time: ${formatElapsedTime()}',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+            style: TextStyle(fontSize: screenWidth * 0.055, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
         ],
       ),
@@ -455,19 +453,18 @@ Widget _buildTimerCard() {
   );
 }
 
-// Keep delta points visible after stopping trip
-Widget _buildDeltaList() {
+Widget _buildDeltaList(double screenHeight, double screenWidth) {
   return Container(
-    height: 150,
+    height: screenHeight * 0.2,
     child: Card(
       elevation: 8,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenWidth * 0.04)),
       shadowColor: Colors.black26,
       child: Padding(
-        padding: EdgeInsets.all(8),
+        padding: EdgeInsets.all(screenWidth * 0.02),
         child: deltaPointsClone.isNotEmpty
             ? ListView.builder(
-                key: ValueKey(deltaPointsClone.length), // Ensures widget rebuilds correctly
+                key: ValueKey(deltaPointsClone.length),
                 itemCount: deltaPointsClone.length,
                 itemBuilder: (context, index) {
                   var delta = deltaPointsClone[index];
@@ -475,15 +472,15 @@ Widget _buildDeltaList() {
                     leading: Icon(Icons.location_on, color: Colors.redAccent),
                     title: Text("Point #${delta['point_number']}", style: TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text("ΔLat: ${delta['delta_latitude']}, ΔLon: ${delta['delta_longitude']}"),
-                    tileColor: index % 2 == 0 ? Colors.grey[100] : Colors.white, // Alternating colors
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    tileColor: index % 2 == 0 ? Colors.grey[100] : Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenWidth * 0.03)),
                   );
                 },
               )
             : Center(
                 child: Text(
                   "No data available",
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                  style: TextStyle(color: Colors.grey, fontSize: screenWidth * 0.04),
                 ),
               ),
       ),
@@ -491,44 +488,43 @@ Widget _buildDeltaList() {
   );
 }
 
-
-// Build map visualization that persists after stopping trip
-Widget _buildMapView() {
-  //print("Rendering Map with ${deltaPoints.length} points");
+Widget _buildMapView(double screenHeight, double screenWidth) {
   return Container(
-    height: 200,
+    height: screenHeight * 0.25,
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 5)],
+      borderRadius: BorderRadius.circular(screenWidth * 0.03),
+      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: screenWidth * 0.015)],
     ),
     child: Padding(
-      padding: EdgeInsets.all(8),
+      padding: EdgeInsets.all(screenWidth * 0.02),
       child: deltaPointsClone.isNotEmpty
           ? CustomPaint(
-              painter: RoutePainter(deltaPointsClone), // Use custom painter to draw route
+              painter: RoutePainter(deltaPointsClone),
               child: Container(),
             )
           : Center(
               child: Text(
                 "No route data available",
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(color: Colors.grey, fontSize: screenWidth * 0.04),
               ),
             ),
     ),
   );
 }
 
-// Build start/stop button with standout UI
-Widget _buildActionButton() {
+Widget _buildActionButton(double screenWidth) {
   return Container(
-    margin: EdgeInsets.only(top: 20),
+    margin: EdgeInsets.only(top: screenWidth * 0.05),
     width: double.infinity,
     child: ElevatedButton(
       onPressed: isTripStarted ? stopTrip : startTrip,
       style: ElevatedButton.styleFrom(
-        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.1,
+          vertical: screenWidth * 0.05,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(screenWidth * 0.08)),
         elevation: 10,
         backgroundColor: isTripStarted ? Colors.redAccent : Colors.greenAccent,
         foregroundColor: Colors.white,
@@ -536,7 +532,7 @@ Widget _buildActionButton() {
       ),
       child: Text(
         isTripStarted ? 'Stop Trip' : 'Start Trip',
-        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+        style: TextStyle(fontSize: screenWidth * 0.065, fontWeight: FontWeight.bold),
       ),
     ),
   );

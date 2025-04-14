@@ -85,7 +85,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
       } else if (_selectedRole == 'Service Provider') {
         data['server_number'] = serverNumberController.text;
         data['id'] = idController.text;
-      } else if (_selectedRole == 'Insurance Provider') {
+      } else if (_selectedRole == 'Insurance') {
         data['insurance_provider_name'] = insuranceProviderController.text;
         data['state'] = stateController.text;
         data['id'] = idController.text;
