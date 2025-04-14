@@ -44,21 +44,6 @@ class _HomePageState extends State<HomePage> {
     late String firstName;
     late String lastName;
 
-  final List<Widget> _userPages = [
-    CurrentTripPage(),
-    PreviousTripsPage(),
-    ScorePage(),
-    SettingsPage(),
-  ];
-
-  final List<Widget> _insurancePages = [
-    // Placeholder pages for insurance provider
-    Container(), // User Lookup
-    Container(), // User Trips
-    Container(), // User Score
-    SettingsPage(),
-  ];
-
     void _onItemTapped(int index) {
       setState(() {
         _selectedIndex = index; // Switches pages     
