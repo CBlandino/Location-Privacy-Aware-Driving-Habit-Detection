@@ -18,25 +18,27 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
   List<dynamic> trips = [];
   final String server = AppConfig.server;
   int _selectedIndex = 1;
+  late String role;
 
   @override
   void initState() {
     super.initState();
-    _checkAuthToken();
+    _loadUserInfo();
     fetchPreviousTrips();
   }
 
-  Future<void> _checkAuthToken() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('access_token');
+Future<void> _loadUserInfo() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // if (token == null || JwtDecoder.isExpired(token)) {
-    //   Navigator.pushReplacement(
-    //     context,
-    //     MaterialPageRoute(builder: (context) => LoginPageWidget()),
-    //   );
-    // }
-  }
+  role = prefs.getString('user_role')!;
+  //String? firstName = prefs.getString('user_first_name');
+  //String? lastName = prefs.getString('user_last_name');
+  //String? email = prefs.getString('user_email');
+
+  if (role == null) {
+    print('role not found.');
+  } 
+}
 
 Future<void> fetchPreviousTrips() async {
   List<dynamic> data = await TripService.fetchPreviousTrips();
@@ -107,6 +109,7 @@ void _showTripDetails(Map<String, dynamic> trip) {
       appBar: CustomAppBar(
         selectedIndex: 1,
         onItemTapped: _onItemTapped,
+        role: role,
       ),
       body: trips.isEmpty
           ? Center(child: Text("No trips available"))
@@ -139,6 +142,7 @@ void _showTripDetails(Map<String, dynamic> trip) {
       bottomNavigationBar: CustomAppBar(
       selectedIndex: _selectedIndex,
       onItemTapped: _onItemTapped,
+      role: role,
     )
     .buildBottomNavBar(context),
     );

@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:jwt_decoder/jwt_decoder.dart';
+//import 'package:jwt_decoder/jwt_decoder.dart';
 import 'ipconfig.dart';
 import 'custom_app_bar.dart';
 import 'login_page.dart';
@@ -19,7 +19,7 @@ import 'user_score_page.dart';
 import 'user_trips_page.dart';
 
 class HomePage extends StatefulWidget {
-  final String role;
+  String role;
 
   HomePage({required this.role});
 
@@ -39,6 +39,10 @@ class _HomePageState extends State<HomePage> {
     List<Map<String, dynamic>> _userTrips = [];
     Map<String, dynamic>? _userScore;
 
+    late String role;
+    late String email;
+    late String firstName;
+    late String lastName;
 
   final List<Widget> _userPages = [
     CurrentTripPage(),
@@ -66,6 +70,37 @@ class _HomePageState extends State<HomePage> {
   String errorMessage = '';
   bool isLoading = false;
 
+void _searchUsers(String query) async {
+  setState(() {
+    _isSearching = true;
+    _searchError = '';
+    _searchResults = [];
+  });
+
+  try {
+    // Replace this with your real API call or logic
+    // Example: simulate an API call delay
+    await Future.delayed(Duration(seconds: 1));
+
+    // For demonstration: pretend we found a user with a matching ID
+    final results = [
+      {'id': '123', 'name': 'John Doe'},
+      {'id': '456', 'name': 'Jane Smith'}
+    ].where((user) => user['name']!.toLowerCase().contains(query.toLowerCase())).toList();
+
+    setState(() {
+      _isSearching = false;
+      _searchResults = results;
+      _searchedUserId = (results.isNotEmpty ? results.first['id'] : '')!;
+    });
+  } catch (e) {
+    setState(() {
+      _isSearching = false;
+      _searchError = 'Search failed: $e';
+    });
+  }
+}
+
 Future<void> loadRecentTrips() async {
   setState(() {
     isLoading = true;
@@ -90,7 +125,7 @@ Future<void> loadRecentTrips() async {
   Future<void> _loadProfileImage() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
-  Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+  //Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
   // if (JwtDecoder.isExpired(token)) {
   //   Navigator.pushReplacement(
@@ -114,12 +149,62 @@ Future<void> loadRecentTrips() async {
     loadRecentTrips();
     _loadProfileImage();
     _checkAuthToken();
+    _loadUserInfo();
+    
   }
 
 Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
-  Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
+
+  if (token != null) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        throw Exception('Invalid token structure');
+      }
+
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final Map<String, dynamic> tokenData = json.decode(decoded);
+
+      role = tokenData['role'];
+       firstName = tokenData['first_name'];
+       lastName = tokenData['last_name'];
+       email = tokenData['email'];
+
+      if (role != null && firstName != null && lastName != null && email != null) {
+        print('User Info from Token:');
+        print('Role: $role');
+        print('First Name: $firstName');
+        print('Last Name: $lastName');
+        print('Email: $email');
+
+        // store them in SharedPreferences
+        await prefs.setString('role', role);
+        await prefs.setString('first_name', firstName);
+        await prefs.setString('last_name', lastName);
+        await prefs.setString('email', email);
+      } else {
+        print('Some fields are missing in the token.');
+      }
+    } catch (e) {
+      print('Error decoding token: $e');
+    }
+  } else {
+    print('No token found in SharedPreferences');
+  }
+}
+
+Future<void> _loadUserInfo() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  role = prefs.getString('role')!;
+  firstName = prefs.getString('first_name') ?? 'First';
+  lastName = prefs.getString('last_name') ?? 'Last';
+  email = prefs.getString('email')?? 'Email';
+
 }
 
   @override
@@ -128,20 +213,21 @@ Future<void> _checkAuthToken() async {
       appBar: CustomAppBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
+        role: widget.role, // Pass the role
       ),
       drawer: CustomDrawer(role: widget.role),
-      body: widget.role == 'User' 
+      body: widget.role == 'user' 
           ? _buildUserHomePage()
           : _buildInsuranceHomePage(),
       bottomNavigationBar: CustomAppBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
+        role: widget.role, // Pass the role
       ).buildBottomNavBar(context),
     );
   }
   
   Widget _buildInsuranceHomePage() {
-    var _searchUsers;
     return _selectedIndex == 0
         ? Padding(
             padding: const EdgeInsets.all(16.0),
@@ -252,10 +338,10 @@ Future<void> _checkAuthToken() async {
                                   ),
                                   SizedBox(height: 10),
                                   UserScorePage(
-                                    userId: _searchedUserId,
-                                    scoreData: _userScore,
-                                    isLoading: false, // Set based on state
-                                    errorMessage: '', // Set based on state
+  userId: _searchedUserId,
+  scoreData: _userScore ?? {}, // fallback to empty map
+  isLoading: false,
+  errorMessage: '',
                                   ),
                                 ],
                               ),
@@ -268,11 +354,15 @@ Future<void> _checkAuthToken() async {
                 : SettingsPage();
   }
 
-@override
 Widget _buildUserHomePage() {
-  return Scaffold(
-    drawer: CustomDrawer(role: widget.role),
-    body: _selectedIndex == 0
+
+    String displayName = '$firstName $lastName' ?? 'User';
+  String initials = (firstName != null && lastName != null)
+      ? '${firstName![0]}${lastName![0]}'.toUpperCase()
+      : '??';
+
+
+  return _selectedIndex == 0
         ? Padding(
             padding: const EdgeInsets.all(16.0),
             child: SingleChildScrollView(
@@ -298,7 +388,7 @@ Widget _buildUserHomePage() {
                                 ),
                               ),
                               Text(
-                                'John Doe!',
+                                displayName,
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
@@ -318,7 +408,7 @@ Widget _buildUserHomePage() {
                           backgroundImage: _profileImage != null ? FileImage(_profileImage!) : null,
                           child: _profileImage == null
                               ? Text(
-                                  'JD', // Replace with user's initials dynamically
+                                  initials, // Replace with user's initials dynamically
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -422,9 +512,7 @@ Widget _buildUserHomePage() {
                 ],
               ),
             ),
-          )
-        : _userPages[_selectedIndex], // Switch to other pages dynamically
-  );
+          ) : SettingsPage();
 }
 
 

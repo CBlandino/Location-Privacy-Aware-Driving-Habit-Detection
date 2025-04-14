@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart' show SharedPreferences;
 import 'dart:convert';
 import 'custom_app_bar.dart';
 
@@ -12,6 +13,7 @@ class ScorePage extends StatefulWidget {
 class _ScorePage extends State<ScorePage> {
   final double score = 85;
   int _selectedIndex = 2;
+  late String role;
 
   // Static data for testing
   Map<String, String> breakdown = {
@@ -21,6 +23,22 @@ class _ScorePage extends State<ScorePage> {
     "Cornering": "Average",
     "Speed Control": "Good",
   };
+
+ @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+Future<void> _loadUserInfo() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  role = prefs.getString('role')!;
+  //String? firstName = prefs.getString('first_name');
+  //String? lastName = prefs.getString('last_name');
+  //String? email = prefs.getString('email');
+
+}
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +207,7 @@ class _ScorePage extends State<ScorePage> {
       bottomNavigationBar: CustomAppBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
+        role:role,
       ).buildBottomNavBar(context),
     );
   }

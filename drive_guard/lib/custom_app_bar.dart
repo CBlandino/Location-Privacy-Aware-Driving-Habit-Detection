@@ -4,15 +4,20 @@ import 'current_trip_page.dart';
 import 'previous_trips_page.dart';
 import 'score_page.dart';
 import 'settings_page.dart';
+import 'user_lookup.dart';
+import 'user_score_page.dart';
+import 'user_trips_page.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
+  final String role; // Add role parameter
 
   const CustomAppBar({
     Key? key,
     required this.selectedIndex,
     required this.onItemTapped,
+    required this.role, // Require role
   }) : super(key: key);
 
   @override
@@ -28,19 +33,25 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => Size.fromHeight(kToolbarHeight);
 
   String _getAppBarTitle(int index) {
-    switch (index) {
-      case 0:
-        return "Home";
-      case 1:
-        return "Previous Trips";
-      case 2:
-        return "Score";
-      case 3:
-        return "Account";
-      default:
-        return "Home";
+    if (role == 'insurance') {
+      switch (index) {
+        case 0: return "User Lookup";
+        case 1: return "User Trips";
+        case 2: return "User Scores";
+        case 3: return "Account";
+        default: return "User Lookup";
+      }
+    } else { // User role
+      switch (index) {
+        case 0: return "Home";
+        case 1: return "Previous Trips";
+        case 2: return "Score";
+        case 3: return "Account";
+        default: return "Home";
+      }
     }
   }
+
 
   Widget buildBottomNavBar(BuildContext context) {
     return BottomNavigationBar(
@@ -52,32 +63,106 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         onItemTapped(index); // Update selected index
         _navigateToPage(context, index); // Handle navigation
       },
-      items: [
-        BottomNavigationBarItem(icon: Icon(Icons.directions_car), label: 'Current Trip'),
-        BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Previous Trips'),
-        BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Score'),
-        BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: 'Account'),
-      ],
+      items: role == 'Insurance Provider' 
+          ? _buildInsuranceNavItems()
+          : _buildUserNavItems(),
     );
+  }
+
+  List<BottomNavigationBarItem> _buildInsuranceNavItems() {
+    return [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.person_search),
+        label: 'Lookup',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.history),
+        label: 'Trips',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.score),
+        label: 'Scores',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.account_circle),
+        label: 'Account',
+      ),
+    ];
+  }
+
+  List<BottomNavigationBarItem> _buildUserNavItems() {
+    return [
+      BottomNavigationBarItem(
+        icon: Icon(Icons.directions_car),
+        label: 'Current Trip',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.history),
+        label: 'Previous Trips',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.star),
+        label: 'Score',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(Icons.account_circle),
+        label: 'Account',
+      ),
+    ];
   }
 
   void _navigateToPage(BuildContext context, int index) {
     Widget page;
-    switch (index) {
-      case 0:
-        page = CurrentTripPage();
-        break;
-      case 1:
-        page = PreviousTripsPage();
-        break;
-      case 2:
-        page = ScorePage();
-        break;
-      case 3:
-        page = SettingsPage();
-        break;
-      default:
-        return;
+    
+    if (role == 'Insurance Provider') {
+      switch (index) {
+        case 0:
+          page = UserLookupPage(
+            onSearch: (query) {}, 
+            searchResults: [],
+            isLoading: false,
+            errorMessage: '',
+          );
+          break;
+        case 1:
+          page = UserTripsPage(
+            userId: '',
+            trips: [],
+            isLoading: false,
+            errorMessage: '',
+          );
+          break;
+        case 2:
+          page = UserScorePage(
+            userId: '',
+            scoreData: null,
+            isLoading: false,
+            errorMessage: '',
+          );
+          break;
+        case 3:
+          page = SettingsPage();
+          break;
+        default:
+          return;
+      }
+    } else {
+      switch (index) {
+        case 0:
+          page = CurrentTripPage();
+          break;
+        case 1:
+          page = PreviousTripsPage();
+          break;
+        case 2:
+          page = ScorePage();
+          break;
+        case 3:
+          page = SettingsPage();
+          break;
+        default:
+          return;
+      }
     }
 
     Navigator.pushReplacement(

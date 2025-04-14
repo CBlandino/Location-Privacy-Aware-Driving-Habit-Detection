@@ -10,6 +10,7 @@ import 'settings_page.dart';
 class CustomDrawer extends StatefulWidget {
   final String role;
 
+
   CustomDrawer({required this.role});
 
   @override
@@ -17,27 +18,30 @@ class CustomDrawer extends StatefulWidget {
 }
 
 class _CustomDrawerState extends State<CustomDrawer> {
+  late String firstName;
+  late String lastName;
+  late String role;
+  late String email;
+  late String fullName = '$firstName $lastName';
+
   String accountName = 'Loading...';
   String accountEmail = 'Loading...';
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _loadUserInfo();
   }
 
-  // Load user data from SharedPreferences
-  Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+Future<void> _loadUserInfo() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    String? userName = prefs.getString('user_name');
-    String? userEmail = prefs.getString('user_email');
+  role = prefs.getString('role')!;
+  firstName = prefs.getString('first_name') ?? 'First';
+  lastName = prefs.getString('last_name') ?? 'Last';
+  email = prefs.getString('email')?? 'Email';
 
-    setState(() {
-      accountName = userName ?? 'Unknown User';
-      accountEmail = userEmail ?? 'No Email';
-    });
-  }
+}
 
   // Logout Function - Clears token and redirects to login page
   Future<void> _logout(BuildContext context) async {
@@ -60,8 +64,8 @@ class _CustomDrawerState extends State<CustomDrawer> {
       child: Column(
         children: [
           UserAccountsDrawerHeader(
-            accountName: Text(accountName),
-            accountEmail: Text(accountEmail),
+            accountName: Text(fullName),
+            accountEmail: Text(email),
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.blue,
               child: Icon(Icons.person, color: Colors.white),

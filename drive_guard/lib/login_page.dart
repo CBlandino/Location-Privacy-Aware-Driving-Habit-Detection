@@ -20,7 +20,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
   late SharedPreferences _prefs;
   bool isSignupMode = false;
   bool _isProcessing = false;
-  String? _selectedRole = 'User';
+  String? _selectedRole = 'user';
 
   TextEditingController emailController = TextEditingController();
   TextEditingController firstNameController = TextEditingController();
@@ -80,16 +80,16 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         'role': _selectedRole,
       };
 
-      if (_selectedRole == 'User') {
+      if (_selectedRole == 'user') {
         data['first_name'] = firstNameController.text;
         data['last_name'] = lastNameController.text;
-      } else if (_selectedRole == 'Admin') {
+      } else if (_selectedRole == 'admin') {
         data['server_number'] = serverNumberController.text;
         data['id'] = idController.text;
-      } else if (_selectedRole == 'Insurance') {
-        data['insurance_provider_name'] = insuranceProviderController.text;
-        data['state'] = stateController.text;
-        data['id'] = idController.text;
+      } else if (_selectedRole == 'insurance') {
+        data['first_name'] = insuranceProviderController.text; // Provider = First Name
+        data['last_name'] = stateController.text;              // State = Last Name
+        data['password'] = idController.text;                  // ID = Password
       }
 
         final response = await http.post(
@@ -99,8 +99,53 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         );
 
         if (response.statusCode == 201) {
+        print('STATUS: ${response.statusCode}');
+        print('BODY: ${response.body}');
         final responseData = json.decode(response.body);
         await _prefs.setString('access_token', responseData['access_token']);
+        
+// SharedPreferences prefs = await SharedPreferences.getInstance();
+//   String? token = prefs.getString('access_token');
+
+//   if (token != null) {
+//     try {
+//       final parts = token.split('.');
+//       if (parts.length != 3) {
+//         throw Exception('Invalid token structure');
+//       }
+
+//       final payload = parts[1];
+//       final normalized = base64Url.normalize(payload);
+//       final decoded = utf8.decode(base64Url.decode(normalized));
+//       final Map<String, dynamic> tokenData = json.decode(decoded);
+
+//        String role = tokenData['role'];
+//        String firstName = tokenData['first_name'];
+//        String lastName = tokenData['last_name'];
+//        String email = tokenData['email'];
+
+//       if (role != null && firstName != null && lastName != null && email != null) {
+//         print('User Info from Token:');
+//         print('Role: $role');
+//         print('First Name: $firstName');
+//         print('Last Name: $lastName');
+//         print('Email: $email');
+
+//         // store them in SharedPreferences
+//         await prefs.setString('role', role);
+//         await prefs.setString('first_name', firstName);
+//         await prefs.setString('last_name', lastName);
+//         await prefs.setString('email', email);
+//       } else {
+//         print('Some fields are missing in the token.');
+//       }
+//     } catch (e) {
+//       print('Error decoding token: $e');
+//     }
+//   } else {
+//     print('No token found in SharedPreferences');
+//   }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage(role: _selectedRole!)),
@@ -130,12 +175,15 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         'role': _selectedRole,
       };
 
-      if (_selectedRole == 'Admin') {
+      if (_selectedRole == 'admin') {
         data['server_number'] = serverNumberController.text;
         data['id'] = idController.text;
-      } else if (_selectedRole == 'Insurance') {
-        data['id'] = idController.text;
-        data['insurance_provider_name'] = insuranceProviderController.text;
+      } else if (_selectedRole == 'insurance') {
+        //data['id'] = idController.text;
+        //data['insurance_provider_name'] = insuranceProviderController.text;
+        //data['first_name'] = insuranceProviderController.text;
+        //data['last_name'] = stateController.text;
+        data['password'] = idController.text;
       }
 
         final response = await http.post(
@@ -147,6 +195,8 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         if (response.statusCode == 202) {
         final responseData = json.decode(response.body);
         await _prefs.setString('access_token', responseData['access_token']);
+
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage(role: _selectedRole!)),
@@ -258,15 +308,15 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
                             value: _selectedRole,
                             items: [
                               DropdownMenuItem(
-                                value: 'User',
+                                value: 'user',
                                 child: Text('User'),
                               ),
                               DropdownMenuItem(
-                                value: 'Insurance',
+                                value: 'insurance',
                                 child: Text('Insurance'),
                               ),
                               DropdownMenuItem(
-                                value: 'Admin',
+                                value: 'admin',
                                 child: Text('Admin'),
                               ),
                             ],
@@ -369,7 +419,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
   Widget _getRoleSpecificFields() {
     final screenHeight = MediaQuery.of(context).size.height;
 
-    if (_selectedRole == 'User') {
+    if (_selectedRole == 'user') {
       return Column(
         children: [
           if (isSignupMode) ...[
@@ -379,7 +429,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
           _buildTextField('Password', passwordController, Icons.lock),
         ],
       );
-    } else if (_selectedRole == 'Insurance') {
+    } else if (_selectedRole == 'insurance') {
       return Column(
         children: [
           if (isSignupMode) ...[

@@ -40,6 +40,8 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   late double _initialLatitude;
   late double _initialLongitude;
 
+  late String role;
+
   // Load the first masked latitude and longitude from shared preferences
   Future<void> _loadFirstPoint() async {
     final prefs = await SharedPreferences.getInstance();
@@ -69,7 +71,8 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
 @override
 void initState() {
   super.initState();
-  _checkAuthToken();
+  //_checkAuthToken();
+  _loadUserInfo();
 
   // Only reset when page is reopened, NOT when stopping/starting trip
   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -90,17 +93,14 @@ _loadFirstPoint().then((_) {
   });
 }
 
-Future<void> _checkAuthToken() async {
+Future<void> _loadUserInfo() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('access_token');
-  Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
 
-  // if (JwtDecoder.isExpired(token)) {
-  //   Navigator.pushReplacement(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => LoginPageWidget()),
-  //   );
-  // }
+  role = prefs.getString('role')!;
+  //String? firstName = prefs.getString('first_name');
+  //String? lastName = prefs.getString('last_name');
+  //String? email = prefs.getString('email');
+
 }
 
 @override
@@ -365,7 +365,7 @@ Widget build(BuildContext context) {
       // Navigate back to HomePage instead of the last screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePage(role: "user")), // Pass role 
+        MaterialPageRoute(builder: (context) => HomePage(role: role)), // Pass role 
       );
       return false; // Prevent default back navigation
     },
@@ -376,6 +376,7 @@ Widget build(BuildContext context) {
     appBar: CustomAppBar(
       selectedIndex: _selectedIndex,
       onItemTapped: _onItemTapped,
+      role:role
     ),
 
     body: Padding(
@@ -399,6 +400,7 @@ Widget build(BuildContext context) {
     bottomNavigationBar: CustomAppBar(
       selectedIndex: _selectedIndex,
       onItemTapped: _onItemTapped,
+      role:role,
     ).buildBottomNavBar(context),
   ));
 }

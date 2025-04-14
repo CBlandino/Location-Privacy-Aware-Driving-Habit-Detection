@@ -7,8 +7,15 @@ import 'home_page.dart';
 import 'login_page.dart';
 import 'account_page.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
 
+  @override
+  _SettingsPage createState() => _SettingsPage();
+}
+
+class _SettingsPage extends State<SettingsPage>
+{
+late String role;
 int _selectedIndex = 3;
 
     void _onItemTapped(int index) {
@@ -17,6 +24,23 @@ int _selectedIndex = 3;
       });
     }
 
+ @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+Future<void> _loadUserInfo() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  role = prefs.getString('role')!;
+  //String? firstName = prefs.getString('first_name');
+  //String? lastName = prefs.getString('last_name');
+  //String? email = prefs.getString('email');
+
+
+}
+
 @override
 Widget build(BuildContext context) {
     return WillPopScope(
@@ -24,7 +48,7 @@ Widget build(BuildContext context) {
       // Navigate back to HomePage instead of the last screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePage(role: "user")), // Pass role 
+        MaterialPageRoute(builder: (context) => HomePage(role: role)), // Pass role 
       );
       return false; // Prevent default back navigation
     },
@@ -33,6 +57,7 @@ Widget build(BuildContext context) {
     appBar: CustomAppBar(
       selectedIndex: 3, // Assuming index 3 is the "Settings" page
       onItemTapped: _onItemTapped,
+      role: role,
     ),
 
     body: Stack(
@@ -77,6 +102,7 @@ Widget build(BuildContext context) {
     bottomNavigationBar: CustomAppBar(
       selectedIndex: 3, // Keep this in sync with settings page index
       onItemTapped: _onItemTapped,
+      role:role,
     ).buildBottomNavBar(context),
   ));
 }
@@ -149,7 +175,7 @@ Widget buildReviewDriving(BuildContext context) => SimpleSettingsTile(
   },
 );
 
-  void setState(Null Function() param0) {}
+ // void setState(Null Function() param0) {}
 
 
       // backgroundColor: Colors.white,
