@@ -20,10 +20,12 @@ func LoginUser(c *gin.Context, db *sql.DB) {
     err := c.BindJSON(&loggedUser)
     if err != nil {
         log.Fatal(err)
+		c.IndentedJSON(http.StatusNotAcceptable, err)
+		return
     }
 
     //TODO better error handling... either user email is not registered or incorrect password
-    err = verifyLogin(loggedUser, db)
+    err = verifyLogin(&loggedUser, db)
     if err != nil {
         log.Println(err)
         log.Println("USER NOT FOUND. STATUS:", http.StatusNotAcceptable)
@@ -31,7 +33,7 @@ func LoginUser(c *gin.Context, db *sql.DB) {
         return
     }
 
-    jwt, status := tokens.NewJWT([]string{loggedUser.Email})
+    jwt, status := tokens.NewJWT(loggedUser)
     if status != http.StatusAccepted { 
         log.Println("USER:", loggedUser.Email, "NOT ACCEPTED")
         c.Status(status)
@@ -39,10 +41,10 @@ func LoginUser(c *gin.Context, db *sql.DB) {
     c.IndentedJSON(http.StatusAccepted, &authResponse{jwt})
 }
 
-func verifyLogin(logUser tokens.User, db *sql.DB) error {
+func verifyLogin(logUser *tokens.User, db *sql.DB) error {
     var pass, salt []byte
-    usrRow := db.QueryRow("SELECT password_hash, salt FROM users WHERE email = $1", logUser.Email)
-    if err := usrRow.Scan(&pass, &salt); err != nil {
+    usrRow := db.QueryRow("SELECT password_hash, salt, first_name, last_name, class FROM users WHERE email = $1", logUser.Email)
+    if err := usrRow.Scan(&pass, &salt, &logUser.Firstname, &logUser.Lastname, &logUser.Role); err != nil {
         return err
     }
 

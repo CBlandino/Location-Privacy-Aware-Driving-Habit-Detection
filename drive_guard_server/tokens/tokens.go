@@ -12,14 +12,17 @@ import (
 // use crypto/rand
 var signingKey = []byte("SUPERSECRETSIGNINGKEY")
 
-func NewJWT(claimsList []string) (string, int) {
+func NewJWT(user User) (string, int) {
 
 	// create user claims... this can all be expanded upon based on user class
 	// different inputs etc.
 	// for now its just email
 	claims := &UserClaims{
 		// add more claims later (adjust parameters)
-		claimsList[0],
+		user.Firstname,
+		user.Lastname, 
+		user.Email, 
+		user.Role,
 		jwt.StandardClaims{},
 	}
 
