@@ -1,9 +1,13 @@
+
+CREATE TYPE userclass AS ENUM ('admin', 'insurance', 'user');
+
 DROP TABLE IF EXISTS Users;
 CREATE TABLE Users (
     user_id         SERIAL PRIMARY KEY,        
     first_name      VARCHAR(100) NOT NULL, 
     last_name       VARCHAR(100) NOT NULL,
     email           VARCHAR(255) UNIQUE NOT NULL,
+    class           userclass NOT NULL,
     password_hash   BYTEA NOT NULL, 
     salt            BYTEA NOT NULL
 );
@@ -16,6 +20,8 @@ CREATE TABLE Trips (
     done            BOOLEAN NOT NULL,
     data            JSONB NOT NULL,
     distance        REAL NOT NULL, 
+    velocity        REAL, 
+    trip_score      REAL,
 
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
