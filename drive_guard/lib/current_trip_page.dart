@@ -261,27 +261,29 @@ Future<void> _getCurrentLocation() async {
       int deltaLat = maskedLatitude - _previousMaskedLatitude!;
       int deltaLon = maskedLongitude - _previousMaskedLongitude!;
 
-      setState(() {
-        deltaPoints.insert(0, {
+            setState(() {
+        final deltaPoint = {
           'dlat': deltaLat,
           'dlon': deltaLon,
           't': DateTime.now().toIso8601String(),
           'p': _pointCounter,
-        });
+        };
 
-        deltaPointsClone.insert(0, {
+        final clonePoint = {
           'delta_latitude': deltaLat,
           'delta_longitude': deltaLon,
           'point_number': _pointCounter,
-        });
+        };
 
+        deltaPoints.insert(0, deltaPoint);
+        deltaPointsClone.insert(0, clonePoint);
         _pointCounter++;
 
+        _previousMaskedLatitude = maskedLatitude;
+        _previousMaskedLongitude = maskedLongitude;
       });
     }
 
-    _previousMaskedLatitude = maskedLatitude;
-    _previousMaskedLongitude = maskedLongitude;
   } catch (e) {
     print("Error getting location: $e");
   }
