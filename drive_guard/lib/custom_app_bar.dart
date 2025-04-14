@@ -8,23 +8,38 @@ import 'user_lookup.dart';
 import 'user_score_page.dart';
 import 'user_trips_page.dart';
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
-  final String? role; // Add role parameter
- 
+  final String? role;
 
   const CustomAppBar({
     Key? key,
     required this.selectedIndex,
     required this.onItemTapped,
-    required this.role, // Require role
+    required this.role,
   }) : super(key: key);
+
+  @override
+  State<CustomAppBar> createState() => _CustomAppBarState();
+
+  @override
+  Size get preferredSize => Size.fromHeight(kToolbarHeight);
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+  late String role;
+
+ @override
+  void initState() {
+    super.initState();
+    role = widget.role!; // default if null
+  }
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(_getAppBarTitle(selectedIndex)),
+      title: Text(_getAppBarTitle(widget.selectedIndex)),
       centerTitle: true,
       backgroundColor: Colors.blue,
     );
@@ -66,12 +81,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   Widget buildBottomNavBar(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: selectedIndex,
+      currentIndex: widget.selectedIndex,
       elevation: 10,
       selectedItemColor: Colors.blue,
       unselectedItemColor: Colors.grey,
       onTap: (index) {
-        onItemTapped(index); // Update selected index
+        widget.onItemTapped(index); // Update selected index
         _navigateToPage(context, index); // Handle navigation
       },
       items: role == 'Insurance Provider' 

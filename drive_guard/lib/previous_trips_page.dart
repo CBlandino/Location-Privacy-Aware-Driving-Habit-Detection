@@ -35,9 +35,6 @@ Future<void> _loadUserInfo() async {
   //String? lastName = prefs.getString('user_last_name');
   //String? email = prefs.getString('user_email');
 
-  if (role == null) {
-    print('role not found.');
-  } 
 }
 
 Future<void> fetchPreviousTrips() async {
