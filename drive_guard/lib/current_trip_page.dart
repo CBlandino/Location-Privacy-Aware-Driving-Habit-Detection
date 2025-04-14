@@ -277,12 +277,11 @@ Future<void> _getCurrentLocation() async {
 
         _pointCounter++;
 
-        _previousMaskedLatitude = maskedLatitude;
-         _previousMaskedLongitude = maskedLongitude;
-
       });
     }
 
+    _previousMaskedLatitude = maskedLatitude;
+    _previousMaskedLongitude = maskedLongitude;
   } catch (e) {
     print("Error getting location: $e");
   }
@@ -453,7 +452,7 @@ Widget _buildDeltaList(double screenHeight, double screenWidth) {
         padding: EdgeInsets.all(screenWidth * 0.02),
         child: deltaPointsClone.isNotEmpty
             ? ListView.builder(
-                key: ValueKey(deltaPointsClone.length),
+                //key: ValueKey(deltaPointsClone.length),
                 itemCount: deltaPointsClone.length,
                 itemBuilder: (context, index) {
                   var delta = deltaPointsClone[index];
