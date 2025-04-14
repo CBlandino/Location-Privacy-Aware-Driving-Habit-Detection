@@ -216,7 +216,7 @@ void stopTrip() async {
   });
 
   // Send remaining data but DO NOT clear `deltaPoints` or reset UI
-  if(_pointCounter > 20)
+  if(_pointCounter > 1)
   {sendTripData();}
 
   // Stop all timers
