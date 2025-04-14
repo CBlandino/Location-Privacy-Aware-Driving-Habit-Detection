@@ -182,20 +182,30 @@ void dispose() {
 
   Future<void> _showTripStartingDialog(int seconds) async {
   int remaining = seconds;
+  late void Function(void Function()) safeSetState;
+  late StateSetter dialogSetState;
 
-  showDialog(
+  // Start dialog
+  await showDialog(
     context: context,
-    barrierDismissible: false, // prevent closing manually
+    barrierDismissible: false,
     builder: (BuildContext context) {
       return StatefulBuilder(
-        builder: (context, setState) {
-          Timer.periodic(Duration(seconds: 1), (Timer t) {
-            if (remaining == 1) {
-              t.cancel();
-              Navigator.of(context).pop(); // dismiss dialog
-            } else {
-              setState(() => remaining--);
+        builder: (BuildContext context, StateSetter setState) {
+          dialogSetState = setState;
+          safeSetState = (fn) {
+            if (Navigator.of(context).canPop()) {
+              dialogSetState(fn);
             }
+          };
+
+          // Start countdown once builder is ready
+          Future.delayed(Duration.zero, () async {
+            for (int i = remaining; i > 0; i--) {
+              safeSetState(() => remaining = i);
+              await Future.delayed(Duration(seconds: 1));
+            }
+            Navigator.of(context).pop(); // Close dialog
           });
 
           return AlertDialog(
@@ -214,7 +224,6 @@ void dispose() {
     },
   );
 }
-
 Future<void> startTrip() async {
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
@@ -235,7 +244,7 @@ Future<void> startTrip() async {
   await _showTripStartingDialog(5); // shows 5 second countdown
 
 print("Warming up GPS...");
-for (int i = 0; i < 3; i++) {
+for (int i = 0; i < 6; i++) {
   try {
     Position warmupPosition = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
