@@ -239,7 +239,11 @@ void stopTrip() async {
   setState(() {});
 }
 
+bool _isGettingLocation = false;
 Future<void> _getCurrentLocation() async {
+if (_isGettingLocation) return;
+  _isGettingLocation = true;
+
   try {
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
@@ -284,7 +288,9 @@ Future<void> _getCurrentLocation() async {
     _previousMaskedLongitude = maskedLongitude;
   } catch (e) {
     print("Error getting location: $e");
-  }
+  }finally {
+    _isGettingLocation = false;
+}
 }
 
   // Send trip data to the server
@@ -327,7 +333,7 @@ Future<void> _getCurrentLocation() async {
         deltaPoints.clear(); //delta points are currently being cleared, clone the delta points into another list for the map
       
       } else {
-        //print('Error sending trip data');
+        print('Error sending trip data');
       }
     } catch (error) {
       print('Error: $error');
