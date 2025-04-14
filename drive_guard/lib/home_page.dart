@@ -44,12 +44,12 @@ class _HomePageState extends State<HomePage> {
     late String firstName;
     late String lastName;
 
-  final List<Widget> _userPages = [
-    CurrentTripPage(),
-    PreviousTripsPage(),
-    ScorePage(),
-    SettingsPage(),
-  ];
+  // final List<Widget> _userPages = [
+  //   CurrentTripPage(),
+  //   PreviousTripsPage(),
+  //   ScorePage(),
+  //   SettingsPage(),
+  // ];
 
   final List<Widget> _insurancePages = [
     // Placeholder pages for insurance provider
