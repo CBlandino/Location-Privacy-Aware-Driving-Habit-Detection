@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"flag"
 
 	"database/sql"
 	_ "github.com/lib/pq"
@@ -11,20 +12,37 @@ import (
     "context"
 
 	"drive_guard_server/auth"
-	// "drive_guard_server/score"
 	"drive_guard_server/trips"
 )
 
 var (
-    addr string = ":8080"
+    ADDR string 
+	DB_HOST string 
+	DB_USER string 
+	DB_PASS string 
+	DB_NAME string
 )
+
+func init() {
+	flag.StringVar(&ADDR, "addr", ":8080", "address to run the server on")
+	flag.StringVar(&DB_HOST, "dbaddr", "", "address of databse")
+	flag.StringVar(&DB_USER, "dbuser", "dg_api", "database username")
+	flag.StringVar(&DB_PASS, "dbpass", "secure", "database user password")
+	flag.StringVar(&DB_NAME, "dbname", "dg_db", "database name")
+}
 
 func main() {
     log.Println("STARTING SERVER")
 
 	//connect and configure database
-    db_conn := "user=dg_api dbname=dg_db sslmode=disable"
-    db, err := sql.Open("postgres", db_conn)
+	dbConnStr :=  " user=" + DB_USER + " password=" + DB_PASS + " dbname=" + DB_NAME 
+	if DB_HOST != "" {
+		dbConnStr += "host=" + DB_HOST + " sslmode=require"
+	} else {
+		dbConnStr += " sslmode=disable"
+	}
+
+    db, err := sql.Open("postgres", dbConnStr)
     if err != nil {
         log.Fatal(err)
     }
@@ -35,6 +53,7 @@ func main() {
 	// ping database to ensure successful connection
     if err := db.PingContext(context.Background()); err != nil {
         log.Println("DATABASE CONNECTION UNSUCCESSFUL")
+		log.Println(err)
 	} else {
         log.Println("DATABASE CONNECTION SUCCESSFUL")
     }
@@ -54,5 +73,5 @@ func main() {
 		trips.Previous_trips(c, db)
 	})
 
-    server.Run(addr)
+    server.Run(ADDR)
 }
