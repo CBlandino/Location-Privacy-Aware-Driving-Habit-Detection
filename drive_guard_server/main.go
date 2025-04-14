@@ -9,6 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 
     "context"
+
+	"drive_guard_server/auth"
+	// "drive_guard_server/score"
+	"drive_guard_server/trips"
 )
 
 var (
@@ -38,16 +42,16 @@ func main() {
 	//initialize the web server and handlers
     server := gin.Default()
     server.POST("/signup", func(c *gin.Context) {
-        signupUser(c, db)
+        auth.SignupUser(c, db)
     }) 
     server.POST("/login", func(c *gin.Context) {
-        loginUser(c, db)
+        auth.LoginUser(c, db)
     })
     server.POST("/trip", func(c *gin.Context) {
-        transmitPoints(c, db)
+        trips.TransmitPoints(c, db)
     })
 	server.GET("/previous_trips", func(c *gin.Context) {
-		previous_trips(c, db)
+		trips.Previous_trips(c, db)
 	})
 
     server.Run(addr)

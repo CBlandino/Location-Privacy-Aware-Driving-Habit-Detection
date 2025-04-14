@@ -1,4 +1,4 @@
-package main 
+package trips 
 
 
 import (
@@ -9,9 +9,11 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/gin-gonic/gin"
+
+	"drive_guard_server/tokens"
 )
 
-func previous_trips(c *gin.Context, db *sql.DB) {
+func Previous_trips(c *gin.Context, db *sql.DB) {
 	// select all of the users trips in the trips table.
 
 	// Attempt to verify the JWT that should be held within the Authorization header of the request
@@ -21,7 +23,7 @@ func previous_trips(c *gin.Context, db *sql.DB) {
 		log.Println("No Authorization header found on request")
 		return
 	}
-	claims, err := getClaims(token)
+	claims, err := tokens.GetClaims(token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)	
 		log.Println("BAD REQUEST! :", err)
@@ -64,7 +66,4 @@ func previous_trips(c *gin.Context, db *sql.DB) {
 }
 
 
-type PrevTrip struct {
-	TimeStamp string `json:"timestamp"`
-	Distance float32 `json:"distance"`
-}
+

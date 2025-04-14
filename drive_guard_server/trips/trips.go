@@ -1,9 +1,7 @@
-package main
+package trips
 
 import (
     "log"
-	"errors"
-	"strings"
 	"slices"
     "net/http"	
 	"encoding/json"
@@ -11,27 +9,12 @@ import (
 
     "database/sql"
 	_ "github.com/lib/pq"
-	"github.com/golang-jwt/jwt"
     "github.com/gin-gonic/gin"
+
+	"drive_guard_server/tokens"
 )
 
-
-type pointSet struct {
-	Start bool `json:"isStart"`
-	End bool `json:"isEnd"`
-	Start_time string `json:"start_time"`
-	Elapsed_time int `json:"elapsed_time"`
-	Points []point `json:"delta_points"`
-}
-
-type point struct {
-	Lat int `json:"delta_latitude"`
-	Long int `json:"delta_longitude"`
-	Timestamp string `json:"timestamp"`
-	Order int `json:"point_number"`
-}
-
-func transmitPoints(c *gin.Context, db *sql.DB) {
+func TransmitPoints(c *gin.Context, db *sql.DB) {
     log.Println("RECIEVING POINTS")
 
 	set := new(pointSet)
@@ -43,7 +26,8 @@ func transmitPoints(c *gin.Context, db *sql.DB) {
 		log.Println("No Authorization header found on request")
 		return
 	}
-	claims, err := getClaims(token)
+
+	claims, err := tokens.GetClaims(token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)	
 		log.Println("BAD REQUEST! :", err)
@@ -97,14 +81,23 @@ func transmitPoints(c *gin.Context, db *sql.DB) {
     c.Status(http.StatusAccepted)
 }
 
-func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
+func insertStartTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error {
 	log.Println("STARTING TRIP INSERT")
 	id, err := getUserID(claims.Email, db)
 	if err != nil {
 		return err
 	}
 
-	distance := calculateFunction(set)
+	var distanceSet float64 = 0.0
+	for i, p := range set.Points {
+		d := getDistance(&p)
+		distanceSet += d
+		// velocity = distance / time 
+		// units are miles per second, multiply by 3600 to conver to miles per hour 
+		set.Points[i].Velo = (d / 5.0) * 3600.0
+	}
+
+	log.Println("total distance:", distanceSet)
 
 	//Serialize the delta points into json array form
 	jsonPoints, err := json.Marshal(set.Points) 
@@ -118,7 +111,7 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	// $4 = json array representation of the points
 	// $5 = total accumulated distance thus far, in miles
 	insertSTR := "INSERT INTO trips VALUES (DEFAULT, $1, $2, $3, $4, $5)"
-	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints, distance)
+	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints, distanceSet)
 	if err != nil {
 		return err
 	}
@@ -126,14 +119,23 @@ func insertStartTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	return nil
 }
 
-func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
+func updateExistingTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error {
 	log.Println("UPDATING TRIP. END?:", set.End)
 	id, err := getUserID(claims.Email, db)
 	if err != nil {
 		return err
 	}
 
-	distance := calculateFunction(set)
+	var distanceSet float64 = 0.0
+	for i, p := range set.Points {
+		d := getDistance(&p)
+		distanceSet += d
+		// velocity = distance / time
+		// units are miles per second, multiply by 3600 to conver to miles per hour 
+		set.Points[i].Velo = (d / 5.0) * 3600.0
+	}
+
+	log.Println("total distance:", distanceSet)
 
 	jsonPoints, err := json.Marshal(set.Points)
 	if err != nil {
@@ -141,7 +143,7 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 	}	
 
 	updateSTR := "UPDATE trips SET data = data || $1::jsonb, distance = distance + $2, done = $3 WHERE user_id = $4 AND done = FALSE"
-	_, err = db.Exec(updateSTR, jsonPoints, distance, set.End, id)
+	_, err = db.Exec(updateSTR, jsonPoints, distanceSet, set.End, id)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -152,7 +154,7 @@ func updateExistingTrip(set *pointSet, claims *UserClaims, db *sql.DB) error {
 
 // function that passes over all of the points in a transmitted point set prior to their inclusion in the db 
 // we can calculate distance on the set here, as well as any other metrics we wanted to/needed to
-func calculateFunction(set *pointSet) float64 {
+func getDistance(p *point) float64 {
 
 	var totalDist float64 = 0.0
 
@@ -162,26 +164,21 @@ func calculateFunction(set *pointSet) float64 {
 	const Beta float64 = 1.0
 
 	//running accumulator for the haversine distance between points for every point in the batch
-	for _, dPoint := range set.Points {
 
-		dLat := (float64(dPoint.Lat) * 0.000001) * (math.Pi / 180.0)
-		dLong := (float64(dPoint.Long) * 0.000001) * (math.Pi / 180.0)
+	dLat := (float64(p.Lat) * 0.000001) * (math.Pi / 180.0)
+	dLong := (float64(p.Long) * 0.000001) * (math.Pi / 180.0)
 
-		lat_over2 := dLat / 2.0
-		lat_sin := math.Sin(lat_over2)
-		lat_squared := math.Pow(lat_sin, 2)
+	lat_over2 := dLat / 2.0
+	lat_sin := math.Sin(lat_over2)
+	lat_squared := math.Pow(lat_sin, 2)
 
-		long_over2 := dLong / 2.0 
-		long_sin := math.Sin(long_over2) 
-		long_squared := math.Pow(long_sin, 2)
+	long_over2 := dLong / 2.0 
+	long_sin := math.Sin(long_over2) 
+	long_squared := math.Pow(long_sin, 2)
 
-		a := lat_squared + Beta * long_squared
-		c := 2.0 * math.Atan2(math.Sqrt(a), math.Sqrt(1.0 - a)) 
-		totalDist += R * c
-	}
-
-	//total distance for the trip
-	log.Println(totalDist)
+	a := lat_squared + Beta * long_squared
+	c := 2.0 * math.Atan2(math.Sqrt(a), math.Sqrt(1.0 - a)) 
+	totalDist += R * c
 
 	return totalDist
 }
@@ -196,30 +193,3 @@ func getUserID(claimsEmail string, db *sql.DB) (int, error) {
 
 	return id, nil
 }
-
-
-func getClaims(tokenStr string) (*UserClaims, error) {
-	// split "Bearer" off the header string
-	splt := strings.Split(tokenStr, " ")
-	if len(splt) != 2 && splt[0] != "Bearer" {
-		return nil, errors.New("Invalid Authorization header format")
-	}
-
-	tokenStr = splt[1]
-	claims := new(UserClaims)
-	claims.Email = "test"
-	// verify the integrity of the JWT and parse its claims into the claims struct (UserClaims type from auth.go)
-	tok, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
-		return signingKey, nil
-	})
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
-	log.Println(tok)
-
-	return claims, nil
-}
-
-
