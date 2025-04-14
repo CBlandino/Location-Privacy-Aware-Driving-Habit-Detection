@@ -180,49 +180,25 @@ void dispose() {
     }
   }
 
-// Future<void> _showTripStartingDialog(int seconds) async {
-//   int remaining = seconds;
+Future<void> _showLoadingDialog(String message) async {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(message),
+          ],
+        ),
+      );
+    },
+  );
+}
 
-//   await showDialog(
-//     context: context,
-//     barrierDismissible: false,
-//     builder: (BuildContext dialogContext) {
-//       return StatefulBuilder(
-//         builder: (BuildContext context, StateSetter setState) {
-//           // Start countdown only once
-//           Future.delayed(Duration.zero, () async {
-//             for (int i = seconds; i > 0; i--) {
-//               await Future.delayed(Duration(seconds: 1));
-//               if (Navigator.of(context).canPop()) {
-//                 setState(() {
-//                   remaining = i - 1;
-//                 });
-//               } else {
-//                 return;
-//               }
-//             }
-
-//             if (Navigator.of(context).canPop()) {
-//               Navigator.of(context).pop(); // Close dialog
-//             }
-//           });
-
-//           return AlertDialog(
-//             title: Text("Warming up GPS"),
-//             content: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 CircularProgressIndicator(),
-//                 SizedBox(height: 16),
-//                 Text("Starting trip in $remaining seconds..."),
-//               ],
-//             ),
-//           );
-//         },
-//       );
-//     },
-//   );
-// }
 
 
 Future<void> startTrip() async {
@@ -242,22 +218,26 @@ Future<void> startTrip() async {
     tripStartTime = DateTime.now();
   });
 
-  //await _showTripStartingDialog(6); // shows 5 second countdown
 
-print("Warming up GPS...");
-for (int i = 0; i < 5; i++) {
-  try {
-    Position warmupPosition = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-    print("Warmup #$i → Lat: ${warmupPosition.latitude}, Lon: ${warmupPosition.longitude}");
-    await Future.delayed(Duration(seconds: 1));
-  } catch (e) {
-    print("Warmup error: $e");
-  }
-}
+await _showLoadingDialog("Getting ready... warming up GPS");
+
+// wakes up GPS
+print("Waking up GPS...");
+await Geolocator.getCurrentPosition(
+  desiredAccuracy: LocationAccuracy.low,
+); 
+
+// let GPS stabilize
+await Future.delayed(Duration(seconds: 3)); 
+
+print("Getting accurate location...");
+Position pos = await Geolocator.getCurrentPosition(
+  desiredAccuracy: LocationAccuracy.high,
+);
+print("Accurate: ${pos.latitude}, ${pos.longitude}");
 
     print("GPS warmup complete. Starting timers.");
+    Navigator.of(context, rootNavigator: true).pop();
 
   // Start listening to GPS updates
   _deltaTimer = Timer.periodic(Duration(seconds: 5), (timer) {
@@ -299,10 +279,7 @@ void stopTrip() async {
   setState(() {});
 }
 
-bool _isGettingLocation = false;
 Future<void> _getCurrentLocation() async {
-if (_isGettingLocation) return;
-  _isGettingLocation = true;
 
   try {
     Position position = await Geolocator.getCurrentPosition(
@@ -348,10 +325,9 @@ if (_isGettingLocation) return;
     _previousMaskedLongitude = maskedLongitude;
   } catch (e) {
     print("Error getting location: $e");
-  }finally {
-    _isGettingLocation = false;
+  }
 }
-}
+
 
   // Send trip data to the server
   Future<void> sendTripData() async {
