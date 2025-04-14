@@ -13,7 +13,6 @@ class ScorePage extends StatefulWidget {
 class _ScorePage extends State<ScorePage> {
   final double score = 85;
   int _selectedIndex = 2;
-  late String role;
 
   // Static data for testing
   Map<String, String> breakdown = {
@@ -33,7 +32,7 @@ class _ScorePage extends State<ScorePage> {
 Future<void> _loadUserInfo() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  role = prefs.getString('role')!;
+  String role = prefs.getString('role')!;
   //String? firstName = prefs.getString('first_name');
   //String? lastName = prefs.getString('last_name');
   //String? email = prefs.getString('email');
