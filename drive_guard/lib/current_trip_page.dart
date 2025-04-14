@@ -180,6 +180,41 @@ void dispose() {
     }
   }
 
+  Future<void> _showTripStartingDialog(int seconds) async {
+  int remaining = seconds;
+
+  showDialog(
+    context: context,
+    barrierDismissible: false, // prevent closing manually
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          Timer.periodic(Duration(seconds: 1), (Timer t) {
+            if (remaining == 1) {
+              t.cancel();
+              Navigator.of(context).pop(); // dismiss dialog
+            } else {
+              setState(() => remaining--);
+            }
+          });
+
+          return AlertDialog(
+            title: Text("Warming up GPS"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text("Starting trip in $remaining seconds..."),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 Future<void> startTrip() async {
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
@@ -197,7 +232,22 @@ Future<void> startTrip() async {
     tripStartTime = DateTime.now();
   });
 
+  await _showTripStartingDialog(5); // shows 5 second countdown
 
+print("Warming up GPS...");
+for (int i = 0; i < 3; i++) {
+  try {
+    Position warmupPosition = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    print("Warmup #$i → Lat: ${warmupPosition.latitude}, Lon: ${warmupPosition.longitude}");
+    await Future.delayed(Duration(seconds: 1));
+  } catch (e) {
+    print("Warmup error: $e");
+  }
+}
+
+    print("GPS warmup complete. Starting timers.");
 
   // Start listening to GPS updates
   _deltaTimer = Timer.periodic(Duration(seconds: 5), (timer) {
