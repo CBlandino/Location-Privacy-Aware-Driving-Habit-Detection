@@ -83,6 +83,7 @@ void _showTripDetails(Map<String, dynamic> trip) {
           children: [
             Text("Start Time: ${timestamp > 0 ? DateTime.fromMillisecondsSinceEpoch(timestamp * 1000) : 'Invalid timestamp'}"),
             Text("Distance: ${trip['distance']} meters"),
+            Text("Average Velocity: ${trip['velocity']} mph"),
           ],
         ),
         actions: [
