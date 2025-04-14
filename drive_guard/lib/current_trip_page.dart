@@ -180,7 +180,14 @@ void dispose() {
     }
   }
 
-void startTrip() {
+Future<void> startTrip() async {
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+    await _requestPermissions(); // Request permission if not granted
+    permission = await Geolocator.checkPermission();
+  }
+
+ if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
   setState(() {
     isTripStarted = true;
     deltaPoints.clear();
@@ -190,7 +197,7 @@ void startTrip() {
     tripStartTime = DateTime.now();
   });
 
-  _requestPermissions();
+
 
   // Start listening to GPS updates
   _deltaTimer = Timer.periodic(Duration(seconds: 5), (timer) {
@@ -207,6 +214,10 @@ void startTrip() {
     sendTripData();
   });
 }
+else {
+    _showPermissionDialog("Location permission is required to start the trip.");
+  }
+}
 
 // Stop the trip but KEEP delta points visible
 void stopTrip() async {
@@ -216,7 +227,7 @@ void stopTrip() async {
   });
 
   // Send remaining data but DO NOT clear `deltaPoints` or reset UI
-  if(_pointCounter > 1)
+  if(_elapsedTime > 5)
   {sendTripData();}
 
   // Stop all timers
