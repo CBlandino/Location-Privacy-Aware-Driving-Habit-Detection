@@ -11,7 +11,7 @@ import 'user_trips_page.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
-  final String role; // Add role parameter
+  final String? role; // Add role parameter
 
   const CustomAppBar({
     Key? key,
@@ -41,7 +41,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         case 3: return "Account";
         default: return "User Lookup";
       }
-    } else { // User role
+    } else if(role == 'user') { // User role
+      switch (index) {
+        case 0: return "Home";
+        case 1: return "Previous Trips";
+        case 2: return "Score";
+        case 3: return "Account";
+        default: return "Home";
+      }
+    }
+    else 
+    {
       switch (index) {
         case 0: return "Home";
         case 1: return "Previous Trips";
