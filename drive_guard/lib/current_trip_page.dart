@@ -89,6 +89,9 @@ Future<void> _loadUserInfo() async {
   //String? firstName = prefs.getString('first_name');
   //String? lastName = prefs.getString('last_name');
   //String? email = prefs.getString('email');
+   setState((){
+      isLoading = false;
+  });
 
 }
 
