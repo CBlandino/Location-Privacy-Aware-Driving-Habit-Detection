@@ -12,8 +12,11 @@ import 'current_trip_page.dart'; // For navigation to CurrentTripPage
 import 'previous_trips_page.dart';
 import 'score_page.dart';
 import 'settings_page.dart';
-//import 'previous_trips_page.dart';
+import 'previous_trips_page.dart';
 import 'trip_helper.dart';
+import 'user_lookup.dart';
+import 'user_score_page.dart';
+import 'user_trips_page.dart';
 
 class HomePage extends StatefulWidget {
   final String role;
@@ -28,9 +31,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
     int _selectedIndex = 0;
     File? _profileImage;
+
     List<Map<String, dynamic>> _searchResults = [];
     bool _isSearching = false;
     String _searchError = '';
+    String _searchedUserId = '';
+    List<Map<String, dynamic>> _userTrips = [];
+    Map<String, dynamic>? _userScore;
+
 
   final List<Widget> _userPages = [
     CurrentTripPage(),
@@ -79,7 +87,7 @@ Future<void> loadRecentTrips() async {
   }
 }
 
-Future<void> _loadProfileImage() async {
+  Future<void> _loadProfileImage() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
@@ -112,22 +120,157 @@ Future<void> _checkAuthToken() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
   Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-
-  // if (JwtDecoder.isExpired(token)) {
-  //   Navigator.pushReplacement(
-  //   context,
-  //   MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
-  //   );
-  // }
 }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ),
+      drawer: CustomDrawer(role: widget.role),
+      body: widget.role == 'User' 
+          ? _buildUserHomePage()
+          : _buildInsuranceHomePage(),
+      bottomNavigationBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ).buildBottomNavBar(context),
+    );
+  }
+  
+  Widget _buildInsuranceHomePage() {
+    var _searchUsers;
+    return _selectedIndex == 0
+        ? Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Welcome Section
+                  _buildWelcomeCard(),
+                  SizedBox(height: 20),
+                  
+                  // User Lookup Card
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'User Lookup',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          UserLookupPage(
+                            onSearch: _searchUsers,
+                            searchResults: _searchResults,
+                            isLoading: _isSearching,
+                            errorMessage: _searchError,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : _selectedIndex == 1
+            ? Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildWelcomeCard(),
+                      SizedBox(height: 20),
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'User Trips',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              UserTripsPage(
+                                userId: _searchedUserId,
+                                trips: _userTrips,
+                                isLoading: false, // Set based on state
+                                errorMessage: '', // Set based on state
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : _selectedIndex == 2
+                ? Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildWelcomeCard(),
+                          SizedBox(height: 20),
+                          Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'User Score',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  UserScorePage(
+                                    userId: _searchedUserId,
+                                    scoreData: _userScore,
+                                    isLoading: false, // Set based on state
+                                    errorMessage: '', // Set based on state
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : SettingsPage();
+  }
+
 @override
-Widget build(BuildContext context) {
+Widget _buildUserHomePage() {
   return Scaffold(
-    appBar: CustomAppBar(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
-    ),
     drawer: CustomDrawer(role: widget.role),
     body: _selectedIndex == 0
         ? Padding(
@@ -280,16 +423,47 @@ Widget build(BuildContext context) {
               ),
             ),
           )
-        : _pages[_selectedIndex], // Switch to other pages dynamically
-
-    // Use the CustomAppBar's bottom navigation bar
-    bottomNavigationBar: CustomAppBar(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
-    )
-    .buildBottomNavBar(context),
+        : _userPages[_selectedIndex], // Switch to other pages dynamically
   );
 }
+
+
+  Widget _buildWelcomeCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 30,
+              child: Icon(Icons.business),
+            ),
+            SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome, Insurance Provider!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Manage your users and their data',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildSection({
     required String title,
@@ -423,61 +597,6 @@ Widget _buildPreviousTripsSection() {
   );
 }
 
-Widget _buildUserLookupPage() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Text(
-            'User Lookup',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 20),
-          TextField(
-            controller: _userSearchController,
-            decoration: InputDecoration(
-              labelText: 'Search by User ID, Name, or Email',
-              border: OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () => _searchUsers(_userSearchController.text),
-              ),
-            ),
-            onSubmitted: _searchUsers,
-          ),
-          SizedBox(height: 20),
-          if (_isSearching)
-            Center(child: CircularProgressIndicator()),
-          if (_searchError.isNotEmpty)
-            Text(
-              _searchError,
-              style: TextStyle(color: Colors.red),
-            ),
-          if (_searchResults.isNotEmpty)
-            Expanded(
-              child: ListView.builder(
-                itemCount: _searchResults.length,
-                itemBuilder: (context, index) {
-                  final user = _searchResults[index];
-                  return Card(
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    child: ListTile(
-                      title: Text(user['name']),
-                      subtitle: Text(user['email']),
-                      trailing: Icon(Icons.chevron_right),
-                      onTap: () {
-                        // TODO: Handle user selection
-                        // Could navigate to user details or pre-fill trips/score search
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildUserTripsPage() {
     return Padding(

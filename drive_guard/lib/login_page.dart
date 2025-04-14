@@ -83,7 +83,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
       if (_selectedRole == 'User') {
         data['first_name'] = firstNameController.text;
         data['last_name'] = lastNameController.text;
-      } else if (_selectedRole == 'Service Provider') {
+      } else if (_selectedRole == 'Admin') {
         data['server_number'] = serverNumberController.text;
         data['id'] = idController.text;
       } else if (_selectedRole == 'Insurance') {
@@ -130,10 +130,10 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         'role': _selectedRole,
       };
 
-      if (_selectedRole == 'Service Provider') {
+      if (_selectedRole == 'Admin') {
         data['server_number'] = serverNumberController.text;
         data['id'] = idController.text;
-      } else if (_selectedRole == 'Insurance Provider') {
+      } else if (_selectedRole == 'Insurance') {
         data['id'] = idController.text;
         data['insurance_provider_name'] = insuranceProviderController.text;
       }
@@ -262,12 +262,12 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
                                 child: Text('User'),
                               ),
                               DropdownMenuItem(
-                                value: 'Insurance Provider',
-                                child: Text('Insurance Provider'),
+                                value: 'Insurance',
+                                child: Text('Insurance'),
                               ),
                               DropdownMenuItem(
-                                value: 'Service Provider',
-                                child: Text('Service Provider'),
+                                value: 'Admin',
+                                child: Text('Admin'),
                               ),
                             ],
                             onChanged: (String? value) {
@@ -379,12 +379,12 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
           _buildTextField('Password', passwordController, Icons.lock),
         ],
       );
-    } else if (_selectedRole == 'Insurance Provider') {
+    } else if (_selectedRole == 'Insurance') {
       return Column(
         children: [
           if (isSignupMode) ...[
             _buildTextField(
-              'Insurance Provider Name',
+              'Insurance Name',
               insuranceProviderController,
               Icons.business,
             ),
@@ -393,7 +393,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
           _buildTextField('ID', idController, Icons.card_membership),
         ],
       );
-    } else if (_selectedRole == 'Service Provider') {
+    } else if (_selectedRole == 'Admin') {
       return Column(
         children: [
           if (isSignupMode) ...[
