@@ -20,6 +20,7 @@ import 'user_trips_page.dart';
 
 class HomePage extends StatefulWidget {
   String role;
+    bool isLoading = true;
 
   HomePage({required this.role});
 
@@ -150,6 +151,10 @@ Future<void> _checkAuthToken() async {
     firstName = decodedToken['first_name'];
     lastName = decodedToken['last_name'];
     email = decodedToken['email'];
+
+     setState((){
+      isLoading = false;
+  });
 
     print('Decoded: $firstName $lastName ($email), Role: $role');
   
@@ -701,17 +706,28 @@ Widget _buildUserHomePage() {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
     return Scaffold(
-      appBar: CustomAppBar(
+      body: Center(child: CircularProgressIndicator()),
+    );
+  }
+    return Scaffold(
+      appBar: isLoading
+        ? null
+        : CustomAppBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
         role: widget.role, // Pass the role
       ),
-      drawer: CustomDrawer(role: widget.role),
-      body: widget.role == 'user' 
+      drawer: isLoading ? null : CustomDrawer(role: widget.role),
+      body:  isLoading
+        ? Center(child: CircularProgressIndicator())
+        : widget.role == 'user' 
           ? _buildUserHomePage()
           : _buildInsuranceHomePage(),
-      bottomNavigationBar: CustomAppBar(
+      bottomNavigationBar: isLoading
+        ? null
+        : CustomAppBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
         role: widget.role, // Pass the role
