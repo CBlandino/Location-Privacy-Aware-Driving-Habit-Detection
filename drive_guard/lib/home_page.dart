@@ -28,14 +28,24 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
     int _selectedIndex = 0;
     File? _profileImage;
+    List<Map<String, dynamic>> _searchResults = [];
+    bool _isSearching = false;
+    String _searchError = '';
 
-    final List<Widget> _pages = [
-      // HomePage(),      // Home Dashboard
-      CurrentTripPage(),    // Current Trip
-      PreviousTripsPage(),  // Previous Trips
-      ScorePage(),          // Score Page
-      SettingsPage(),        // Account Page
-    ];
+  final List<Widget> _userPages = [
+    CurrentTripPage(),
+    PreviousTripsPage(),
+    ScorePage(),
+    SettingsPage(),
+  ];
+
+  final List<Widget> _insurancePages = [
+    // Placeholder pages for insurance provider
+    Container(), // User Lookup
+    Container(), // User Trips
+    Container(), // User Score
+    SettingsPage(),
+  ];
 
     void _onItemTapped(int index) {
       setState(() {
@@ -412,5 +422,127 @@ Widget _buildPreviousTripsSection() {
     ),
   );
 }
+
+Widget _buildUserLookupPage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Text(
+            'User Lookup',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
+          TextField(
+            controller: _userSearchController,
+            decoration: InputDecoration(
+              labelText: 'Search by User ID, Name, or Email',
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => _searchUsers(_userSearchController.text),
+              ),
+            ),
+            onSubmitted: _searchUsers,
+          ),
+          SizedBox(height: 20),
+          if (_isSearching)
+            Center(child: CircularProgressIndicator()),
+          if (_searchError.isNotEmpty)
+            Text(
+              _searchError,
+              style: TextStyle(color: Colors.red),
+            ),
+          if (_searchResults.isNotEmpty)
+            Expanded(
+              child: ListView.builder(
+                itemCount: _searchResults.length,
+                itemBuilder: (context, index) {
+                  final user = _searchResults[index];
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    child: ListTile(
+                      title: Text(user['name']),
+                      subtitle: Text(user['email']),
+                      trailing: Icon(Icons.chevron_right),
+                      onTap: () {
+                        // TODO: Handle user selection
+                        // Could navigate to user details or pre-fill trips/score search
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserTripsPage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Text(
+            'User Trip Lookup',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
+          TextField(
+            decoration: InputDecoration(
+              labelText: 'Enter User ID',
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  // TODO: Implement trip lookup
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          // TODO: Add trip results display
+          Expanded(
+            child: Center(
+              child: Text('Search for a user to view their trips')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserScorePage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Text(
+            'User Score Lookup',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
+          TextField(
+            decoration: InputDecoration(
+              labelText: 'Enter User ID',
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  // TODO: Implement score lookup
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          // TODO: Add score display
+          Expanded(
+            child: Center(
+              child: Text('Search for a user to view their score')),
+          ),
+        ],
+      ),
+    );
+  }
 
 }

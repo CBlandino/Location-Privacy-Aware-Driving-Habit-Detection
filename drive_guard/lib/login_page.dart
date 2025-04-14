@@ -77,6 +77,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
       Map<String, dynamic> data = {
         'email': emailController.text,
         'password': passwordController.text,
+        'role': _selectedRole,
       };
 
       if (_selectedRole == 'User') {
@@ -126,6 +127,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
       Map<String, dynamic> data = {
         'email': emailController.text,
         'password': passwordController.text,
+        'role': _selectedRole,
       };
 
       if (_selectedRole == 'Service Provider') {
