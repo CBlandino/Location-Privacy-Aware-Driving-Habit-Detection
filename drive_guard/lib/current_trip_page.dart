@@ -244,7 +244,7 @@ Future<void> startTrip() async {
   await _showTripStartingDialog(5); // shows 5 second countdown
 
 print("Warming up GPS...");
-for (int i = 0; i < 6; i++) {
+for (int i = 0; i < 5; i++) {
   try {
     Position warmupPosition = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
