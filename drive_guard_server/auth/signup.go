@@ -74,12 +74,12 @@ func insertUser(newUser tokens.User, db *sql.DB) (sql.Result, error) {
 
 
 func checkRole(input string) (string, error) {
-	if input == "User" {
-		return "user", nil
-	} else if input == "Admin" {
-		return "admin", nil
-	} else if input == "Insurance" {
-		return "insurance", nil
+	if input == "user" {
+		return input, nil
+	} else if input == "admin" {
+		return input, nil
+	} else if input == "insurance" {
+		return input, nil
 	} 
 
 	return "", errors.New("invalid user class provided!")
