@@ -18,6 +18,7 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
   List<dynamic> trips = [];
   final String server = AppConfig.server;
   int _selectedIndex = 1;
+  late String role;
 
   @override
   void initState() {
@@ -29,7 +30,7 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
 Future<void> _loadUserInfo() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  String role = prefs.getString('role')!;
+  role = prefs.getString('role')!;
   //String? firstName = prefs.getString('user_first_name');
   //String? lastName = prefs.getString('user_last_name');
   //String? email = prefs.getString('user_email');
