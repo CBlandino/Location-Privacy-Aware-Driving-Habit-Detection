@@ -706,11 +706,6 @@ Widget _buildUserHomePage() {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-    return Scaffold(
-      body: Center(child: CircularProgressIndicator()),
-    );
-  }
     return Scaffold(
       appBar: isLoading
         ? null

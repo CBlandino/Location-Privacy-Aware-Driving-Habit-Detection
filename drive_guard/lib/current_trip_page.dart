@@ -20,6 +20,7 @@ class CurrentTripPage extends StatefulWidget {
 
 class _CurrentTripPageState extends State<CurrentTripPage> {
   bool isTripStarted = false; // Flag to track if the trip is ongoing
+  bool isLoading = true;
   Timer? _deltaTimer;
   Timer? _elapsedTimeTimer;
   Timer? _sendDataTimer;
@@ -339,12 +340,16 @@ Widget build(BuildContext context) {
     },
     child: Scaffold(
       backgroundColor: Colors.grey[200],
-      appBar: CustomAppBar(
+      appBar: isLoading
+          ? null
+          : CustomAppBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
         role:role,
       ),
-      body: Padding(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
         padding: EdgeInsets.all(screenWidth * 0.02),
         child: Column(
           children: [
@@ -361,7 +366,9 @@ Widget build(BuildContext context) {
           ],
         ),
       ),
-      bottomNavigationBar: CustomAppBar(
+      bottomNavigationBar:  isLoading
+          ? null
+          : CustomAppBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
         role:role,

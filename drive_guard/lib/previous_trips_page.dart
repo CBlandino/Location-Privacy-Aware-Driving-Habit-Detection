@@ -19,6 +19,7 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
   final String server = AppConfig.server;
   int _selectedIndex = 1;
   late String role;
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -34,6 +35,10 @@ Future<void> _loadUserInfo() async {
   //String? firstName = prefs.getString('user_first_name');
   //String? lastName = prefs.getString('user_last_name');
   //String? email = prefs.getString('user_email');
+
+   setState((){
+      isLoading = false;
+  });
 
 }
 
@@ -103,12 +108,16 @@ void _showTripDetails(Map<String, dynamic> trip) {
 @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: isLoading
+        ? null
+        : CustomAppBar(
         selectedIndex: 1,
         onItemTapped: _onItemTapped,
         role: role,
       ),
-      body: trips.isEmpty
+      body:  isLoading
+        ? Center(child: CircularProgressIndicator())
+        : trips.isEmpty
           ? Center(child: Text("No trips available"))
           : SingleChildScrollView(
               scrollDirection: Axis.vertical,
@@ -136,7 +145,9 @@ void _showTripDetails(Map<String, dynamic> trip) {
                 ),
               ),
             ),//:_pages[_selectedIndex],
-      bottomNavigationBar: CustomAppBar(
+      bottomNavigationBar: isLoading
+        ? null
+        : CustomAppBar(
       selectedIndex: _selectedIndex,
       onItemTapped: _onItemTapped,
       role: role,

@@ -16,6 +16,8 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPage extends State<SettingsPage>
 {
 late String role;
+bool isLoading = true;
+
 int _selectedIndex = 3;
 
     void _onItemTapped(int index) {
@@ -37,6 +39,9 @@ Future<void> _loadUserInfo() async {
   //String? firstName = prefs.getString('first_name');
   //String? lastName = prefs.getString('last_name');
   //String? email = prefs.getString('email');
+   setState((){
+      isLoading = false;
+  });
 
 
 }
@@ -54,13 +59,17 @@ Widget build(BuildContext context) {
     },
 
   child: Scaffold(
-    appBar: CustomAppBar(
+    appBar: isLoading
+        ? null
+        : CustomAppBar(
       selectedIndex: 3, // Assuming index 3 is the "Settings" page
       onItemTapped: _onItemTapped,
       role: role,
     ),
 
-    body: Stack(
+    body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Stack(
       children: [
         Padding(
           padding: EdgeInsets.all(24),
@@ -99,7 +108,9 @@ Widget build(BuildContext context) {
     ),
 
     // Bottom Navigation Bar from CustomAppBar
-    bottomNavigationBar: CustomAppBar(
+    bottomNavigationBar: isLoading
+        ? null
+        : CustomAppBar(
       selectedIndex: 3, // Keep this in sync with settings page index
       onItemTapped: _onItemTapped,
       role:role,
