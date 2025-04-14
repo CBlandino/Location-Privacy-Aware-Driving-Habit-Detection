@@ -179,18 +179,51 @@ void dispose() {
       print('Could not open app settings.');
     }
   }
-
+  
 Future<void> _showTripStartingDialog(int seconds) async {
   int remaining = seconds;
 
   await showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (BuildContext context) {
-      return CountdownDialog(initialSeconds: remaining);
+    builder: (BuildContext dialogContext) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          // Start countdown only once
+          Future.delayed(Duration.zero, () async {
+            for (int i = seconds; i > 0; i--) {
+              await Future.delayed(Duration(seconds: 1));
+              if (Navigator.of(context).canPop()) {
+                setState(() {
+                  remaining = i - 1;
+                });
+              } else {
+                return;
+              }
+            }
+
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop(); // Close dialog
+            }
+          });
+
+          return AlertDialog(
+            title: Text("Warming up GPS"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text("Starting trip in $remaining seconds..."),
+              ],
+            ),
+          );
+        },
+      );
     },
   );
 }
+
 
 Future<void> startTrip() async {
   LocationPermission permission = await Geolocator.checkPermission();
