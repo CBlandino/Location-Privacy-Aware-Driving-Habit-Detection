@@ -1,5 +1,5 @@
 import 'dart:io';
-//import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'ipconfig.dart';
 import 'custom_app_bar.dart';
 import 'login_page.dart';
@@ -78,7 +78,7 @@ void _searchUsers(String query) async {
   });
 
   try {
-    // Replace this with your real API call or logic
+    // Replace this with your real API 
     // Example: simulate an API call delay
     await Future.delayed(Duration(seconds: 1));
 
@@ -147,7 +147,7 @@ Future<void> loadRecentTrips() async {
   void initState() {
     super.initState();
     _checkAuthToken();
-    _loadUserInfo();
+    //_loadUserInfo();
     loadRecentTrips();
     _loadProfileImage();
   
@@ -159,76 +159,274 @@ Future<void> _checkAuthToken() async {
   String? token = prefs.getString('access_token');
 
   if (token != null) {
-    try {
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        throw Exception('Invalid token structure');
-      }
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-      final payload = parts[1];
-      final normalized = base64Url.normalize(payload);
-      final decoded = utf8.decode(base64Url.decode(normalized));
-      final Map<String, dynamic> tokenData = json.decode(decoded);
+    role = decodedToken['role'];
+    firstName = decodedToken['first_name'];
+    lastName = decodedToken['last_name'];
+    email = decodedToken['email'];
 
-      role = tokenData['role'];
-       firstName = tokenData['first_name'];
-       lastName = tokenData['last_name'];
-       email = tokenData['email'];
-
-      if (role != null && firstName != null && lastName != null && email != null) {
-        print('User Info from Token:');
-        print('Role: $role');
-        print('First Name: $firstName');
-        print('Last Name: $lastName');
-        print('Email: $email');
+    print('Decoded: $firstName $lastName ($email), Role: $role');
+  
 
         // store them in SharedPreferences
         await prefs.setString('role', role);
         await prefs.setString('first_name', firstName);
         await prefs.setString('last_name', lastName);
         await prefs.setString('email', email);
-      } else {
-        print('Some fields are missing in the token.');
-      }
-    } catch (e) {
-      print('Error decoding token: $e');
-    }
-  } else {
+      } 
+  else {
     print('No token found in SharedPreferences');
   }
 }
 
-Future<void> _loadUserInfo() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
+// Future<void> _loadUserInfo() async {
+//   SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  role = prefs.getString('role')!;
-  firstName = prefs.getString('first_name') ?? 'First';
-  lastName = prefs.getString('last_name') ?? 'Last';
-  email = prefs.getString('email')?? 'Email';
+//   role = prefs.getString('role')!;
+//   firstName = prefs.getString('first_name') ?? 'First';
+//   lastName = prefs.getString('last_name') ?? 'Last';
+//   email = prefs.getString('email')?? 'Email';
 
-}
+// }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-        role: widget.role, // Pass the role
+  Widget _buildWelcomeCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-      drawer: CustomDrawer(role: widget.role),
-      body: widget.role == 'user' 
-          ? _buildUserHomePage()
-          : _buildInsuranceHomePage(),
-      bottomNavigationBar: CustomAppBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-        role: widget.role, // Pass the role
-      ).buildBottomNavBar(context),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 30,
+              child: Icon(Icons.business),
+            ),
+            SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome, Insurance Provider!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Manage your users and their data',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
+
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required String buttonText,
+    String? description,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      elevation: 10,
+      color: Colors.blue.withOpacity(.9),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            ListTile(
+              leading: Icon(icon, color: Colors.white, size: 40),
+              title: Text(
+                title,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+              trailing: ElevatedButton(
+                onPressed: onTap,
+                child: Text(buttonText),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.blue,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ),
+            if (description != null)
+              SizedBox(height: 10),
+            if (description != null)
+              Text(
+                description,
+                style: TextStyle(fontSize: 16, color: Colors.white70),
+                textAlign: TextAlign.center,
+              ),
+          ],
+        ),
+      ),
+    );
   
-  Widget _buildInsuranceHomePage() {
+  }
+
+Widget _buildPreviousTripsSection() {
+  return Card(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    elevation: 10,
+    color: Colors.lightBlueAccent,
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recent Trips',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          SizedBox(height: 10),
+          isLoading
+              ? Center(child: CircularProgressIndicator())
+              : errorMessage.isNotEmpty
+                  ? Center(
+                      child: Text(
+                        errorMessage,
+                        style: TextStyle(color: Colors.red, fontSize: 18),
+                      ),
+                    )
+                  : recentTrips.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No recent trips available.',
+                            style: TextStyle(fontSize: 18, color: Colors.white),
+                          ),
+                        )
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            headingRowColor: MaterialStateColor.resolveWith((states) => Colors.blue),
+                            columns: [
+                              DataColumn(
+                                label: Text(
+                                  'Date',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Distance (mi)',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Actions',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                            rows: recentTrips.take(3).map<DataRow>((trip) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(Text(TripService.formatTimestamp(trip['start_time']))),
+                                  DataCell(Text(trip['distance'].toStringAsFixed(2))),
+                                  DataCell(
+                                    IconButton(
+                                      icon: Icon(Icons.arrow_forward_ios),
+                                      onPressed: () {
+                                        // Optional: handle trip detail tap
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+  Widget _buildUserTripsPage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Text(
+            'User Trip Lookup',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
+          TextField(
+            decoration: InputDecoration(
+              labelText: 'Enter User ID',
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  // TODO: Implement trip lookup
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          // TODO: Add trip results display
+          Expanded(
+            child: Center(
+              child: Text('Search for a user to view their trips')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserScorePage() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Text(
+            'User Score Lookup',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 20),
+          TextField(
+            decoration: InputDecoration(
+              labelText: 'Enter User ID',
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () {
+                  // TODO: Implement score lookup
+                },
+              ),
+            ),
+          ),
+          SizedBox(height: 20),
+          // TODO: Add score display
+          Expanded(
+            child: Center(
+              child: Text('Search for a user to view their score')),
+          ),
+        ],
+      ),
+    );
+  }
+
+    Widget _buildInsuranceHomePage() {
     return _selectedIndex == 0
         ? Padding(
             padding: const EdgeInsets.all(16.0),
@@ -516,240 +714,23 @@ Widget _buildUserHomePage() {
           ) : SettingsPage();
 }
 
-
-  Widget _buildWelcomeCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        role: widget.role, // Pass the role
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              child: Icon(Icons.business),
-            ),
-            SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome, Insurance Provider!',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'Manage your users and their data',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSection({
-    required String title,
-    required IconData icon,
-    required String buttonText,
-    String? description,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      elevation: 10,
-      color: Colors.blue.withOpacity(.9),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            ListTile(
-              leading: Icon(icon, color: Colors.white, size: 40),
-              title: Text(
-                title,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              trailing: ElevatedButton(
-                onPressed: onTap,
-                child: Text(buttonText),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.blue,
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-            ),
-            if (description != null)
-              SizedBox(height: 10),
-            if (description != null)
-              Text(
-                description,
-                style: TextStyle(fontSize: 16, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-          ],
-        ),
-      ),
-    );
-  
-  }
-
-Widget _buildPreviousTripsSection() {
-  return Card(
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    elevation: 10,
-    color: Colors.lightBlueAccent,
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Recent Trips',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          SizedBox(height: 10),
-          isLoading
-              ? Center(child: CircularProgressIndicator())
-              : errorMessage.isNotEmpty
-                  ? Center(
-                      child: Text(
-                        errorMessage,
-                        style: TextStyle(color: Colors.red, fontSize: 18),
-                      ),
-                    )
-                  : recentTrips.isEmpty
-                      ? Center(
-                          child: Text(
-                            'No recent trips available.',
-                            style: TextStyle(fontSize: 18, color: Colors.white),
-                          ),
-                        )
-                      : SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            headingRowColor: MaterialStateColor.resolveWith((states) => Colors.blue),
-                            columns: [
-                              DataColumn(
-                                label: Text(
-                                  'Date',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Distance (mi)',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  'Actions',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                            rows: recentTrips.take(3).map<DataRow>((trip) {
-                              return DataRow(
-                                cells: [
-                                  DataCell(Text(TripService.formatTimestamp(trip['start_time']))),
-                                  DataCell(Text(trip['distance'].toStringAsFixed(2))),
-                                  DataCell(
-                                    IconButton(
-                                      icon: Icon(Icons.arrow_forward_ios),
-                                      onPressed: () {
-                                        // Optional: handle trip detail tap
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          ),
-                        ),
-        ],
-      ),
-    ),
-  );
-}
-
-
-  Widget _buildUserTripsPage() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Text(
-            'User Trip Lookup',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 20),
-          TextField(
-            decoration: InputDecoration(
-              labelText: 'Enter User ID',
-              border: OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {
-                  // TODO: Implement trip lookup
-                },
-              ),
-            ),
-          ),
-          SizedBox(height: 20),
-          // TODO: Add trip results display
-          Expanded(
-            child: Center(
-              child: Text('Search for a user to view their trips')),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserScorePage() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          Text(
-            'User Score Lookup',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 20),
-          TextField(
-            decoration: InputDecoration(
-              labelText: 'Enter User ID',
-              border: OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {
-                  // TODO: Implement score lookup
-                },
-              ),
-            ),
-          ),
-          SizedBox(height: 20),
-          // TODO: Add score display
-          Expanded(
-            child: Center(
-              child: Text('Search for a user to view their score')),
-          ),
-        ],
-      ),
+      drawer: CustomDrawer(role: widget.role),
+      body: widget.role == 'user' 
+          ? _buildUserHomePage()
+          : _buildInsuranceHomePage(),
+      bottomNavigationBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        role: widget.role, // Pass the role
+      ).buildBottomNavBar(context),
     );
   }
 
