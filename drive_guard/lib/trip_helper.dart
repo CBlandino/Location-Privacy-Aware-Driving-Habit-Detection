@@ -46,20 +46,25 @@ static String formatTimestamp(dynamic timestamp) {
     DateTime dateTime;
 
     if (timestamp is int) {
-      dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+      // Auto-detect seconds vs milliseconds (heuristic)
+      dateTime = timestamp > 1000000000000
+          ? DateTime.fromMillisecondsSinceEpoch(timestamp)
+          : DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
     } else if (timestamp is String) {
       try {
         dateTime = DateTime.parse(timestamp); // Try ISO 8601
       } catch (_) {
-        // Fallback to custom format
-        dateTime = DateFormat("MM/dd/yyyy HH:mm").parse(timestamp);
+        try {
+          dateTime = DateFormat("MM/dd/yyyy HH:mm").parse(timestamp); // Try custom format
+        } catch (_) {
+          throw FormatException("Unrecognized date format");
+        }
       }
     } else {
-      throw FormatException("Unknown timestamp format");
+      throw FormatException("Unsupported timestamp type");
     }
 
-    return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} "
-           "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+    return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
   } catch (e) {
     print("Error parsing timestamp: $e");
     return "Invalid timestamp";
