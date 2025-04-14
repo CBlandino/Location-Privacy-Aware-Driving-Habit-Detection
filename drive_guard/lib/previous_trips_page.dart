@@ -30,7 +30,7 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
 Future<void> _loadUserInfo() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  role = prefs.getString('user_role')!;
+  role = prefs.getString('role')!;
   //String? firstName = prefs.getString('user_first_name');
   //String? lastName = prefs.getString('user_last_name');
   //String? email = prefs.getString('user_email');

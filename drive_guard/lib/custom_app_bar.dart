@@ -12,6 +12,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
   final String? role; // Add role parameter
+ 
 
   const CustomAppBar({
     Key? key,
