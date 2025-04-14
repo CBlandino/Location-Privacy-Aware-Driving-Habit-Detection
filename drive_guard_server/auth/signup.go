@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"errors"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -32,7 +33,7 @@ func SignupUser(c *gin.Context, db *sql.DB) {
     log.Println("RESULT:", result)
 
     // instead of passing the users email in the JWT, u can isntead pass their users table ID
-    jwt, status := tokens.NewJWT([]string{ newUser.Email })
+    jwt, status := tokens.NewJWT(newUser)
     if status != http.StatusAccepted {
         // if token creation fails send back bad response
         c.Status(status)
@@ -50,13 +51,18 @@ func insertUser(newUser tokens.User, db *sql.DB) (sql.Result, error) {
     rand.Read(salt)
 
     pass_hash := sha256.Sum256(append([]byte(newUser.Password), salt...))
+	role, err := checkRole(newUser.Role)
+	if err != nil {
+		return nil, err
+	}
 	// $1 = first name 
 	// $2 = last name 
 	// $3 = user email 
-	// $4 = password hash 
-	// $5 = password salt
-    insertStmnt := "INSERT INTO users VALUES (DEFAULT, $1, $2, $3, $4, $5)"
-    result, err := db.Exec(insertStmnt, newUser.Firstname, newUser.Lastname, newUser.Email, pass_hash[:], salt) 
+	// $4 = user class
+	// $5 = password hash 
+	// $6 = password salt
+    insertStmnt := "INSERT INTO users VALUES (DEFAULT, $1, $2, $3, $4, $5, $6)"
+    result, err := db.Exec(insertStmnt, newUser.Firstname, newUser.Lastname, newUser.Email, role, pass_hash[:], salt) 
     // TODO: check for duplicate email
     if err != nil {
         log.Println(err)
@@ -64,4 +70,17 @@ func insertUser(newUser tokens.User, db *sql.DB) (sql.Result, error) {
     }
 
     return result, nil
+}
+
+
+func checkRole(input string) (string, error) {
+	if input == "User" {
+		return "user", nil
+	} else if input == "Admin" {
+		return "admin", nil
+	} else if input == "Insurance" {
+		return "insurance", nil
+	} 
+
+	return "", errors.New("invalid user class provided!")
 }
