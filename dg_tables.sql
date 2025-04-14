@@ -19,7 +19,7 @@ CREATE TABLE Trips (
     start_time      TIMESTAMP NOT NULL,
     done            BOOLEAN NOT NULL,
     data            JSONB NOT NULL,
-    distance        REAL NOT NULL, 
+    distance        REAL, 
     velocity        REAL, 
     trip_score      REAL,
 
