@@ -89,7 +89,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
         widget.onItemTapped(index); // Update selected index
         _navigateToPage(context, index); // Handle navigation
       },
-      items: role == 'Insurance Provider' 
+      items: role == 'insurance' 
           ? _buildInsuranceNavItems()
           : _buildUserNavItems(),
     );
@@ -140,7 +140,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
   void _navigateToPage(BuildContext context, int index) {
     Widget page;
     
-    if (role == 'Insurance Provider') {
+    if (role == 'insurance') {
       switch (index) {
         case 0:
           page = UserLookupPage(
