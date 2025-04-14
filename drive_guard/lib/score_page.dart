@@ -14,6 +14,7 @@ class _ScorePage extends State<ScorePage> {
   final double score = 85;
   int _selectedIndex = 2;
   late String role;
+  bool isLoading = true;
 
   // Static data for testing
   Map<String, String> breakdown = {
@@ -34,6 +35,10 @@ Future<void> _loadUserInfo() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
   role = prefs.getString('role')!;
+
+  setState((){
+      isLoading = false;
+  });
   //String? firstName = prefs.getString('first_name');
   //String? lastName = prefs.getString('last_name');
   //String? email = prefs.getString('email');
@@ -50,7 +55,9 @@ Future<void> _loadUserInfo() async {
         title: Text('Your Score'),
         backgroundColor: Colors.blue.shade700,
       ),
-      body: Padding(
+      body: isLoading
+        ? Center(child: CircularProgressIndicator())
+        : Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -204,11 +211,13 @@ Future<void> _loadUserInfo() async {
           ],
         ),
       ),
-      bottomNavigationBar: CustomAppBar(
-        selectedIndex: _selectedIndex,
-        onItemTapped: _onItemTapped,
-        role:role,
-      ).buildBottomNavBar(context),
+      bottomNavigationBar:  isLoading
+        ? null
+        : CustomAppBar(
+            selectedIndex: _selectedIndex,
+            onItemTapped: _onItemTapped,
+            role: role,
+          ).buildBottomNavBar(context),
     );
   }
 
