@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'home_page.dart';
@@ -101,8 +102,13 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         if (response.statusCode == 201) {
         print('STATUS: ${response.statusCode}');
         print('BODY: ${response.body}');
-        final responseData = json.decode(response.body);
-        await _prefs.setString('access_token', responseData['access_token']);
+final responseData = json.decode(response.body);
+  String token = responseData['access_token'];
+  await _prefs.setString('access_token', token);
+
+Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+    String role = decodedToken['role'];
         
 // SharedPreferences prefs = await SharedPreferences.getInstance();
 //   String? token = prefs.getString('access_token');
@@ -148,7 +154,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(role: _selectedRole!)),
+          MaterialPageRoute(builder: (context) => HomePage(role: role)),
         );
         } else {
           final responseData = await parseJson(response.body);
@@ -193,13 +199,17 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         );
 
         if (response.statusCode == 202) {
-        final responseData = json.decode(response.body);
-        await _prefs.setString('access_token', responseData['access_token']);
+final responseData = json.decode(response.body);
+  String token = responseData['access_token'];
+  await _prefs.setString('access_token', token);
 
+Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+    String role = decodedToken['role'];
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(role: _selectedRole!)),
+          MaterialPageRoute(builder: (context) => HomePage(role: role)),
         );
         } else {
           // Error: Show error message
