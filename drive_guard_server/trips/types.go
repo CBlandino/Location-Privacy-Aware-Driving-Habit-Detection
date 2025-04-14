@@ -33,5 +33,7 @@ type PrevTrip struct {
 	// trip starting time
 	TimeStamp string `json:"timestamp"`
 	// total distance travelled during the trip
-	Distance float32 `json:"distance"`
+	Distance float64 `json:"distance"`
+	// average velocity for the trip 
+	Velocity float64 `json:"velocity"`
 }

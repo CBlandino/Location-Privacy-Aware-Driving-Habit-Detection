@@ -39,7 +39,7 @@ func Previous_trips(c *gin.Context, db *sql.DB) {
 	}
 
 	// select the all of the timestamps and distances for a users trips
-	querySTR := "SELECT start_time, distance FROM trips WHERE user_id = $1" 
+	querySTR := "SELECT start_time, distance, velocity FROM trips WHERE user_id = $1" 
 
 	rows, err := db.Query(querySTR, id)
 	if err != nil {
@@ -53,7 +53,7 @@ func Previous_trips(c *gin.Context, db *sql.DB) {
 	trips := make([]PrevTrip, 0)
 	for rows.Next() {
 		var trip PrevTrip 
-		if err := rows.Scan(&trip.TimeStamp, &trip.Distance); err != nil {
+		if err := rows.Scan(&trip.TimeStamp, &trip.Distance, &trip.Velocity); err != nil {
 			log.Println(err)
 			c.JSON(http.StatusBadRequest, err)
 			return

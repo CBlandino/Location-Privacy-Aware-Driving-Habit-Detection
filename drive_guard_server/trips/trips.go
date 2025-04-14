@@ -5,13 +5,14 @@ import (
 	"slices"
     "net/http"	
 	"encoding/json"
-	"math"
+	// "math"
 
     "database/sql"
 	_ "github.com/lib/pq"
     "github.com/gin-gonic/gin"
 
 	"drive_guard_server/tokens"
+	"drive_guard_server/score"
 )
 
 func TransmitPoints(c *gin.Context, db *sql.DB) {
@@ -88,17 +89,6 @@ func insertStartTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error
 		return err
 	}
 
-	var distanceSet float64 = 0.0
-	for i, p := range set.Points {
-		d := getDistance(&p)
-		distanceSet += d
-		// velocity = distance / time 
-		// units are miles per second, multiply by 3600 to conver to miles per hour 
-		set.Points[i].Velo = (d / 5.0) * 3600.0
-	}
-
-	log.Println("total distance:", distanceSet)
-
 	//Serialize the delta points into json array form
 	jsonPoints, err := json.Marshal(set.Points) 
 	if err != nil {
@@ -109,11 +99,22 @@ func insertStartTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error
 	// $2 = trip start timestamp 
 	// $3 = boolean value for if the trip is still in progress
 	// $4 = json array representation of the points
-	// $5 = total accumulated distance thus far, in miles
-	insertSTR := "INSERT INTO trips VALUES (DEFAULT, $1, $2, $3, $4, $5)"
-	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints, distanceSet)
+	insertSTR := "INSERT INTO trips (user_id, start_time, done, data) VALUES ($1, $2, $3, $4)"
+	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints)
 	if err != nil {
 		return err
+	}
+
+	if set.End {
+		trip_id, err := getTripID(id, db)
+		if err != nil {
+			return err
+		}
+
+		err = score.TripMetricsPasses(trip_id, db)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -126,67 +127,47 @@ func updateExistingTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) er
 		return err
 	}
 
-	var distanceSet float64 = 0.0
-	for i, p := range set.Points {
-		d := getDistance(&p)
-		distanceSet += d
-		// velocity = distance / time
-		// units are miles per second, multiply by 3600 to conver to miles per hour 
-		set.Points[i].Velo = (d / 5.0) * 3600.0
-	}
-
-	log.Println("total distance:", distanceSet)
-
 	jsonPoints, err := json.Marshal(set.Points)
 	if err != nil {
 		return err
 	}	
 
-	updateSTR := "UPDATE trips SET data = data || $1::jsonb, distance = distance + $2, done = $3 WHERE user_id = $4 AND done = FALSE"
-	_, err = db.Exec(updateSTR, jsonPoints, distanceSet, set.End, id)
+	updateSTR := "UPDATE trips SET data = data || $1::jsonb, done = $2 WHERE user_id = $3 AND done = FALSE"
+	_, err = db.Exec(updateSTR, jsonPoints, set.End, id)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
+	if set.End {
+		trip_id, err := getTripID(id, db)
+		if err != nil {
+			return err
+		}
+
+		err = score.TripMetricsPasses(trip_id, db)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
-
-// function that passes over all of the points in a transmitted point set prior to their inclusion in the db 
-// we can calculate distance on the set here, as well as any other metrics we wanted to/needed to
-func getDistance(p *point) float64 {
-
-	var totalDist float64 = 0.0
-
-	// radius of the earth in miles (6371km)
-	const R float64 = 3958.756 
-	// using beta approximation of 1 until implementation of R points is done
-	const Beta float64 = 1.0
-
-	//running accumulator for the haversine distance between points for every point in the batch
-
-	dLat := (float64(p.Lat) * 0.000001) * (math.Pi / 180.0)
-	dLong := (float64(p.Long) * 0.000001) * (math.Pi / 180.0)
-
-	lat_over2 := dLat / 2.0
-	lat_sin := math.Sin(lat_over2)
-	lat_squared := math.Pow(lat_sin, 2)
-
-	long_over2 := dLong / 2.0 
-	long_sin := math.Sin(long_over2) 
-	long_squared := math.Pow(long_sin, 2)
-
-	a := lat_squared + Beta * long_squared
-	c := 2.0 * math.Atan2(math.Sqrt(a), math.Sqrt(1.0 - a)) 
-	totalDist += R * c
-
-	return totalDist
-}
-
 
 func getUserID(claimsEmail string, db *sql.DB) (int, error) {
 	var id int 
 	row := db.QueryRow("SELECT user_id FROM users WHERE email = $1", claimsEmail)
+	if err := row.Scan(&id); err != nil {
+		return -1, err
+	}
+
+	return id, nil
+}
+
+func getTripID(userID int, db *sql.DB) (int, error) {
+	var id int 
+	row := db.QueryRow("SELECT trip_id FROM trips WHERE user_id = $1 ORDER BY start_time DESC LIMIT 1", userID)
+
 	if err := row.Scan(&id); err != nil {
 		return -1, err
 	}
