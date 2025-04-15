@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-//import 'package:intl/intl.dart'; // Import for date formatting
 import 'package:intl/intl.dart';
 import 'custom_app_bar.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'ipconfig.dart';
-import 'login_page.dart';
 import 'trip_helper.dart';
 
 class PreviousTripsPage extends StatefulWidget {
@@ -16,8 +11,6 @@ class PreviousTripsPage extends StatefulWidget {
 
 class _PreviousTripsPageState extends State<PreviousTripsPage> {
   List<dynamic> trips = [];
-  final String server = AppConfig.server;
-  int _selectedIndex = 1;
   late String role;
   bool isLoading = true;
 
@@ -28,70 +21,62 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
     fetchPreviousTrips();
   }
 
-Future<void> _loadUserInfo() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-
-  role = prefs.getString('role')!;
-  //String? firstName = prefs.getString('user_first_name');
-  //String? lastName = prefs.getString('user_last_name');
-  //String? email = prefs.getString('user_email');
-
-   setState((){
-      isLoading = false;
-  });
-
-}
-
-Future<void> fetchPreviousTrips() async {
-  List<dynamic> data = await TripService.fetchPreviousTrips();
-  if (mounted) {
+  Future<void> _loadUserInfo() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    role = prefs.getString('role')!;
     setState(() {
-      trips = data;
+      isLoading = false;
     });
   }
-}
 
-
-List<Map<String, dynamic>> _getDummyData() {
-  return [
-    {"timestamp": 1711910400, "distance": 10.0},
-    {"timestamp": 1711996800, "distance": 8.5},
-    {"timestamp": 1712083200, "distance": 12.3},
-  ];
-}
+  Future<void> fetchPreviousTrips() async {
+    List<dynamic> data = await TripService.fetchPreviousTrips();
+    if (mounted) {
+      setState(() {
+        trips = data;
+      });
+    }
+  }
 
 void _showTripDetails(Map<String, dynamic> trip) {
   int timestamp;
   
   try {
     timestamp = trip['timestamp'] is int
-    ? trip['timestamp']
-    : DateTime.parse(trip['timestamp']).millisecondsSinceEpoch ~/ 1000;
+        ? trip['timestamp']
+        : DateTime.parse(trip['timestamp']).millisecondsSinceEpoch ~/ 1000;
   } catch (e) {
     print('Error parsing timestamp: $e');
-    timestamp = 0; // Fallback in case of error
+    timestamp = 0;
   }
 
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text("Trip Details"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Start Time: ${timestamp > 0 ? DateTime.fromMillisecondsSinceEpoch(timestamp * 1000) : 'Invalid timestamp'}"),
-            Text("Distance: ${trip['distance']} miles"),
-            Text("Average Velocity: ${trip['velocity']} mph"),
-          ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16)),
+        title: Text("Trip Details", style: TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildDetailRow(Icons.calendar_today, "Date:", 
+                  timestamp > 0 ? DateFormat('MMM dd, yyyy').format(DateTime.fromMillisecondsSinceEpoch(timestamp * 1000)) : 'N/A'),
+              _buildDetailRow(Icons.access_time, "Time:", 
+                  timestamp > 0 ? DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(timestamp * 1000)) : 'N/A'),
+              _buildDetailRow(Icons.directions_car, "Distance:", 
+                  "${trip['distance']?.toStringAsFixed(2) ?? 'N/A'} miles"),
+              _buildDetailRow(Icons.speed, "Average Speed:", 
+                  "${trip['velocity']?.toStringAsFixed(1) ?? 'N/A'} mph"),
+            ],
+          ),
         ),
-        actions: [
+        actions: <Widget>[
           TextButton(
-            child: Text("Close"),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text("Close", style: TextStyle(color: Theme.of(context).primaryColor)),
           ),
         ],
       );
@@ -99,61 +84,127 @@ void _showTripDetails(Map<String, dynamic> trip) {
   );
 }
 
-
-    void _onItemTapped(int index) {
-      setState(() {
-        _selectedIndex = index; // Switches pages     
-      });
-    }
-
-@override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: isLoading
-        ? null
-        : CustomAppBar(
-        selectedIndex: 1,
-        onItemTapped: _onItemTapped,
-        role: role,
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[600]),
+          SizedBox(width: 10),
+          Text(label, style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(width: 5),
+          Text(value),
+        ],
       ),
-      body:  isLoading
-        ? Center(child: CircularProgressIndicator())
-        : trips.isEmpty
-          ? Center(child: Text("No trips available"))
-          : SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columnSpacing: 20,
-                  columns: [
-                    DataColumn(label: Text("Start Time")),
-                    DataColumn(label: Text("Distance (m)")),
-                    DataColumn(label: Text("Actions")),
-                  ],
-                  rows: trips.map((trip) {
-                    return DataRow(cells: [
-                      DataCell(Text(TripService.formatTimestamp(trip['timestamp']))),
-                      DataCell(Text(trip['distance'].toString())),
-                      DataCell(
-                        ElevatedButton(
-                          child: Text("Expand Trip"),
-                          onPressed: () => _showTripDetails(trip),
-                        ),
-                      ),
-                    ]);
-                  }).toList(),
-                ),
-              ),
-            ),//:_pages[_selectedIndex],
-      bottomNavigationBar: isLoading
-        ? null
-        : CustomAppBar(
-      selectedIndex: _selectedIndex,
-      onItemTapped: _onItemTapped,
-      role: role,
-    )
-    .buildBottomNavBar(context),
     );
   }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  int _selectedIndex = 1;
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: isLoading
+        ? null
+        : CustomAppBar(
+            selectedIndex: 1,
+            onItemTapped: _onItemTapped,
+            role: role,
+          ),
+    body: isLoading
+        ? Center(
+            child: CircularProgressIndicator(), 
+          )
+        : trips.isEmpty
+            ? Center(
+                child: Column( 
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.directions_car, size: 64, color: Colors.grey[400]),
+                    SizedBox(height: 16),
+                    Text(
+                      "No trips recorded yet",
+                      style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      "Your trips will appear here after completion",
+                      style: TextStyle(color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column( // Fixed child parameter here
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Your Trips",
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 16),
+                    Expanded(
+                      child: ListView.separated( // Fixed child parameter here
+                        itemCount: trips.length,
+                        separatorBuilder: (context, index) => Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final trip = trips[index];
+                          final timestamp = trip['timestamp'] is int
+                              ? trip['timestamp']
+                              : DateTime.parse(trip['timestamp']).millisecondsSinceEpoch ~/ 1000;
+                          final date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+                          
+                          return Card(
+                            elevation: 2,
+                            margin: EdgeInsets.symmetric(vertical: 4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              leading: Container(
+                                padding: EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.directions_car,
+                                  color: Theme.of(context).primaryColor,
+                                ),
+                              ),
+                              title: Text(
+                                DateFormat('MMM dd, yyyy').format(date),
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                "${trip['distance']?.toStringAsFixed(2) ?? '0.00'} miles • ${DateFormat('hh:mm a').format(date)}",
+                              ),
+                              trailing: Icon(Icons.chevron_right),
+                              onTap: () => _showTripDetails(trip),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+    bottomNavigationBar: isLoading
+        ? null
+        : CustomAppBar(
+            selectedIndex: _selectedIndex,
+            onItemTapped: _onItemTapped,
+            role: role,
+          ).buildBottomNavBar(context),
+  );
+}
 }
