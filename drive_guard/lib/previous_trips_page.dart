@@ -82,7 +82,7 @@ void _showTripDetails(Map<String, dynamic> trip) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Start Time: ${timestamp > 0 ? DateTime.fromMillisecondsSinceEpoch(timestamp * 1000) : 'Invalid timestamp'}"),
-            Text("Distance: ${trip['distance']} meters"),
+            Text("Distance: ${trip['distance']} miles"),
             Text("Average Velocity: ${trip['velocity']} mph"),
           ],
         ),
