@@ -9,14 +9,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-    "context"
+	"context"
 
 	"drive_guard_server/auth"
 	"drive_guard_server/trips"
 )
 
 var (
-    ADDR string 
+	ADDR string 
 	DB_HOST string 
 	DB_USER string 
 	DB_PASS string 
@@ -33,46 +33,46 @@ func init() {
 }
 
 func main() {
-    log.Println("STARTING SERVER")
+	log.Println("STARTING SERVER")
 
 	//connect and configure database
 	dbConnStr :=  " user=" + DB_USER + " password=" + DB_PASS + " dbname=" + DB_NAME 
 	if DB_HOST != "" {
-		dbConnStr += "host=" + DB_HOST + " sslmode=require"
+		dbConnStr += " host=" + DB_HOST + " sslmode=require"
 	} else {
 		dbConnStr += " sslmode=disable"
 	}
 
-    db, err := sql.Open("postgres", dbConnStr)
-    if err != nil {
-        log.Fatal(err)
-    }
-    db.SetMaxIdleConns(50)
+	db, err := sql.Open("postgres", dbConnStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	db.SetMaxIdleConns(50)
 	db.SetMaxOpenConns(50)
 
 
 	// ping database to ensure successful connection
-    if err := db.PingContext(context.Background()); err != nil {
-        log.Println("DATABASE CONNECTION UNSUCCESSFUL")
+	if err := db.PingContext(context.Background()); err != nil {
+		log.Println("DATABASE CONNECTION UNSUCCESSFUL")
 		log.Println(err)
 	} else {
-        log.Println("DATABASE CONNECTION SUCCESSFUL")
-    }
+		log.Println("DATABASE CONNECTION SUCCESSFUL")
+	}
 
 	//initialize the web server and handlers
-    server := gin.Default()
-    server.POST("/signup", func(c *gin.Context) {
-        auth.SignupUser(c, db)
-    }) 
-    server.POST("/login", func(c *gin.Context) {
-        auth.LoginUser(c, db)
-    })
-    server.POST("/trip", func(c *gin.Context) {
-        trips.TransmitPoints(c, db)
-    })
+	server := gin.Default()
+	server.POST("/signup", func(c *gin.Context) {
+		auth.SignupUser(c, db)
+	}) 
+	server.POST("/login", func(c *gin.Context) {
+		auth.LoginUser(c, db)
+	})
+	server.POST("/trip", func(c *gin.Context) {
+		trips.TransmitPoints(c, db)
+	})
 	server.GET("/previous_trips", func(c *gin.Context) {
 		trips.Previous_trips(c, db)
 	})
 
-    server.Run(ADDR)
+	server.Run(ADDR)
 }
