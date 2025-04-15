@@ -29,6 +29,7 @@ func init() {
 	flag.StringVar(&DB_USER, "dbuser", "dg_api", "database username")
 	flag.StringVar(&DB_PASS, "dbpass", "secure", "database user password")
 	flag.StringVar(&DB_NAME, "dbname", "dg_db", "database name")
+	flag.Parse()
 }
 
 func main() {
