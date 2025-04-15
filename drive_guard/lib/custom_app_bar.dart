@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'current_trip_page.dart';
+import 'home_page.dart';
 import 'previous_trips_page.dart';
 import 'score_page.dart';
 import 'settings_page.dart';
@@ -11,7 +12,7 @@ import 'user_trips_page.dart';
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
-  final String? role; // Add role parameter
+  final String role; // Add role parameter
 
   const CustomAppBar({
     Key? key,
@@ -159,7 +160,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     } else {
       switch (index) {
         case 0:
-          page = CurrentTripPage();
+          page = HomePage(role: role);
           break;
         case 1:
           page = PreviousTripsPage();
