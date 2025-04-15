@@ -64,21 +64,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
 
-  Widget buildBottomNavBar(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: selectedIndex,
-      elevation: 10,
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
-      onTap: (index) {
-        onItemTapped(index); // Update selected index
-        _navigateToPage(context, index); // Handle navigation
-      },
-      items: role == 'Insurance Provider' 
-          ? _buildInsuranceNavItems()
-          : _buildUserNavItems(),
-    );
-  }
+Widget buildBottomNavBar(BuildContext context) {
+  return BottomNavigationBar(
+    currentIndex: selectedIndex,
+    elevation: 10,
+    selectedItemColor: Colors.blue,
+    unselectedItemColor: Colors.grey,
+    onTap: onItemTapped, 
+    items: role == 'insurance'
+        ? _buildInsuranceNavItems()
+        : _buildUserNavItems(),
+  );
+}
+
 
   List<BottomNavigationBarItem> _buildInsuranceNavItems() {
     return [
@@ -125,7 +123,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   void _navigateToPage(BuildContext context, int index) {
     Widget page;
     
-    if (role == 'Insurance Provider') {
+    if (role == 'insurance') {
       switch (index) {
         case 0:
           page = UserLookupPage(

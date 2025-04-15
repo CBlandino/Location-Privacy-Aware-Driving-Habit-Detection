@@ -18,75 +18,52 @@ class UserScorePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextField(
-          decoration: InputDecoration(
-            labelText: 'Enter User ID',
-            hintText: 'e.g., user12345',
-            border: OutlineInputBorder(),
-            suffixIcon: Icon(Icons.search),
-          ),
-          controller: TextEditingController(text: userId),
-          onSubmitted: onSearchSubmitted,
-        ),
-        SizedBox(height: 20),
-        
-        if (isLoading)
-          Center(child: CircularProgressIndicator()),
-        
-        if (errorMessage.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              errorMessage,
-              style: TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
+    return Scaffold(
+      appBar: AppBar(title: Text("User Score")),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Enter User ID',
+                hintText: 'e.g., user12345',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.search),
+              ),
+              controller: TextEditingController(text: userId),
+              onSubmitted: onSearchSubmitted,
             ),
-          ),
-        
-        if (!isLoading && errorMessage.isEmpty)
-          _buildScoreContent(),
-      ],
+            SizedBox(height: 20),
+
+            if (isLoading)
+              Center(child: CircularProgressIndicator()),
+
+            if (errorMessage.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  errorMessage,
+                  style: TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+            if (!isLoading && errorMessage.isEmpty)
+              _buildScoreContent(),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildScoreContent() {
     if (userId.isEmpty) {
-      return Expanded(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.score, size: 48, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
-                'Enter a User ID to view their safety score',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildMessage("Enter a User ID to view their safety score", Icons.score);
     }
 
     if (scoreData == null) {
-      return Expanded(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.help_outline, size: 48, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
-                'No score data available for user $userId',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildMessage("No score data available for user $userId", Icons.help_outline);
     }
 
     final score = scoreData!['score']?.toDouble() ?? 0.0;
@@ -137,6 +114,19 @@ class UserScorePage extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMessage(String message, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
+      child: Column(
+        children: [
+          Icon(icon, size: 48, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(message, style: TextStyle(fontSize: 16, color: Colors.grey), textAlign: TextAlign.center),
+        ],
       ),
     );
   }

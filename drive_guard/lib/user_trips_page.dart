@@ -8,8 +8,8 @@ class UserTripsPage extends StatelessWidget {
   final Function(String)? onSearchSubmitted;
 
   const UserTripsPage({
-    this.userId = '', // Default empty string
-    this.trips = const [], // Default empty list
+    this.userId = '',
+    this.trips = const [],
     this.isLoading = false,
     this.errorMessage = '',
     this.onSearchSubmitted,
@@ -18,72 +18,52 @@ class UserTripsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        TextField(
-          decoration: InputDecoration(
-            labelText: 'Enter User ID',
-            hintText: 'e.g., user12345',
-            border: OutlineInputBorder(),
-            suffixIcon: Icon(Icons.search),
-          ),
-          onSubmitted: onSearchSubmitted,
-          controller: TextEditingController(text: userId),
-        ),
-        SizedBox(height: 20),
-        
-        if (isLoading)
-          Center(child: CircularProgressIndicator()),
-        
-        if (errorMessage.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              errorMessage,
-              style: TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
+    return Scaffold(
+      appBar: AppBar(title: Text('User Trips')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Enter User ID',
+                hintText: 'e.g., user12345',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.search),
+              ),
+              onSubmitted: onSearchSubmitted,
+              controller: TextEditingController(text: userId),
             ),
-          ),
-        
-        if (!isLoading && errorMessage.isEmpty)
-          Expanded(
-            child: _buildTripsContent(),
-          ),
-      ],
+            SizedBox(height: 20),
+
+            if (isLoading)
+              Center(child: CircularProgressIndicator()),
+
+            if (errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  errorMessage,
+                  style: TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+            if (!isLoading && errorMessage.isEmpty)
+              Expanded(child: _buildTripsContent()),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildTripsContent() {
     if (userId.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search, size: 48, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'Enter a User ID to search for trips',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
+      return _buildMessage("Enter a User ID to search for trips", Icons.search);
     }
 
     if (trips.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.directions_car, size: 48, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No trips found for this user',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
+      return _buildMessage("No trips found for this user", Icons.directions_car);
     }
 
     return ListView.builder(
@@ -109,6 +89,19 @@ class UserTripsPage extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMessage(String message, IconData icon) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(message, style: TextStyle(fontSize: 16, color: Colors.grey)),
+        ],
+      ),
     );
   }
 

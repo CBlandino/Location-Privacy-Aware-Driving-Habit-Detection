@@ -16,48 +16,51 @@ class UserLookupPage extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    final TextEditingController _searchController = 
-        TextEditingController(text: initialSearchQuery);
+@override
+Widget build(BuildContext context) {
+  final TextEditingController _searchController = 
+      TextEditingController(text: initialSearchQuery);
 
-    return Column(
-      children: [
-        TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            labelText: 'Search Users',
-            hintText: 'Enter name, email, or ID',
-            border: OutlineInputBorder(),
-            suffixIcon: IconButton(
-              icon: Icon(Icons.search),
-              onPressed: () => onSearch(_searchController.text.trim()),
+  return Material(
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              labelText: 'Search Users',
+              hintText: 'Enter name, email, or ID',
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search),
+                onPressed: () => onSearch(_searchController.text.trim()),
+              ),
             ),
+            onSubmitted: (query) => onSearch(query.trim()),
           ),
-          onSubmitted: (query) => onSearch(query.trim()),
-        ),
-        SizedBox(height: 20),
-        
-        if (isLoading)
-          Center(child: CircularProgressIndicator()),
-        
-        if (errorMessage.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              errorMessage,
-              style: TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
+          SizedBox(height: 20),
+
+          if (isLoading)
+            Center(child: CircularProgressIndicator()),
+
+          if (errorMessage.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                errorMessage,
+                style: TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
             ),
-          ),
-        
-        if (!isLoading && errorMessage.isEmpty)
-          Expanded(
-            child: _buildResultsContent(),
-          ),
-      ],
-    );
-  }
+
+          if (!isLoading && errorMessage.isEmpty)
+            Flexible(child: _buildResultsContent()),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _buildResultsContent() {
     if (initialSearchQuery.isEmpty && searchResults.isEmpty) {
