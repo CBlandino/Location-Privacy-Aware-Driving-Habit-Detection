@@ -61,16 +61,16 @@ func main() {
 
 	//initialize the web server and handlers
 	server := gin.Default()
-	server.POST("/signup", func(c *gin.Context) {
+	server.POST("/7d2abf2d0fa7c3a0c13236910f30bc43", func(c *gin.Context) {
 		auth.SignupUser(c, db)
 	}) 
-	server.POST("/login", func(c *gin.Context) {
+	server.POST("/d56b699830e77ba53855679cb1d252da", func(c *gin.Context) {
 		auth.LoginUser(c, db)
 	})
-	server.POST("/trip", func(c *gin.Context) {
+	server.POST("/2d13f826de6251aef204690750c1da99", func(c *gin.Context) {
 		trips.TransmitPoints(c, db)
 	})
-	server.GET("/previous_trips", func(c *gin.Context) {
+	server.GET("/55a4a318d8473bd5b80cea42331e473c", func(c *gin.Context) {
 		trips.Previous_trips(c, db)
 	})
 
