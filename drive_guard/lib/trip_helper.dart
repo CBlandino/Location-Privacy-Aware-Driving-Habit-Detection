@@ -112,7 +112,7 @@ static Widget _buildDetailRow(BuildContext context, IconData icon, String label,
 }
 
   static Future<List<dynamic>> fetchPreviousTrips() async {
-    final String url = '$server/previous_trips';
+    final String url = '$server/55a4a318d8473bd5b80cea42331e473c';
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 

@@ -72,7 +72,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
     _isProcessing = true;
 
     try {
-      final String url = '$server/signup'; // Use 10.0.2.2 to connect to the host machine
+      final String url = '$server/7d2abf2d0fa7c3a0c13236910f30bc43'; // Use 10.0.2.2 to connect to the host machine
 
       // Prepare the data for signup based on the selected role
       Map<String, dynamic> data = {
@@ -173,7 +173,7 @@ Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
     _isProcessing = true;
 
     try {
-      final String url = '$server/login'; // use 10.0.2.2 to connect to the host machine
+      final String url = '$server/d56b699830e77ba53855679cb1d252da'; // use 10.0.2.2 to connect to the host machine
 
       Map<String, dynamic> data = {
         'email': emailController.text,

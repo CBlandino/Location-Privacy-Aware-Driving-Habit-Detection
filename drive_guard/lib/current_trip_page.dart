@@ -331,7 +331,7 @@ Future<void> _getCurrentLocation() async {
 
   // Send trip data to the server
   Future<void> sendTripData() async {
-    final String url = '$server/trip';
+    final String url = '$server/2d13f826de6251aef204690750c1da99';
     // Retrieve token from shared preferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
