@@ -138,6 +138,83 @@ static Widget _buildDetailRow(BuildContext context, IconData icon, String label,
     }
   }
 
+// Add to trip_helper.dart
+static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+  final String url = '$server/search_users?query=$query';
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('access_token');
+
+  try {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(json.decode(response.body));
+    } else {
+      throw Exception('Failed to search users');
+    }
+  } catch (error) {
+    throw Exception('Search failed: $error');
+  }
+}
+
+static Future<Map<String, dynamic>> getUserScore(String userId) async {
+  final String url = '$server/user_score/$userId';
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('access_token');
+
+  try {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return Map<String, dynamic>.from(json.decode(response.body));
+    } else {
+      throw Exception('Failed to get user score');
+    }
+  } catch (error) {
+    throw Exception('Failed to fetch score: $error');
+  }
+}
+
+static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? sortBy}) async {
+  String url = '$server/user_trips/$userId';
+  if (sortBy != null) {
+    url += '?sort=$sortBy';
+  }
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('access_token');
+
+  try {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(json.decode(response.body));
+    } else {
+      throw Exception('Failed to get user trips');
+    }
+  } catch (error) {
+    throw Exception('Failed to fetch trips: $error');
+  }
+}
+
 static String formatTimestamp(dynamic timestamp) {
   if (timestamp == null) {
     return "No date";

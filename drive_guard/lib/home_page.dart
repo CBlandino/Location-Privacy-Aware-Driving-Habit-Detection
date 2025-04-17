@@ -32,12 +32,20 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   File? _profileImage;
 
-  List<Map<String, dynamic>> _searchResults = [];
+    List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
   String _searchError = '';
   String _searchedUserId = '';
   List<Map<String, dynamic>> _userTrips = [];
   Map<String, dynamic>? _userScore;
+
+String _searchQuery = '';
+List<Map<String, dynamic>> _foundUsers = [];
+Map<String, dynamic>? _selectedUser;
+bool _isLoadingUsers = false;
+bool _isLoadingScore = false;
+bool _isLoadingTrips = false;
+String _tripSortOption = 'recent'; // 'recent' or 'distance
 
   late String role;
   late String email;
@@ -54,42 +62,69 @@ class _HomePageState extends State<HomePage> {
   String errorMessage = '';
   bool isLoading = false;
 
-  void _searchUsers(String query) async {
+Future<void> _searchForUsers() async {
+  if (_searchQuery.isEmpty) return;
+  
+  setState(() {
+    _isLoadingUsers = true;
+    _foundUsers = [];
+    _selectedUser = null;
+  });
+
+  try {
+    final results = await TripService.searchUsers(_searchQuery);
     setState(() {
-      _isSearching = true;
-      _searchError = '';
-      _searchResults = [];
+      _foundUsers = results;
+      _isLoadingUsers = false;
     });
-
-    try {
-      // Replace this with your real API
-      // Example: simulate an API call delay
-      await Future.delayed(Duration(seconds: 1));
-
-      // For demonstration: pretend we found a user with a matching ID
-      final results =
-          [
-                {'id': '123', 'name': 'John Doe'},
-                {'id': '456', 'name': 'Jane Smith'},
-              ]
-              .where(
-                (user) =>
-                    user['name']!.toLowerCase().contains(query.toLowerCase()),
-              )
-              .toList();
-
-      setState(() {
-        _isSearching = false;
-        _searchResults = results;
-        _searchedUserId = (results.isNotEmpty ? results.first['id'] : '')!;
-      });
-    } catch (e) {
-      setState(() {
-        _isSearching = false;
-        _searchError = 'Search failed: $e';
-      });
-    }
+  } catch (e) {
+    setState(() {
+      _isLoadingUsers = false;
+      _searchError = 'Search failed: $e';
+    });
   }
+}
+
+Future<void> _loadUserScore(String userId) async {
+  setState(() {
+    _isLoadingScore = true;
+    _userScore = null;
+  });
+
+  try {
+    final scoreData = await TripService.getUserScore(userId);
+    setState(() {
+      _userScore = scoreData;
+      _isLoadingScore = false;
+    });
+  } catch (e) {
+    setState(() {
+      _isLoadingScore = false;
+      _searchError = 'Failed to load score: $e';
+    });
+  }
+}
+
+Future<void> _loadUserTrips(String userId) async {
+  setState(() {
+    _isLoadingTrips = true;
+    _userTrips = [];
+  });
+
+  try {
+    final trips = await TripService.getUserTrips(userId, sortBy: _tripSortOption);
+    setState(() {
+      _userTrips = trips;
+      _isLoadingTrips = false;
+    });
+  } catch (e) {
+    setState(() {
+      _isLoadingTrips = false;
+      _searchError = 'Failed to load trips: $e';
+    });
+  }
+}
+
 
   Future<void> loadRecentTrips() async {
     setState(() {
@@ -112,18 +147,27 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void _selectUser(Map<String, dynamic> user) {
+  setState(() {
+    _selectedUser = user;
+    _searchedUserId = user['id'];
+  });
+  _loadUserScore(user['id']);
+  _loadUserTrips(user['id']);
+}
+
+void _setTripSort(String sortOption) {
+  setState(() {
+    _tripSortOption = sortOption;
+  });
+  if (_searchedUserId.isNotEmpty) {
+    _loadUserTrips(_searchedUserId);
+  }
+}
+
   Future<void> _loadProfileImage() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
-    //Map<String, dynamic> decodedToken = JwtDecoder.decode(token!);
-
-    // if (JwtDecoder.isExpired(token)) {
-    //   Navigator.pushReplacement(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
-    //   );
-    //   return;
-    // }
 
     final imagePath = prefs.getString('profile_image');
     if (imagePath != null) {
@@ -180,34 +224,6 @@ class _HomePageState extends State<HomePage> {
 
   // }
 
-  Widget _buildWelcomeCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            CircleAvatar(radius: 30, child: Icon(Icons.business)),
-            SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome, Insurance Provider!',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'Manage your users and their data',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildSection({
     required String title,
@@ -355,368 +371,271 @@ Widget _buildPreviousTripsSection() {
   );
 }
 
-
-  Widget _buildUserTripsPage() {
-    return Padding(
+Widget _buildUserSearchCard() {
+  return Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Expanded(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'User Trip Lookup',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            'Find User',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade800,
+            ),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 16),
           TextField(
             decoration: InputDecoration(
-              labelText: 'Enter User ID',
+              labelText: 'Search by name, email or ID',
               border: OutlineInputBorder(),
               suffixIcon: IconButton(
                 icon: Icon(Icons.search),
-                onPressed: () {
-                  // TODO: Implement trip lookup
-                },
+                onPressed: _searchForUsers,
               ),
             ),
+            onChanged: (value) => _searchQuery = value,
+            onSubmitted: (_) => _searchForUsers(),
           ),
-          SizedBox(height: 20),
-          // TODO: Add trip results display
-          Expanded(
-            child: Center(child: Text('Search for a user to view their trips')),
-          ),
+          SizedBox(height: 16),
+          if (_isLoadingUsers)
+            Center(child: CircularProgressIndicator())
+          else if (_foundUsers.isNotEmpty)
+            Column(
+              children: [
+                Text(
+                  'Search Results',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                ..._foundUsers.map((user) => ListTile(
+                  leading: CircleAvatar(
+                    child: Text(user['name'][0]),
+                  ),
+                  title: Text(user['name']),
+                  subtitle: Text(user['email']),
+                  onTap: () => _selectUser(user),
+                )).toList(),
+              ],
+            ),
         ],
-      )
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildUserScorePage() {
-    return Padding(
+Widget _buildUserScoreCard() {
+  return Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'User Score Lookup',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 20),
-          TextField(
-            decoration: InputDecoration(
-              labelText: 'Enter User ID',
-              border: OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {
-                  // TODO: Implement score lookup
-                },
-              ),
-            ),
-          ),
-          SizedBox(height: 20),
-          // TODO: Add score display
-          Expanded(
-            child: Center(child: Text('Search for a user to view their score')),
-          ),
-        ],
-      ),
-    );
-  }
-
-Widget _buildInsuranceHomePage() {
-  return _selectedIndex == 0
-      ? SingleChildScrollView(
-          child: Padding(
-            padding:  const EdgeInsets.all(16.0),
-          child: Column(
+          Row(
             children: [
-              // Welcome Card with gradient
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.blue.shade700, Colors.blue.shade400],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                    
-                  ],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Colors.white.withOpacity(0.2),
-                        child: Icon(Icons.business, color: Colors.white, size: 30),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome, Insurance Provider!',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Manage your users and their driving data',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+              Text(
+                'User Safety Score',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade800,
                 ),
               ),
-              SizedBox(height: 24),
-
-              // User Lookup Card
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+              if (_selectedUser != null) ...[
+                SizedBox(width: 8),
+                Chip(
+                  label: Text(_selectedUser!['name']),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.search, color: Colors.blue.shade700),
-                          SizedBox(width: 8),
-                          Text(
-                            'User Lookup',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-                       SizedBox(height: 16),
-                    SizedBox(
-                      height: 300,
-                      child: UserLookupPage(
-                        onSearch: _searchUsers,
-                        searchResults: _searchResults,
-                        isLoading: _isSearching,
-                        errorMessage: _searchError,
-                      ),
-                    ),
-                    ],
+              ],
+            ],
+          ),
+          SizedBox(height: 16),
+          if (_isLoadingScore)
+            Center(child: CircularProgressIndicator())
+          else if (_userScore == null)
+            Center(child: Text('Select a user to view their score'))
+          else
+            Column(
+              children: [
+                CircularProgressIndicator(
+                  value: _userScore!['score'] / 100,
+                  semanticsLabel: 'Safety score',
+                ),
+                SizedBox(height: 16),
+                Text(
+                  '${_userScore!['score']}%',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+                SizedBox(height: 8),
+                Text(
+                  'Last updated: ${TripService.formatTimestamp(_userScore!['updated_at'])}',
+                  style: TextStyle(
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildUserTripsCard() {
+  return Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'User Trips',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade800,
+                ),
+              ),
+              DropdownButton<String>(
+                value: _tripSortOption,
+                items: [
+                  DropdownMenuItem(
+                    value: 'recent',
+                    child: Text('Recent'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'distance',
+                    child: Text('Longest'),
+                  ),
+                ],
+                onChanged: (value) => _setTripSort(value!),
               ),
             ],
           ),
-        ))
-      : _selectedIndex == 1
-          ? SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // Welcome Card
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Colors.blue.shade700, Colors.blue.shade400],
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.white.withOpacity(0.2),
-                            child: Icon(Icons.business, color: Colors.white, size: 30),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'User Trip Data',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  'View and analyze user trip history',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.9),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 24),
+          SizedBox(height: 16),
+          if (_isLoadingTrips)
+            Center(child: CircularProgressIndicator())
+          else if (_userTrips.isEmpty)
+            Center(child: Text(_selectedUser == null 
+                ? 'Select a user to view trips'
+                : 'No trips found'))
+          else
+            Column(
+              children: _userTrips.map((trip) => ListTile(
+                leading: Icon(Icons.directions_car),
+                title: Text(TripService.formatTimestamp(trip['start_time'])),
+                subtitle: Text('${trip['distance'].toStringAsFixed(2)} miles'),
+                trailing: IconButton(
+                  icon: Icon(Icons.info),
+                  onPressed: () => TripService.showTripDetails(context, trip),
+                ),
+              )).toList(),
+            ),
+        ],
+      ),
+    ),
+  );
+}
 
-                  // User Trips Card
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(Icons.directions_car, color: Colors.blue.shade700),
-                              SizedBox(width: 8),
-                              Text(
-                                'User Trips',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 16),
-                          UserTripsPage(
-                            userId: _searchedUserId,
-                            trips: _userTrips,
-                            isLoading: false,
-                            errorMessage: '',
-                          ),
-                        ],
-                      ),
-                    ),
+Widget _buildWelcomeCard({required String title, required String description}) {
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Colors.blue.shade700, Colors.blue.shade400],
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.blue.withOpacity(0.3),
+          blurRadius: 10,
+          spreadRadius: 2,
+        ),
+      ],
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.white.withOpacity(0.2),
+            child: Icon(Icons.business, color: Colors.white, size: 30),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                ],
-              ),
-            ))
-          : _selectedIndex == 2
-              ? SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      // Welcome Card
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Colors.blue.shade700, Colors.blue.shade400],
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 30,
-                                backgroundColor: Colors.white.withOpacity(0.2),
-                                child: Icon(Icons.business, color: Colors.white, size: 30),
-                              ),
-                              SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'User Safety Scores',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      'Review and analyze user driving scores',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 24),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  description,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
-                      // User Score Card
-                      Card(
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.assessment, color: Colors.blue.shade700),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'User Score',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(height: 16),
-                              UserScorePage(
-                                userId: _searchedUserId,
-                                scoreData: _userScore ?? {},
-                                isLoading: false,
-                                errorMessage: '',
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ))
-              : SettingsPage();
+Widget _buildInsuranceHomePage() {
+  return SingleChildScrollView(
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildWelcomeCard(
+            title: 'Insurance Dashboard',
+            description: 'Manage user data and driving scores',
+          ),
+          SizedBox(height: 24),
+          _buildUserSearchCard(),
+          SizedBox(height: 24),
+          _buildUserScoreCard(),
+          SizedBox(height: 24),
+          _buildUserTripsCard(),
+        ],
+      ),
+    ),
+  );
 }
 
 Widget _buildUserHomePage() {
