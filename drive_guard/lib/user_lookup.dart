@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-class UserLookupPage extends StatelessWidget {
+import 'custom_app_bar.dart';
+
+class UserLookupPage extends StatefulWidget {
   final Function(String) onSearch;
   final List<Map<String, dynamic>> searchResults;
   final bool isLoading;
@@ -16,53 +18,80 @@ class UserLookupPage extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
-@override
-Widget build(BuildContext context) {
-  final TextEditingController _searchController = 
-      TextEditingController(text: initialSearchQuery);
-
-  return Material(
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              labelText: 'Search Users',
-              hintText: 'Enter name, email, or ID',
-              border: OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () => onSearch(_searchController.text.trim()),
-              ),
-            ),
-            onSubmitted: (query) => onSearch(query.trim()),
-          ),
-          SizedBox(height: 20),
-
-          if (isLoading)
-            Center(child: CircularProgressIndicator()),
-
-          if (errorMessage.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                errorMessage,
-                style: TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
-            ),
-
-          if (!isLoading && errorMessage.isEmpty)
-            Flexible(child: _buildResultsContent()),
-        ],
-      ),
-    ),
-  );
+  @override
+  _UserLookupPageState createState() => _UserLookupPageState();
 }
 
-  Widget _buildResultsContent() {
+class _UserLookupPageState extends State<UserLookupPage> {
+  int _selectedIndex = 0;
+
+  
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.text = widget.initialSearchQuery;
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Navigation will be handled by CustomAppBar's _navigateToPage
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        role: 'insurance',
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search Users',
+                hintText: 'Enter name, email, or ID',
+                border: OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(Icons.search),
+                  onPressed: () => widget.onSearch(_searchController.text.trim()),
+                ),
+              ),
+              onSubmitted: (query) => widget.onSearch(query.trim()),
+            ),
+            SizedBox(height: 20),
+            if (widget.isLoading)
+              Expanded(child: Center(child: CircularProgressIndicator())),
+            if (widget.errorMessage.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  widget.errorMessage,
+                  style: TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            if (!widget.isLoading && widget.errorMessage.isEmpty)
+              Expanded(child: _buildResultsContent(widget.initialSearchQuery, widget.searchResults)),
+          ],
+        ),
+      ),
+      bottomNavigationBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        role: 'insurance',
+      ).buildBottomNavBar(context),
+    );
+  }
+
+  Widget _buildResultsContent(dynamic initialSearchQuery, dynamic searchResults) {
     if (initialSearchQuery.isEmpty && searchResults.isEmpty) {
       return Center(
         child: Column(

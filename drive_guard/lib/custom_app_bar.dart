@@ -36,11 +36,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   String _getAppBarTitle(int index) {
     if (role == 'insurance') {
       switch (index) {
-        case 0: return "User Lookup";
+        case 0: return "Dashboard";
         case 1: return "User Trips";
         case 2: return "User Scores";
         case 3: return "Account";
-        default: return "User Lookup";
+        default: return "Dashboard";
       }
     } else if(role == 'user') { // User role
       switch (index) {
@@ -105,7 +105,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return [
       BottomNavigationBarItem(
         icon: Icon(Icons.directions_car),
-        label: 'Current Trip',
+        label: 'Home',
       ),
       BottomNavigationBarItem(
         icon: Icon(Icons.history),

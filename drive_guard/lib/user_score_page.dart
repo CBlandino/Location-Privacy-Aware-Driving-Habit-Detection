@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
-class UserScorePage extends StatelessWidget {
+import 'package:flutter/material.dart';
+
+import 'custom_app_bar.dart';
+
+class UserScorePage extends StatefulWidget {
   final String userId;
   final Map<String, dynamic>? scoreData;
   final bool isLoading;
@@ -17,9 +21,33 @@ class UserScorePage extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _UserScorePageState createState() => _UserScorePageState();
+}
+
+class _UserScorePageState extends State<UserScorePage> {
+  int _selectedIndex = 2; // Set to 2 for User Scores tab
+  final TextEditingController _userIdController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _userIdController.text = widget.userId;
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("User Score")),
+      appBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        role: 'insurance',
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -31,33 +59,38 @@ class UserScorePage extends StatelessWidget {
                 border: OutlineInputBorder(),
                 suffixIcon: Icon(Icons.search),
               ),
-              controller: TextEditingController(text: userId),
-              onSubmitted: onSearchSubmitted,
+              controller: _userIdController,
+              onSubmitted: widget.onSearchSubmitted,
             ),
             SizedBox(height: 20),
-
-            if (isLoading)
-              Center(child: CircularProgressIndicator()),
-
-            if (errorMessage.isNotEmpty)
+            if (widget.isLoading)
+              Container(
+                height: MediaQuery.of(context).size.height * 0.5,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            if (widget.errorMessage.isNotEmpty)
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  errorMessage,
+                  widget.errorMessage,
                   style: TextStyle(color: Colors.red),
                   textAlign: TextAlign.center,
                 ),
               ),
-
-            if (!isLoading && errorMessage.isEmpty)
-              _buildScoreContent(),
+            if (!widget.isLoading && widget.errorMessage.isEmpty)
+              _buildScoreContent(widget.userId, widget.scoreData),
           ],
         ),
       ),
+      bottomNavigationBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        role: 'insurance',
+      ).buildBottomNavBar(context),
     );
   }
 
-  Widget _buildScoreContent() {
+  Widget _buildScoreContent(dynamic userId, dynamic scoreData) {
     if (userId.isEmpty) {
       return _buildMessage("Enter a User ID to view their safety score", Icons.score);
     }

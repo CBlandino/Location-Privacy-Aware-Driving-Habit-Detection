@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
-class UserTripsPage extends StatelessWidget {
+import 'package:flutter/material.dart';
+
+import 'custom_app_bar.dart';
+
+class UserTripsPage extends StatefulWidget {
   final String userId;
   final List<Map<String, dynamic>> trips;
   final bool isLoading;
@@ -17,9 +21,33 @@ class UserTripsPage extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _UserTripsPageState createState() => _UserTripsPageState();
+}
+
+class _UserTripsPageState extends State<UserTripsPage> {
+  int _selectedIndex = 1; // Set to 1 for User Trips tab
+  final TextEditingController _userIdController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _userIdController.text = widget.userId;
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('User Trips')),
+      appBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        role: 'insurance',
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -31,33 +59,35 @@ class UserTripsPage extends StatelessWidget {
                 border: OutlineInputBorder(),
                 suffixIcon: Icon(Icons.search),
               ),
-              onSubmitted: onSearchSubmitted,
-              controller: TextEditingController(text: userId),
+              onSubmitted: widget.onSearchSubmitted,
+              controller: _userIdController,
             ),
             SizedBox(height: 20),
-
-            if (isLoading)
-              Center(child: CircularProgressIndicator()),
-
-            if (errorMessage.isNotEmpty)
+            if (widget.isLoading)
+              Expanded(child: Center(child: CircularProgressIndicator())),
+            if (widget.errorMessage.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
-                  errorMessage,
+                  widget.errorMessage,
                   style: TextStyle(color: Colors.red),
                   textAlign: TextAlign.center,
                 ),
               ),
-
-            if (!isLoading && errorMessage.isEmpty)
-              Expanded(child: _buildTripsContent()),
+            if (!widget.isLoading && widget.errorMessage.isEmpty)
+              Expanded(child: _buildTripsContent(widget.userId, widget.trips)),
           ],
         ),
       ),
+      bottomNavigationBar: CustomAppBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+        role: 'insurance',
+      ).buildBottomNavBar(context),
     );
   }
 
-  Widget _buildTripsContent() {
+  Widget _buildTripsContent(dynamic userId, dynamic trips) {
     if (userId.isEmpty) {
       return _buildMessage("Enter a User ID to search for trips", Icons.search);
     }
