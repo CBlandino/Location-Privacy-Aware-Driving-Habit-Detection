@@ -281,7 +281,6 @@ Widget _buildPreviousTripsSection() {
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
     ),
-    elevation: 10,
     color: Colors.lightBlueAccent,
     child: Padding(
       padding: const EdgeInsets.all(16.0),
