@@ -1,8 +1,7 @@
 package score
 
 import (
-
-	//"math" // maybe need
+	"math" // maybe need
 
 	"database/sql"
 
@@ -31,67 +30,67 @@ func getUserScore(c *gin.Context, db *sql.DB) {
 
 // argument is a map from string to int where each cell represents block of points, key will be long and lat, and pair will be time stamp
 
-// struct for driving habits
+// Represents a driving habit
 type drivingHabit struct {
-	weight float64 // weight
-	input  float64 // input
-
-	numHabits float64 // number of habits that occured
+	name        string
+	weight      float64
+	input       float64
+	threshold   float64
+	rawInput    float64
+	decrementFn func(float64, float64) float64 // takes (rawInput, threshold) and returns input [0,1]
 }
 
-// constructor for driving habit, sets the weight and input
-func newHabit(weight float64, numHabits float64) drivingHabit {
+// Factory for new driving habits
+func newHabit(name string, weight float64, threshold float64, rawInput float64, decrementFn func(float64, float64) float64) drivingHabit {
 	return drivingHabit{
-		weight:    weight,
-		numHabits: numHabits,
+		name:        name,
+		weight:      weight,
+		threshold:   threshold,
+		rawInput:    rawInput,
+		decrementFn: decrementFn,
 	}
 }
 
-func calcuateScore(pointsData []float64) float64 {
+// Sample decrement function (linear penalty)
+func linearDecrement(rawInput, threshold float64) float64 {
+	decrementFromInput := 0.2
+	if rawInput <= threshold {
+		return 1
+	}
+	return math.Max(0, 1-(decrementFromInput*(rawInput-threshold)))
+}
 
-	// purely for test, implement later. decrements score based on number of habits that occured
-	var decrementFromInput = .2
+// Calculates score. More habits can be easily added in the future
+func calculateScore() float64 {
 
-	// driving habits
-	var numBreaks float64
-	var numAccel float64
-	var timeSpeeding float64
+	// Replace these nums with a struct that contains number of occurences as well as the list of lists for waypoints ryan will pass
+	numBreaks := 5.0
+	numAccel := 3.0
+	timeSpeeding := 20.0
 
-	harshBreak := newHabit(0.3, numBreaks)
-	harshAcceleration := newHabit(0.3, numAccel)
-	speeding := newHabit(0.4, timeSpeeding)
-
-	// thresholds for habits
-	if numBreaks <= 2 {
-		harshBreak.input = 1
-	} else {
-		harshBreak.input = 1 - (decrementFromInput * (numBreaks - 2))
+	// Define all habits here — easy to add more
+	habits := []drivingHabit{
+		newHabit("Harsh Braking", 0.3, 2, numBreaks, linearDecrement),
+		newHabit("Harsh Acceleration", 0.3, 2, numAccel, linearDecrement),
+		newHabit("Speeding", 0.4, 10, timeSpeeding, linearDecrement),
+		// Example of future addition:
+		// newHabit("Phone Usage", 0.2, 5, phoneUsageTime, customDecrementFn),
 	}
 
-	if numAccel <= 2 {
-		harshAcceleration.input = 1
-	} else {
-		harshAcceleration.input = 1 - (decrementFromInput * (numAccel - 2))
-	}
-
-	if timeSpeeding <= 10 {
-		speeding.input = 1
-	} else {
-		speeding.input = 1 - (decrementFromInput * (timeSpeeding - 10))
-	}
-
-	// Calculate final score
-	var totalWeighted float64
-	habits := []drivingHabit{harshBreak, harshAcceleration, speeding}
-	for _, habit := range habits {
-		totalWeighted += habit.weight * habit.input
+	// Calculate score
+	totalWeighted := 0.0
+	for i, h := range habits {
+		habits[i].input = h.decrementFn(h.rawInput, h.threshold)
+		totalWeighted += h.weight * habits[i].input
 	}
 
 	score := 1.0 - totalWeighted
 	if score < 0 {
 		score = 0
 	}
-
 	return score
-
 }
+
+// acrually ill be passed a struct with lists of lists in fields that contian, speeding, breaks, acceleration
+// ryan will pass a speeding function where a list is passed containing lists of point in which they were speeding. so it will essentially be a list of lists where each elements if the points in which they were speeding. i can multiply by 5 to get total time spedeing because each point.
+// make it so you get more penalized for speeding higher than if you were just going a few miles over the speeding
