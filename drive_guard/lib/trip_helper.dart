@@ -11,6 +11,98 @@ import 'login_page.dart';
 class TripService {
   static final String server = AppConfig.server;
 
+static Future<List<Map<String, dynamic>>> searchInsurance(String query) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConfig.server}/admin/search_insurance?query=$query'),
+      );
+      if (response.statusCode == 200) {
+        return List<Map<String, dynamic>>.from(json.decode(response.body));
+      }
+      throw Exception('Failed to search insurance companies');
+    } catch (e) {
+      throw Exception('Search error: $e');
+    }
+  }
+
+  static Future<bool> checkServerStatus() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${AppConfig.server}/ping'),
+      ).timeout(const Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+    static Future<void> createAdminAccount({
+    required String email,
+    required String password,
+    required String serverNumber,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.server}/7d2abf2d0fa7c3a0c13236910f30bc43'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': email,
+        'password': password,
+        'server_number': serverNumber,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create admin account: ${response.body}');
+    }
+  }
+
+  static Future<void> createUserAccount({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.server}/7d2abf2d0fa7c3a0c13236910f30bc43'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': email,
+        'password': password,
+        'first_name': firstName,
+        'last_name': lastName,
+        'role': 'user',
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create user account: ${response.body}');
+    }
+  }
+
+    static Future<void> createInsuranceAccount({
+    required String email,
+    required String password,
+    required String companyName,
+    required String state,
+  }) async {
+    final response = await http.post(
+      Uri.parse('${AppConfig.server}/7d2abf2d0fa7c3a0c13236910f30bc43'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': email,
+        'password': password,
+        'company_name': companyName,
+        'state': state,
+        'role': 'insurance',
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create insurance account: ${response.body}');
+    }
+  }
+
+
 static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
   int timestamp;
   try {

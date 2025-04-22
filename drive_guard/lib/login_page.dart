@@ -86,11 +86,13 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         data['first_name'] = firstNameController.text;
         data['last_name'] = lastNameController.text;
       } else if (_selectedRole == 'admin') {
-        data['server_number'] = serverNumberController.text;
-        data['id'] = idController.text;
+        data['first_name'] = firstNameController.text;
+        data['last_name'] = lastNameController.text;
+        data['admin_id'] = idController.text;  
+        //data['server_number'] = serverNumberController.text;
       } else if (_selectedRole == 'insurance') {
         data['first_name'] =
-            insuranceProviderController.text; // Provider = First Name
+        insuranceProviderController.text; // Provider = First Name
         data['last_name'] = stateController.text; // State = Last Name
         data['password'] = idController.text; // ID = Password
       }
@@ -111,48 +113,6 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
         String role = decodedToken['role'];
-
-        // SharedPreferences prefs = await SharedPreferences.getInstance();
-        //   String? token = prefs.getString('access_token');
-
-        //   if (token != null) {
-        //     try {
-        //       final parts = token.split('.');
-        //       if (parts.length != 3) {
-        //         throw Exception('Invalid token structure');
-        //       }
-
-        //       final payload = parts[1];
-        //       final normalized = base64Url.normalize(payload);
-        //       final decoded = utf8.decode(base64Url.decode(normalized));
-        //       final Map<String, dynamic> tokenData = json.decode(decoded);
-
-        //        String role = tokenData['role'];
-        //        String firstName = tokenData['first_name'];
-        //        String lastName = tokenData['last_name'];
-        //        String email = tokenData['email'];
-
-        //       if (role != null && firstName != null && lastName != null && email != null) {
-        //         print('User Info from Token:');
-        //         print('Role: $role');
-        //         print('First Name: $firstName');
-        //         print('Last Name: $lastName');
-        //         print('Email: $email');
-
-        //         // store them in SharedPreferences
-        //         await prefs.setString('role', role);
-        //         await prefs.setString('first_name', firstName);
-        //         await prefs.setString('last_name', lastName);
-        //         await prefs.setString('email', email);
-        //       } else {
-        //         print('Some fields are missing in the token.');
-        //       }
-        //     } catch (e) {
-        //       print('Error decoding token: $e');
-        //     }
-        //   } else {
-        //     print('No token found in SharedPreferences');
-        //   }
 
         Navigator.pushReplacement(
           context,
@@ -185,8 +145,8 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
       };
 
       if (_selectedRole == 'admin') {
-        data['server_number'] = serverNumberController.text;
-        data['id'] = idController.text;
+      data['admin_id'] = idController.text;
+      data['server_number'] = serverNumberController.text;
       } else if (_selectedRole == 'insurance') {
         //data['id'] = idController.text;
         //data['insurance_provider_name'] = insuranceProviderController.text;
@@ -456,21 +416,23 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
           _buildTextField('ID', idController, Icons.card_membership),
         ],
       );
-    } else if (_selectedRole == 'Admin') {
-      return Column(
-        children: [
-          if (isSignupMode) ...[
-            _buildTextField('Email', emailController, Icons.email),
-          ],
-          _buildTextField(
-            'Server Number',
-            serverNumberController,
-            Icons.computer,
-          ),
-          _buildTextField('ID', idController, Icons.card_membership),
-        ],
-      );
-    }
+    } else if (_selectedRole == 'admin') {
+  return Column(
+    children: [
+      if (isSignupMode) ...[
+        _buildTextField('First Name', firstNameController, Icons.person),
+        _buildTextField('Last Name', lastNameController, Icons.person),
+        _buildTextField('Admin ID', idController, Icons.badge),
+        _buildTextField(
+          'Server Number',
+          serverNumberController,
+          Icons.computer,
+        ),
+      ],
+      _buildTextField('Password', passwordController, Icons.lock),
+    ],
+  );
+}
     return SizedBox.shrink();
   }
 
