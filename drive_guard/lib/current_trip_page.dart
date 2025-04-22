@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'custom_app_bar.dart';
 import 'home_page.dart';
-import 'login_page.dart';
-import 'package:geolocator/geolocator.dart'; // Import Geolocator package
-import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences
+import 'package:geolocator/geolocator.dart'; 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ipconfig.dart';
-
-//currently for the "Widget _buildDeltaList()" the points stay 0. Also the program is not consistant, sometimes it takes 1 to four 4 seconds to start making delta point data
 
 class CurrentTripPage extends StatefulWidget {
   @override
@@ -40,8 +36,9 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   Random rand = Random();
 
   // Variables for the initial simulated latitude and longitude
-  late double _initialLatitude;
-  late double _initialLongitude;
+  // late double _initialLatitude;
+  // late double _initialLongitude;
+
   late String role;
 
   // Load the first masked latitude and longitude from shared preferences
@@ -55,7 +52,8 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
 
       void _onItemTapped(int index) {
       setState(() {
-        _selectedIndex = index; // Switches pages     
+        // Switches pages  
+        _selectedIndex = index;    
       });
     }
 
@@ -74,7 +72,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
 void initState() {
   super.initState();
   _loadUserInfo();
-  _requestPermissions(); // Ensure permissions are requested on startup
+  _requestPermissions();
   _loadFirstPoint().then((_) {
     Geolocator.getCurrentPosition();
     setState(() {});  
@@ -405,7 +403,7 @@ Widget build(BuildContext context) {
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : Padding(
+          : SingleChildScrollView(
         padding: EdgeInsets.all(screenWidth * 0.02),
         child: Column(
           children: [
@@ -416,9 +414,9 @@ Widget build(BuildContext context) {
             _buildMapView(screenHeight, screenWidth),
             SizedBox(height: screenHeight * 0.01),
             _buildDeltaList(screenHeight, screenWidth),
-            SizedBox(height: screenHeight * 0.02),
+            SizedBox(height: screenHeight * 0.01),
             _buildActionButton(screenWidth),
-            SizedBox(height: screenHeight * 0.02),
+            SizedBox(height: screenHeight * 0.01),
           ],
         ),
       ),
