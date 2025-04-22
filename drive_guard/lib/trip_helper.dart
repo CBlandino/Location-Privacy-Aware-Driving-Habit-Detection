@@ -97,16 +97,6 @@ static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
                   "${trip['duration']?.toStringAsFixed(1) ?? 'N/A'} minutes",
                 ),
                 const SizedBox(height: 20),
-                Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.blue[800],
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text("Close"),
-                  ),
-                ),
               ],
             ),
           );
