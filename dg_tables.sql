@@ -10,6 +10,7 @@ CREATE TABLE Users (
     class           userclass NOT NULL,
     password_hash   BYTEA NOT NULL, 
     salt            BYTEA NOT NULL
+    user_score      REAL NOT NULL,
 );
 
 DROP TABLE IF EXISTS Trips;
@@ -22,6 +23,9 @@ CREATE TABLE Trips (
     distance        REAL, 
     velocity        REAL, 
     trip_score      REAL,
+    speed_score     REAL, 
+    brake_score     REAL, 
+    accel_score     REAL, 
 
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
