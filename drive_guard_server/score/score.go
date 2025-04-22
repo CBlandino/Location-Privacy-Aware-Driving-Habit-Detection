@@ -1,6 +1,7 @@
 package score
 
 import (
+	"fmt"
 	"math" // maybe need
 
 	"database/sql"
@@ -31,66 +32,63 @@ func getUserScore(c *gin.Context, db *sql.DB) {
 // argument is a map from string to int where each cell represents block of points, key will be long and lat, and pair will be time stamp
 
 // Represents a driving habit
-type drivingHabit struct {
-	name        string
-	weight      float64
-	input       float64
-	threshold   float64
-	rawInput    float64
-	decrementFn func(float64, float64) float64 // takes (rawInput, threshold) and returns input [0,1]
+type metricData struct {
+	name            string                 // Name of habit
+	totalSeverity   int                    // Total severity of the trip, each severity data ranges from 0(no severity), 1(mild severity), 2(high severity)
+	individSeverity int                    // Each individual points severity (not currently in use)
+	threshold       int                    // Threshold for serverity, based off the length of the trip
+	score           float64                // Individual habits score
+	decrementFn     func(int, int) float64 // Takes (severity, threshold) and returns input [0,1]
 }
 
 // Factory for new driving habits
-func newHabit(name string, weight float64, threshold float64, rawInput float64, decrementFn func(float64, float64) float64) drivingHabit {
-	return drivingHabit{
-		name:        name,
-		weight:      weight,
-		threshold:   threshold,
-		rawInput:    rawInput,
-		decrementFn: decrementFn,
+func newHabit(name string, totalSeverity int, threshold int, decrementFn func(int, int) float64) metricData {
+	score := decrementFn(totalSeverity, threshold)
+	return metricData{
+		name:          name,
+		totalSeverity: totalSeverity,
+		threshold:     threshold,
+		score:         score,
+		decrementFn:   decrementFn,
 	}
 }
 
-// Sample decrement function (linear penalty)
-func linearDecrement(rawInput, threshold float64) float64 {
-	decrementFromInput := 0.2
-	if rawInput <= threshold {
+// Calculates individual score depending on the threshold
+func linearDecrement(totalSeverity, threshold int) float64 {
+	decrementFromInput := 0.1
+
+	if totalSeverity <= threshold {
 		return 1
 	}
-	return math.Max(0, 1-(decrementFromInput*(rawInput-threshold)))
+	return math.Max(0, 1-(decrementFromInput*float64(totalSeverity-threshold)))
 }
 
-// Calculates score. More habits can be easily added in the future
-func calculateScore() float64 {
+// Takes metricPass (1 for each habit) and calculates their individual score, as well as a final averaged score
+func takeInput(breakingPass metricPass, accelerationPass metricPass, speedingPass metricPass) float64 {
 
-	// Replace these nums with a struct that contains number of occurences as well as the list of lists for waypoints ryan will pass
-	numBreaks := 5.0
-	numAccel := 3.0
-	timeSpeeding := 20.0
-
-	// Define all habits here — easy to add more
-	habits := []drivingHabit{
-		newHabit("Harsh Braking", 0.3, 2, numBreaks, linearDecrement),
-		newHabit("Harsh Acceleration", 0.3, 2, numAccel, linearDecrement),
-		newHabit("Speeding", 0.4, 10, timeSpeeding, linearDecrement),
-		// Example of future addition:
-		// newHabit("Phone Usage", 0.2, 5, phoneUsageTime, customDecrementFn),
+	habits := []metricData{
+		newHabit("Harsh Breaking", breakingPass.totalSeverity, 5*len(breakingPass.flags), linearDecrement),
+		newHabit("Harsh Acceleration", accelerationPass.totalSeverity, 5*len(accelerationPass.flags), linearDecrement),
+		newHabit("Harsh Acceleration", speedingPass.totalSeverity, 5*len(speedingPass.flags), linearDecrement),
 	}
 
-	// Calculate score
-	totalWeighted := 0.0
-	for i, h := range habits {
-		habits[i].input = h.decrementFn(h.rawInput, h.threshold)
-		totalWeighted += h.weight * habits[i].input
+	var total float64
+	for _, h := range habits {
+		fmt.Printf("%s Score: %.2f\n", h.name, h.score)
+		total += h.score
 	}
 
-	score := 1.0 - totalWeighted
-	if score < 0 {
-		score = 0
-	}
-	return score
+	finalScore := total / float64(len(habits))
+	fmt.Printf("Final Average Score: %.2f\n", finalScore)
+	return finalScore
+
 }
 
-// acrually ill be passed a struct with lists of lists in fields that contian, speeding, breaks, acceleration
-// ryan will pass a speeding function where a list is passed containing lists of point in which they were speeding. so it will essentially be a list of lists where each elements if the points in which they were speeding. i can multiply by 5 to get total time spedeing because each point.
+// threshold is 15% of trips length .15 * (5 * number of points)
+// 24 is max the threshold can be for 1 minute
+
 // make it so you get more penalized for speeding higher than if you were just going a few miles over the speeding
+
+// take ryans metric pass struct and create a score for each individual habit and then create an average score for that trip, do this for every trip
+// take one score from the first trip, then from every trip after calculate the acerage score which will be in users table
+// threshold will be 15% of the trips length
