@@ -3,6 +3,7 @@ package score
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 
 	_ "github.com/lib/pq"
 
@@ -25,10 +26,22 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 	}
 
 	var totalDistance float64 = 0.0
-	for _, point := range data {
-		totalDistance += getDistance(&point)
+	for i, point := range data {
+		if d := getDistance(&point); d != math.NaN() {
+			totalDistance += d
+			velo := int((d / 5) * 3600)
+			data[i].Velo = velo
+		}
 	}
 
+	speedingPass := getSpeedingFlags(data)
+	brakingPass := getBrakingFlags(data)
+	accelPass := getAccelerationFlags(data)
+
+	log.Println("speeding severity:", speedingPass.totalSeverity)
+	log.Println("braking severity:", brakingPass.totalSeverity)
+	log.Println("accel severity:", accelPass.totalSeverity)
+	
 	var averageVelocity float64 = (totalDistance / (5.0 * float64(len(data)))) * 3600.0
 
 	_, err := db.Exec("UPDATE trips SET distance = $1, velocity = $2 WHERE trip_id = $3", totalDistance, averageVelocity, tripID)
@@ -43,10 +56,8 @@ func getDistance(p *point) float64 {
 
 	// radius of the earth in miles (6371km)
 	const R float64 = 3958.756 
-	// using beta approximation of 1 until implementation of R points is done
+	// using beta approximation of 1 until implementation of R geographical points is done
 	const Beta float64 = 1.0
-
-	//running accumulator for the haversine distance between points for every point in the batch
 
 	dLat := (float64(p.Lat) * 0.000001) * (math.Pi / 180.0)
 	dLong := (float64(p.Long) * 0.000001) * (math.Pi / 180.0)
@@ -66,6 +77,81 @@ func getDistance(p *point) float64 {
 	return totalDist
 }
 
+
+func getSpeedingFlags(data []point) metricPass {
+
+	metrics := make([]metricFlag, 0)
+	totalSev := 0
+
+	for _, point := range data {
+		var severity int
+		if point.Velo >= 85 {
+			severity = 2
+		} else if point.Velo >= 75  {
+			severity = 1
+		} else {
+			severity = 0
+		}
+
+		totalSev += severity
+		metrics = append(metrics, metricFlag{severity, point.Velo, -1})
+	}
+
+	return metricPass{metrics, totalSev}
+}
+
+func getBrakingFlags(data []point) metricPass {
+	metrics := make([]metricFlag, 0)
+	totalSev := 0
+
+	previousVelo := 0
+	for _, point := range data {
+		var severity int
+
+		//calculate deceleration between points
+		decel := (previousVelo - point.Velo) / 5
+		if decel >= 7 {
+			severity = 2
+		} else if decel >= 5 {
+			severity = 1
+		} else {
+			severity = 0
+		}
+
+		totalSev += severity
+		metrics = append(metrics, metricFlag{severity, point.Velo, decel})
+		previousVelo = point.Velo
+	}
+
+	return metricPass{metrics, totalSev}
+}
+
+func getAccelerationFlags(data []point) metricPass {
+	metrics := make([]metricFlag, 0) 
+	totalSev := 0
+	
+	previousVelo := 0
+	for _, point := range data {
+		var severity int
+
+		//calculate acceleration between points
+		accel := (point.Velo - previousVelo) / 5 
+		if accel >= 8 {
+			severity = 2
+		} else if accel >= 6 {
+			severity = 1 
+		} else {
+			severity = 0
+		}
+
+		totalSev += severity
+		metrics = append(metrics, metricFlag{severity, point.Velo, accel})
+		previousVelo = point.Velo
+	}
+
+	return metricPass{metrics, totalSev}
+}
+
 type point struct {
 	// Lattitude delta
 	Lat int `json:"dlat"`
@@ -76,5 +162,19 @@ type point struct {
 	// order of this point in the batch
 	Order int `json:"p"`
 	// calculated velocity of this point within its varying time interval
-	Velo float64 `json:"v"`
+	Velo int `json:"v"`
+}
+
+type metricPass struct {
+	flags []metricFlag 
+	totalSeverity int
+}
+
+type metricFlag struct {
+	// severity of the event ranging from 0(no severity), 1(mild severity), 2(high severity)
+	Severity int
+	// speed recorded at the current point
+	Velo int 
+	// acceleration recorded at the current point
+	Accel int
 }
