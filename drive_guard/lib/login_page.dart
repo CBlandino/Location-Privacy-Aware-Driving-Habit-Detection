@@ -15,7 +15,7 @@ class LoginPageWidget extends StatefulWidget {
 }
 
 class _LoginPageWidgetState extends State<LoginPageWidget>
-  with TickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
   late SharedPreferences _prefs;
@@ -72,7 +72,8 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
     _isProcessing = true;
 
     try {
-      final String url = '$server/7d2abf2d0fa7c3a0c13236910f30bc43'; // Use 10.0.2.2 to connect to the host machine
+      final String url =
+          '$server/7d2abf2d0fa7c3a0c13236910f30bc43'; // Use 10.0.2.2 to connect to the host machine
 
       // Prepare the data for signup based on the selected role
       Map<String, dynamic> data = {
@@ -88,78 +89,79 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
         data['server_number'] = serverNumberController.text;
         data['id'] = idController.text;
       } else if (_selectedRole == 'insurance') {
-        data['first_name'] = insuranceProviderController.text; // Provider = First Name
-        data['last_name'] = stateController.text;              // State = Last Name
-        data['password'] = idController.text;                  // ID = Password
+        data['first_name'] =
+            insuranceProviderController.text; // Provider = First Name
+        data['last_name'] = stateController.text; // State = Last Name
+        data['password'] = idController.text; // ID = Password
       }
 
-        final response = await http.post(
-          Uri.parse(url),
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode(data),
-        );
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(data),
+      );
 
-        if (response.statusCode == 201) {
+      if (response.statusCode == 201) {
         print('STATUS: ${response.statusCode}');
         print('BODY: ${response.body}');
-final responseData = json.decode(response.body);
-  String token = responseData['access_token'];
-  await _prefs.setString('access_token', token);
+        final responseData = json.decode(response.body);
+        String token = responseData['access_token'];
+        await _prefs.setString('access_token', token);
 
-Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-    String role = decodedToken['role'];
-        
-// SharedPreferences prefs = await SharedPreferences.getInstance();
-//   String? token = prefs.getString('access_token');
+        String role = decodedToken['role'];
 
-//   if (token != null) {
-//     try {
-//       final parts = token.split('.');
-//       if (parts.length != 3) {
-//         throw Exception('Invalid token structure');
-//       }
+        // SharedPreferences prefs = await SharedPreferences.getInstance();
+        //   String? token = prefs.getString('access_token');
 
-//       final payload = parts[1];
-//       final normalized = base64Url.normalize(payload);
-//       final decoded = utf8.decode(base64Url.decode(normalized));
-//       final Map<String, dynamic> tokenData = json.decode(decoded);
+        //   if (token != null) {
+        //     try {
+        //       final parts = token.split('.');
+        //       if (parts.length != 3) {
+        //         throw Exception('Invalid token structure');
+        //       }
 
-//        String role = tokenData['role'];
-//        String firstName = tokenData['first_name'];
-//        String lastName = tokenData['last_name'];
-//        String email = tokenData['email'];
+        //       final payload = parts[1];
+        //       final normalized = base64Url.normalize(payload);
+        //       final decoded = utf8.decode(base64Url.decode(normalized));
+        //       final Map<String, dynamic> tokenData = json.decode(decoded);
 
-//       if (role != null && firstName != null && lastName != null && email != null) {
-//         print('User Info from Token:');
-//         print('Role: $role');
-//         print('First Name: $firstName');
-//         print('Last Name: $lastName');
-//         print('Email: $email');
+        //        String role = tokenData['role'];
+        //        String firstName = tokenData['first_name'];
+        //        String lastName = tokenData['last_name'];
+        //        String email = tokenData['email'];
 
-//         // store them in SharedPreferences
-//         await prefs.setString('role', role);
-//         await prefs.setString('first_name', firstName);
-//         await prefs.setString('last_name', lastName);
-//         await prefs.setString('email', email);
-//       } else {
-//         print('Some fields are missing in the token.');
-//       }
-//     } catch (e) {
-//       print('Error decoding token: $e');
-//     }
-//   } else {
-//     print('No token found in SharedPreferences');
-//   }
+        //       if (role != null && firstName != null && lastName != null && email != null) {
+        //         print('User Info from Token:');
+        //         print('Role: $role');
+        //         print('First Name: $firstName');
+        //         print('Last Name: $lastName');
+        //         print('Email: $email');
+
+        //         // store them in SharedPreferences
+        //         await prefs.setString('role', role);
+        //         await prefs.setString('first_name', firstName);
+        //         await prefs.setString('last_name', lastName);
+        //         await prefs.setString('email', email);
+        //       } else {
+        //         print('Some fields are missing in the token.');
+        //       }
+        //     } catch (e) {
+        //       print('Error decoding token: $e');
+        //     }
+        //   } else {
+        //     print('No token found in SharedPreferences');
+        //   }
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage(role: role)),
         );
-        } else {
-          final responseData = await parseJson(response.body);
-          _showErrorDialog(responseData['message']);
-        }
+      } else {
+        final responseData = await parseJson(response.body);
+        _showErrorDialog(responseData['message']);
+      }
     } catch (error) {
       _showErrorDialog('An error occurred. Please try again later.');
     } finally {
@@ -173,7 +175,8 @@ Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
     _isProcessing = true;
 
     try {
-      final String url = '$server/d56b699830e77ba53855679cb1d252da'; // use 10.0.2.2 to connect to the host machine
+      final String url =
+          '$server/d56b699830e77ba53855679cb1d252da'; // use 10.0.2.2 to connect to the host machine
 
       Map<String, dynamic> data = {
         'email': emailController.text,
@@ -192,30 +195,30 @@ Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
         data['password'] = idController.text;
       }
 
-        final response = await http.post(
-          Uri.parse(url),
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode(data),
-        );
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(data),
+      );
 
-        if (response.statusCode == 202) {
-final responseData = json.decode(response.body);
-  String token = responseData['access_token'];
-  await _prefs.setString('access_token', token);
+      if (response.statusCode == 202) {
+        final responseData = json.decode(response.body);
+        String token = responseData['access_token'];
+        await _prefs.setString('access_token', token);
 
-Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-    String role = decodedToken['role'];
+        String role = decodedToken['role'];
 
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePage(role: role)),
         );
-        } else {
-          // Error: Show error message
-          final responseData = await parseJson(response.body);
-          _showErrorDialog(responseData['message']);
-        }
+      } else {
+        // Error: Show error message
+        final responseData = await parseJson(response.body);
+        _showErrorDialog(responseData['message']);
+      }
     } catch (error) {
       _showErrorDialog('The Server is down. Please try again later.');
     } finally {
@@ -305,9 +308,9 @@ Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
                           isSignupMode = index == 1;
                         });
                       },
-                        indicatorColor: Colors.blue, 
-                        labelColor: Colors.blue, 
-                        unselectedLabelColor: Colors.grey,
+                      indicatorColor: Colors.blue,
+                      labelColor: Colors.blue,
+                      unselectedLabelColor: Colors.grey,
                     ),
                     SizedBox(height: screenHeight * 0.02),
                     Form(

@@ -6,13 +6,10 @@ import 'package:flutter/material.dart';
 //import 'package:intl/intl.dart'; // Import for date formatting
 import 'package:intl/intl.dart';
 import 'custom_app_bar.dart';
-import 'ipconfig.dart';
 import 'login_page.dart';
 
 class TripService {
   static final String server = AppConfig.server;
-
-  // Add these methods to your TripService class in trip_helper.dart
 
 static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
   int timestamp;
@@ -26,56 +23,94 @@ static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
 
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
     builder: (context) {
-      return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "Trip Details",
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+      return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
-              ),
-              const SizedBox(height: 16),
-              _buildDetailRow(context, Icons.calendar_today, "Date:", 
-                  timestamp > 0 ? DateFormat('MMM dd, yyyy').format(DateTime.fromMillisecondsSinceEpoch(timestamp * 1000)) : 'N/A'),
-              _buildDetailRow(context, Icons.access_time, "Time:", 
-                  timestamp > 0 ? DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(timestamp * 1000)) : 'N/A'),
-              _buildDetailRow(context, Icons.directions_car, "Distance:", 
-                  "${trip['distance']?.toStringAsFixed(2) ?? 'N/A'} miles"),
-              _buildDetailRow(context, Icons.speed, "Average Speed:", 
-                  "${trip['velocity']?.toStringAsFixed(1) ?? 'N/A'} mph"),
-              _buildDetailRow(context, Icons.timer, "Duration:", 
-                  "${trip['duration']?.toStringAsFixed(1) ?? 'N/A'} minutes"),
-              const SizedBox(height: 20),
-              Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white, 
-                    backgroundColor: Colors.blue[800],
                   ),
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Close"),
                 ),
-              ),
-            ],
-          ),
-        ),
+                Text(
+                  "Trip Details",
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                _buildDetailRow(
+                  context,
+                  Icons.calendar_today,
+                  "Date:",
+                  timestamp > 0
+                      ? DateFormat('MMM dd, yyyy').format(
+                          DateTime.fromMillisecondsSinceEpoch(timestamp * 1000))
+                      : 'N/A',
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.access_time,
+                  "Time:",
+                  timestamp > 0
+                      ? DateFormat('hh:mm a').format(
+                          DateTime.fromMillisecondsSinceEpoch(timestamp * 1000))
+                      : 'N/A',
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.directions_car,
+                  "Distance:",
+                  "${trip['distance']?.toStringAsFixed(2) ?? 'N/A'} miles",
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.speed,
+                  "Average Speed:",
+                  "${trip['velocity']?.toStringAsFixed(1) ?? 'N/A'} mph",
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.timer,
+                  "Duration:",
+                  "${trip['duration']?.toStringAsFixed(1) ?? 'N/A'} minutes",
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.blue[800],
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Close"),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       );
     },
   );

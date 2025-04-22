@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'custom_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'trip_helper.dart';
+import 'current_trip_page.dart';
 
 class PreviousTripsPage extends StatefulWidget {
   @override
@@ -104,7 +105,10 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
                               foregroundColor: Colors.white, backgroundColor: Colors.blue[800],
                             ),
                             onPressed: () {
-                              // Navigate to trip start page
+                              Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CurrentTripPage()),
+    );
                             },
                             child: const Text("Start a new trip"),
                           ),
