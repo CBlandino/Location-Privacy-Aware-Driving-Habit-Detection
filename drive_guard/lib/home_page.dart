@@ -2,21 +2,14 @@ import 'dart:io';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'ipconfig.dart';
 import 'custom_app_bar.dart';
-import 'login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'custom_drawer.dart'; // Import CustomDrawer
 import 'current_trip_page.dart'; // For navigation to CurrentTripPage
-import 'previous_trips_page.dart';
-import 'score_page.dart';
 import 'settings_page.dart';
-import 'previous_trips_page.dart';
 import 'trip_helper.dart';
-import 'user_lookup.dart';
-import 'user_score_page.dart';
-import 'user_trips_page.dart';
 
 class HomePage extends StatefulWidget {
   String role;
@@ -32,7 +25,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   File? _profileImage;
 
-    List<Map<String, dynamic>> _searchResults = [];
+  List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
   String _searchError = '';
   String _searchedUserId = '';
@@ -212,68 +205,6 @@ void _setTripSort(String sortOption) {
     } else {
       print('No token found in SharedPreferences');
     }
-  }
-
-  // Future<void> _loadUserInfo() async {
-  //   SharedPreferences prefs = await SharedPreferences.getInstance();
-
-  //   role = prefs.getString('role')!;
-  //   firstName = prefs.getString('first_name') ?? 'First';
-  //   lastName = prefs.getString('last_name') ?? 'Last';
-  //   email = prefs.getString('email')?? 'Email';
-
-  // }
-
-
-  Widget _buildSection({
-    required String title,
-    required IconData icon,
-    required String buttonText,
-    String? description,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      elevation: 10,
-      color: Colors.blue.withOpacity(.9),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            ListTile(
-              leading: Icon(icon, color: Colors.white, size: 40),
-              title: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              trailing: ElevatedButton(
-                onPressed: onTap,
-                child: Text(buttonText),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.blue,
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-              ),
-            ),
-            if (description != null) SizedBox(height: 10),
-            if (description != null)
-              Text(
-                description,
-                style: TextStyle(fontSize: 16, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-          ],
-        ),
-      ),
-    );
   }
 
 Widget _buildPreviousTripsSection() {
@@ -615,6 +546,399 @@ Widget _buildWelcomeCard({required String title, required String description}) {
   );
 }
 
+Widget _buildAdminHomePage() {
+  return SingleChildScrollView(
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildWelcomeCard(
+            title: 'Admin Dashboard',
+            description: 'Manage users, insurance companies, and server status',
+          ),
+          SizedBox(height: 24),
+          _buildServerStatusCard(),
+          SizedBox(height: 24),
+          _buildUserSearchCard(),
+          SizedBox(height: 24),
+          _buildInsuranceSearchCard(),
+          SizedBox(height: 24),
+          _buildCreateAccountCard(),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildServerStatusCard() {
+  return Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Server Status',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade800,
+            ),
+          ),
+          SizedBox(height: 16),
+          FutureBuilder<bool>(
+            future: _checkServerStatus(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Error checking server status'));
+              }
+              return Row(
+                children: [
+                  Icon(
+                    snapshot.data == true ? Icons.check_circle : Icons.error,
+                    color: snapshot.data == true ? Colors.green : Colors.red,
+                    size: 40,
+                  ),
+                  SizedBox(width: 16),
+                  Text(
+                    snapshot.data == true 
+                      ? 'Server is online and running'
+                      : 'Server is offline',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildInsuranceSearchCard() {
+  return Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Find Insurance Company',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade800,
+            ),
+          ),
+          SizedBox(height: 16),
+          TextField(
+            decoration: InputDecoration(
+              labelText: 'Search by name, state or ID',
+              border: OutlineInputBorder(),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.search),
+                onPressed: _searchForInsurance,
+              ),
+            ),
+            onChanged: (value) => _searchQuery = value,
+            onSubmitted: (_) => _searchForInsurance(),
+          ),
+          SizedBox(height: 16),
+          if (_isLoadingUsers)
+            Center(child: CircularProgressIndicator())
+          else if (_foundUsers.isNotEmpty)
+            Column(
+              children: [
+                Text(
+                  'Search Results',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                ..._foundUsers.map((user) => ListTile(
+                  leading: CircleAvatar(
+                    child: Icon(Icons.business),
+                  ),
+                  title: Text(user['name']),
+                  subtitle: Text(user['state']),
+                  onTap: () => _selectUser(user),
+                )).toList(),
+              ],
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildCreateAccountCard() {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _roleController = TextEditingController(text: 'user');
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _serverNumberController = TextEditingController();
+  
+  bool _isCreating = false;
+
+  return Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Create New Account',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade800,
+            ),
+          ),
+          SizedBox(height: 16),
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                DropdownButtonFormField<String>(
+                  value: 'user',
+                  items: [
+                    DropdownMenuItem(value: 'user', child: Text('User')),
+                    DropdownMenuItem(value: 'insurance', child: Text('Insurance')),
+                    DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _roleController.text = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Role',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter an email';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                if (_roleController.text == 'user') ...[
+                  TextFormField(
+                    controller: _firstNameController,
+                    decoration: InputDecoration(
+                      labelText: 'First Name',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter first name';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _lastNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Last Name',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter last name';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+                if (_roleController.text == 'insurance') ...[
+                  TextFormField(
+                    controller: _firstNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Company Name',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter company name';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _lastNameController,
+                    decoration: InputDecoration(
+                      labelText: 'State',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter state';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+                if (_roleController.text == 'admin') ...[
+                  TextFormField(
+                    controller: _serverNumberController,
+                    decoration: InputDecoration(
+                      labelText: 'Server Number',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter server number';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _isCreating 
+                    ? null 
+                    : () async {
+                        if (_formKey.currentState!.validate()) {
+                          setState(() => _isCreating = true);
+                          try {
+                            switch (_roleController.text) {
+                              case 'admin':
+                                await TripService.createAdminAccount(
+                                  email: _emailController.text,
+                                  password: _passwordController.text,
+                                  serverNumber: _serverNumberController.text,
+                                );
+                                break;
+                              case 'insurance':
+                                await TripService.createInsuranceAccount(
+                                  email: _emailController.text,
+                                  password: _passwordController.text,
+                                  companyName: _firstNameController.text,
+                                  state: _lastNameController.text,
+                                );
+                                break;
+                              case 'user':
+                              default:
+                                await TripService.createUserAccount(
+                                  email: _emailController.text,
+                                  password: _passwordController.text,
+                                  firstName: _firstNameController.text,
+                                  lastName: _lastNameController.text,
+                                );
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Account created successfully')),
+                            );
+                            _emailController.clear();
+                            _passwordController.clear();
+                            _firstNameController.clear();
+                            _lastNameController.clear();
+                            _serverNumberController.clear();
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error creating account: $e')),
+                            );
+                          } finally {
+                            setState(() => _isCreating = false);
+                          }
+                        }
+                      },
+                  child: _isCreating 
+                    ? CircularProgressIndicator(color: Colors.white)
+                    : Text('Create Account'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(double.infinity, 50),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<bool> _checkServerStatus() async {
+  return await TripService.checkServerStatus();
+}
+
+Future<void> _searchForInsurance() async {
+  if (_searchQuery.isEmpty) return;
+  
+  setState(() {
+    _isLoadingUsers = true;
+    _foundUsers = [];
+    _selectedUser = null;
+  });
+
+  try {
+    final results = await TripService.searchInsurance(_searchQuery);
+    setState(() {
+      _foundUsers = results;
+      _isLoadingUsers = false;
+    });
+  } catch (e) {
+    setState(() {
+      _isLoadingUsers = false;
+      _searchError = 'Search failed: $e';
+    });
+  }
+}
+
+
 Widget _buildInsuranceHomePage() {
   return SingleChildScrollView(
     child: Padding(
@@ -638,7 +962,7 @@ Widget _buildInsuranceHomePage() {
 }
 
 Widget _buildUserHomePage() {
-  String displayName = '$firstName $lastName' ?? 'User';
+  String displayName = '$firstName $lastName';
   String initials = (firstName.isNotEmpty && lastName.isNotEmpty)
       ? '${firstName[0]}${lastName[0]}'.toUpperCase()
       : '??';
@@ -835,32 +1159,31 @@ Widget _buildUserHomePage() {
       : SettingsPage();
 }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar:
-          isLoading
-              ? null
-              : CustomAppBar(
-                selectedIndex: _selectedIndex,
-                onItemTapped: _onItemTapped,
-                role: widget.role, // Pass the role
-              ),
-      drawer: isLoading ? null : CustomDrawer(role: widget.role),
-      body:
-          isLoading
-              ? Center(child: CircularProgressIndicator())
-              : widget.role == 'user'
-              ? _buildUserHomePage()
-              : _buildInsuranceHomePage(),
-      bottomNavigationBar:
-          isLoading
-              ? null
-              : CustomAppBar(
-                selectedIndex: _selectedIndex,
-                onItemTapped: _onItemTapped,
-                role: widget.role, // Pass the role
-              ).buildBottomNavBar(context),
-    );
-  }
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: isLoading
+        ? null
+        : CustomAppBar(
+            selectedIndex: _selectedIndex,
+            onItemTapped: _onItemTapped,
+            role: widget.role,
+          ),
+    drawer: isLoading ? null : CustomDrawer(role: widget.role),
+    body: isLoading
+        ? Center(child: CircularProgressIndicator())
+        : widget.role == 'user'
+            ? _buildUserHomePage()
+            : widget.role == 'insurance'
+                ? _buildInsuranceHomePage()
+                : _buildAdminHomePage(),
+    bottomNavigationBar: isLoading
+        ? null
+        : CustomAppBar(
+            selectedIndex: _selectedIndex,
+            onItemTapped: _onItemTapped,
+            role: widget.role,
+          ).buildBottomNavBar(context),
+  );
+}
 }

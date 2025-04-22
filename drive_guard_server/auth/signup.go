@@ -61,8 +61,9 @@ func insertUser(newUser tokens.User, db *sql.DB) (sql.Result, error) {
 	// $4 = user class
 	// $5 = password hash 
 	// $6 = password salt
-    insertStmnt := "INSERT INTO users VALUES (DEFAULT, $1, $2, $3, $4, $5, $6)"
-    result, err := db.Exec(insertStmnt, newUser.Firstname, newUser.Lastname, newUser.Email, role, pass_hash[:], salt) 
+	// $7 = default user score (1.0)
+    insertStmnt := "INSERT INTO users VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7)"
+    result, err := db.Exec(insertStmnt, newUser.Firstname, newUser.Lastname, newUser.Email, role, pass_hash[:], salt, 1.0) 
     // TODO: check for duplicate email
     if err != nil {
         log.Println(err)
@@ -74,13 +75,10 @@ func insertUser(newUser tokens.User, db *sql.DB) (sql.Result, error) {
 
 
 func checkRole(input string) (string, error) {
-	if input == "user" {
-		return input, nil
-	} else if input == "admin" {
-		return input, nil
-	} else if input == "insurance" {
-		return input, nil
-	} 
 
-	return "", errors.New("invalid user class provided!")
+	if input != "user" && input != "admin" && input != "insurance" {
+		return "", errors.New("invalid user class provided!")
+	}
+
+	return input, nil
 }

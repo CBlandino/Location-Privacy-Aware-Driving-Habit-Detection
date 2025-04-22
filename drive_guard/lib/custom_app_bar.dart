@@ -33,52 +33,72 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => Size.fromHeight(kToolbarHeight);
 
-  String _getAppBarTitle(int index) {
-    if (role == 'insurance') {
-      switch (index) {
-        case 0: return "Dashboard";
-        case 1: return "User Trips";
-        case 2: return "User Scores";
-        case 3: return "Account";
-        default: return "Dashboard";
-      }
-    } else if(role == 'user') { // User role
-      switch (index) {
-        case 0: return "Home";
-        case 1: return "Previous Trips";
-        case 2: return "Score";
-        case 3: return "Account";
-        default: return "Home";
-      }
+ String _getAppBarTitle(int index) {
+  if (role == 'insurance') {
+    switch (index) {
+      case 0: return "Dashboard";
+      case 1: return "User Trips";
+      case 2: return "User Scores";
+      case 3: return "Account";
+      default: return "Dashboard";
     }
-    else 
-    {
-      switch (index) {
-        case 0: return "Home";
-        case 1: return "Previous Trips";
-        case 2: return "Score";
-        case 3: return "Account";
-        default: return "Home";
-      }
+  } else if (role == 'admin') {
+    switch (index) {
+      case 0: return "Dashboard";
+      case 1: return "User Lookup";
+      case 2: return "Insurance Lookup";
+      case 3: return "Account";
+      default: return "Dashboard";
+    }
+  } else { 
+    switch (index) {
+      case 0: return "Home";
+      case 1: return "Previous Trips";
+      case 2: return "Score";
+      case 3: return "Account";
+      default: return "Home";
     }
   }
+}
 
+List<BottomNavigationBarItem> _buildAdminNavItems() {
+  return [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.dashboard),
+      label: 'Dashboard',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.person_search),
+      label: 'Users',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.business),
+      label: 'Insurance',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.account_circle),
+      label: 'Account',
+    ),
+  ];
+}
 
-  Widget buildBottomNavBar(BuildContext context) {
-    return BottomNavigationBar(
-      currentIndex: selectedIndex,
-      elevation: 10,
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
-      onTap: (index) {
-        onItemTapped(index); // Update selected index
-        _navigateToPage(context, index); // Handle navigation
-      },
-      items: role == 'insurance' 
-          ? _buildInsuranceNavItems()
-          : _buildUserNavItems(),
-    );
-  }
+Widget buildBottomNavBar(BuildContext context) {
+  return BottomNavigationBar(
+    currentIndex: selectedIndex,
+    elevation: 10,
+    selectedItemColor: Colors.blue,
+    unselectedItemColor: Colors.grey,
+    onTap: (index) {
+      onItemTapped(index);
+      _navigateToPage(context, index);
+    },
+    items: role == 'insurance'
+        ? _buildInsuranceNavItems()
+        : role == 'admin'
+            ? _buildAdminNavItems()
+            : _buildUserNavItems(),
+  );
+}
 
   List<BottomNavigationBarItem> _buildInsuranceNavItems() {
     return [
@@ -157,7 +177,24 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         default:
           return;
       }
-    } else {
+    } else if(role == 'admin'){
+    switch (index) {
+      case 0:
+        page = HomePage(role: role);
+        break;
+      case 1:
+        page = SettingsPage(); //UserLookupPage(...);
+        break;
+      case 2:
+        page = SettingsPage(); //InsuranceLookupPage(...);
+        break;
+      case 3:
+        page = SettingsPage();
+        break;
+      default:
+        return;
+    }
+    }else {
       switch (index) {
         case 0:
           page = HomePage(role: role);
