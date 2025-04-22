@@ -9,7 +9,7 @@ CREATE TABLE Users (
     email           VARCHAR(255) UNIQUE NOT NULL,
     class           userclass NOT NULL,
     password_hash   BYTEA NOT NULL, 
-    salt            BYTEA NOT NULL
+    salt            BYTEA NOT NULL, 
     user_score      REAL NOT NULL,
 );
 
