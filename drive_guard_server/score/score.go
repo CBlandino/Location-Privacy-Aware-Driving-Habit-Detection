@@ -67,9 +67,9 @@ func linearDecrement(totalSeverity, threshold int) float64 {
 func takeInput(breakingPass metricPass, accelerationPass metricPass, speedingPass metricPass) float64 {
 
 	habits := []metricData{
-		newHabit("Harsh Breaking", breakingPass.totalSeverity, 5*len(breakingPass.flags), linearDecrement),
-		newHabit("Harsh Acceleration", accelerationPass.totalSeverity, 5*len(accelerationPass.flags), linearDecrement),
-		newHabit("Harsh Acceleration", speedingPass.totalSeverity, 5*len(speedingPass.flags), linearDecrement),
+		newHabit("Harsh Breaking", breakingPass.totalSeverity, int(.15*float64(5*len(breakingPass.flags))), linearDecrement),
+		newHabit("Harsh Acceleration", accelerationPass.totalSeverity, int(.15*float64(5*len(accelerationPass.flags))), linearDecrement),
+		newHabit("Harsh Acceleration", speedingPass.totalSeverity, int(.15*float64(5*len(speedingPass.flags))), linearDecrement),
 	}
 
 	var total float64
