@@ -1,13 +1,14 @@
 package score
 
 import (
-	"fmt"
+	"log"
 	"math" // maybe need
 
 	"database/sql"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+
 )
 
 // come up with a mathemtical function i want for trip then implement into go
@@ -23,7 +24,7 @@ import (
 
 // for first function
 func getUserScore(c *gin.Context, db *sql.DB) {
-
+	
 }
 
 //for second func that calculates score and updates
@@ -64,24 +65,24 @@ func linearDecrement(totalSeverity, threshold int) float64 {
 }
 
 // Takes metricPass (1 for each habit) and calculates their individual score, as well as a final averaged score
-func takeInput(breakingPass metricPass, accelerationPass metricPass, speedingPass metricPass) float64 {
+func takeInput(breakingPass metricPass, accelerationPass metricPass, speedingPass metricPass) (float64, float64, float64, float64) {
 
 	habits := []metricData{
 		newHabit("Harsh Breaking", breakingPass.totalSeverity, int(.15*float64(5*len(breakingPass.flags))), linearDecrement),
 		newHabit("Harsh Acceleration", accelerationPass.totalSeverity, int(.15*float64(5*len(accelerationPass.flags))), linearDecrement),
-		newHabit("Harsh Acceleration", speedingPass.totalSeverity, int(.15*float64(5*len(speedingPass.flags))), linearDecrement),
+		newHabit("Speeding", speedingPass.totalSeverity, int(.15*float64(5*len(speedingPass.flags))), linearDecrement),
 	}
 
 	var total float64
 	for _, h := range habits {
-		fmt.Printf("%s Score: %.2f\n", h.name, h.score)
+		log.Printf("%s Score: %.2f\n", h.name, h.score)
 		total += h.score
 	}
 
 	finalScore := total / float64(len(habits))
-	fmt.Printf("Final Average Score: %.2f\n", finalScore)
-	return finalScore
-
+	log.Printf("Final Average Score: %.2f\n", finalScore)
+	//return the total score for the trip, the total score for harsh braking, accelration and 
+	return finalScore, habits[0].score, habits[1].score, habits[2].score
 }
 
 // threshold is 15% of trips length .15 * (5 * number of points)

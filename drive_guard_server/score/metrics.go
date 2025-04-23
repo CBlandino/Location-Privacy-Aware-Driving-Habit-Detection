@@ -34,17 +34,22 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 		}
 	}
 
-	speedingPass := getSpeedingFlags(data)
 	brakingPass := getBrakingFlags(data)
 	accelPass := getAccelerationFlags(data)
+	speedingPass := getSpeedingFlags(data)
 
-	log.Println("speeding severity:", speedingPass.totalSeverity)
 	log.Println("braking severity:", brakingPass.totalSeverity)
 	log.Println("accel severity:", accelPass.totalSeverity)
+	log.Println("speeding severity:", speedingPass.totalSeverity)
 	
 	var averageVelocity float64 = (totalDistance / (5.0 * float64(len(data)))) * 3600.0
 
-	_, err := db.Exec("UPDATE trips SET distance = $1, velocity = $2 WHERE trip_id = $3", totalDistance, averageVelocity, tripID)
+	// calculate score for the trip
+	tripScore, brakingScore, accelScore, speedingScore := takeInput(brakingPass, accelPass, speedingPass)
+
+	// store calculated information in the trips table
+	updateStmnt := "UPDATE trips SET distance = $1, velocity = $2, trip_score = $3, speed_score = $4, brake_score = $5, accel_score = $6 WHERE trip_id = $7"
+	_, err := db.Exec(updateStmnt, totalDistance, averageVelocity, tripScore, speedingScore, brakingScore, accelScore, tripID)
 	return err
 }
 
