@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
     "github.com/gin-gonic/gin"
 
-	"drive_guard_server/tokens"
+	"drive_guard_server/util"
 	"drive_guard_server/score"
 )
 
@@ -28,7 +28,7 @@ func TransmitPoints(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	claims, err := tokens.GetClaims(token)
+	claims, err := util.GetClaims(token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)	
 		log.Println("BAD REQUEST! :", err)
@@ -82,9 +82,9 @@ func TransmitPoints(c *gin.Context, db *sql.DB) {
     c.Status(http.StatusAccepted)
 }
 
-func insertStartTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error {
+func insertStartTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) error {
 	log.Println("STARTING TRIP INSERT")
-	id, err := getUserID(claims.Email, db)
+	id, err := util.GetUserID(claims.Email, db)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func insertStartTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error
 	}
 
 	if set.End {
-		trip_id, err := getTripID(id, db)
+		trip_id, err := util.GetTripID(id, db)
 		if err != nil {
 			return err
 		}
@@ -120,9 +120,9 @@ func insertStartTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error
 	return nil
 }
 
-func updateExistingTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) error {
+func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) error {
 	log.Println("UPDATING TRIP. END?:", set.End)
-	id, err := getUserID(claims.Email, db)
+	id, err := util.GetUserID(claims.Email, db)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func updateExistingTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) er
 	}
 
 	if set.End {
-		trip_id, err := getTripID(id, db)
+		trip_id, err := util.GetTripID(id, db)
 		if err != nil {
 			return err
 		}
@@ -152,25 +152,4 @@ func updateExistingTrip(set *pointSet, claims *tokens.UserClaims, db *sql.DB) er
 	}
 
 	return nil
-}
-
-func getUserID(claimsEmail string, db *sql.DB) (int, error) {
-	var id int 
-	row := db.QueryRow("SELECT user_id FROM users WHERE email = $1", claimsEmail)
-	if err := row.Scan(&id); err != nil {
-		return -1, err
-	}
-
-	return id, nil
-}
-
-func getTripID(userID int, db *sql.DB) (int, error) {
-	var id int 
-	row := db.QueryRow("SELECT trip_id FROM trips WHERE user_id = $1 ORDER BY start_time DESC LIMIT 1", userID)
-
-	if err := row.Scan(&id); err != nil {
-		return -1, err
-	}
-
-	return id, nil
 }

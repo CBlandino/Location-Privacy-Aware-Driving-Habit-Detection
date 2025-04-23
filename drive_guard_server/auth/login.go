@@ -11,12 +11,12 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 
-	"drive_guard_server/tokens"
+	"drive_guard_server/util"
 )
 
 func LoginUser(c *gin.Context, db *sql.DB) {
     log.Println("POST: login user")
-    var loggedUser tokens.User 
+    var loggedUser util.User 
     err := c.BindJSON(&loggedUser)
     if err != nil {
         log.Fatal(err)
@@ -33,7 +33,7 @@ func LoginUser(c *gin.Context, db *sql.DB) {
         return
     }
 
-    jwt, status := tokens.NewJWT(loggedUser)
+    jwt, status := util.NewJWT(loggedUser)
     if status != http.StatusAccepted { 
         log.Println("USER:", loggedUser.Email, "NOT ACCEPTED")
         c.Status(status)
@@ -41,7 +41,7 @@ func LoginUser(c *gin.Context, db *sql.DB) {
     c.IndentedJSON(http.StatusAccepted, &authResponse{jwt})
 }
 
-func verifyLogin(logUser *tokens.User, db *sql.DB) error {
+func verifyLogin(logUser *util.User, db *sql.DB) error {
     var pass, salt []byte
     usrRow := db.QueryRow("SELECT password_hash, salt, first_name, last_name, class FROM users WHERE email = $1", logUser.Email)
     if err := usrRow.Scan(&pass, &salt, &logUser.Firstname, &logUser.Lastname, &logUser.Role); err != nil {

@@ -11,13 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 
-	"drive_guard_server/tokens"
+	"drive_guard_server/util"
 )
 
 
 func SignupUser(c *gin.Context, db *sql.DB) {
     log.Println("POST: signup user")
-    var newUser tokens.User 
+    var newUser util.User 
     err := c.BindJSON(&newUser)
     if err != nil {
         log.Fatal(err)
@@ -33,7 +33,7 @@ func SignupUser(c *gin.Context, db *sql.DB) {
     log.Println("RESULT:", result)
 
     // instead of passing the users email in the JWT, u can isntead pass their users table ID
-    jwt, status := tokens.NewJWT(newUser)
+    jwt, status := util.NewJWT(newUser)
     if status != http.StatusAccepted {
         // if token creation fails send back bad response
         c.Status(status)
@@ -46,7 +46,7 @@ func SignupUser(c *gin.Context, db *sql.DB) {
     log.Println("RESPONSE:", http.StatusCreated)
 }
 
-func insertUser(newUser tokens.User, db *sql.DB) (sql.Result, error) {
+func insertUser(newUser util.User, db *sql.DB) (sql.Result, error) {
     salt := make([]byte, 50) 
     rand.Read(salt)
 

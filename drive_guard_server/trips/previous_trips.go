@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"drive_guard_server/tokens"
+	"drive_guard_server/util"
 )
 
 func Previous_trips(c *gin.Context, db *sql.DB) {
@@ -23,7 +23,7 @@ func Previous_trips(c *gin.Context, db *sql.DB) {
 		log.Println("No Authorization header found on request")
 		return
 	}
-	claims, err := tokens.GetClaims(token)
+	claims, err := util.GetClaims(token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err)	
 		log.Println("BAD REQUEST! :", err)
@@ -31,7 +31,7 @@ func Previous_trips(c *gin.Context, db *sql.DB) {
 	}
 	log.Println("CLAIMS EMAIL:", claims.Email)
 
-	id, err := getUserID(claims.Email, db)
+	id, err := util.GetUserID(claims.Email, db)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err) 
 		log.Println(err)

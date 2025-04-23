@@ -3,12 +3,14 @@ package score
 import (
 	"log"
 	"math" // maybe need
+	"net/http"
 
 	"database/sql"
-
-	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 
+	"github.com/gin-gonic/gin"
+	
+	"drive_guard_server/util"
 )
 
 // come up with a mathemtical function i want for trip then implement into go
@@ -24,7 +26,25 @@ import (
 
 // for first function
 func getUserScore(c *gin.Context, db *sql.DB) {
-	
+
+	log.Println("FETCHING USER SCORE")
+
+	// Attempt to verify the JWT that should be held within the Authorization header of the request
+	token := c.GetHeader("Authorization")
+	if token == "" {
+		c.JSON(http.StatusBadRequest, "No Authorization header found on request")
+		log.Println("No Authorization header found on request")
+		return
+	}
+
+	claims, err := util.GetClaims(token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err)	
+		log.Println("BAD REQUEST! :", err)
+		return
+	}
+
+	log.Println("CLAIMS EMAIL:", claims.Email)
 }
 
 //for second func that calculates score and updates
