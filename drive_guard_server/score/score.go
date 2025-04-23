@@ -46,6 +46,41 @@ func getUserScore(c *gin.Context, db *sql.DB) {
 	}
 
 	log.Println("CLAIMS EMAIL:", claims.Email)
+
+	// brake, acceleration, and speed severity
+	var brakeSeverity, accelSeverity, speedSeverity int
+
+	// change to correct query grabs
+	query := `SELECT brake_severity, accel_severity, speed_severity FROM trips WHERE email=$1 ORDER BY timestamp DESC LIMIT 1`
+	err = db.QueryRow(query, claims.Email).Scan(&brakeSeverity, &accelSeverity, &speedSeverity)
+	if err != nil {
+		log.Println("DB ERROR:", err)
+		c.JSON(http.StatusInternalServerError, "Could not fetch trip data")
+		return
+	}
+
+	// Use dummy flags just to simulate the threshold
+	dummyFlags := make([]metricFlag, 5)
+	for i := range dummyFlags {
+		dummyFlags[i] = metricFlag{
+			Severity: 1,
+			Velo:     0,
+			Accel:    0,
+		}
+	}
+	breakingPass := metricPass{totalSeverity: brakeSeverity, flags: dummyFlags}
+	accelPass := metricPass{totalSeverity: accelSeverity, flags: dummyFlags}
+	speedingPass := metricPass{totalSeverity: speedSeverity, flags: dummyFlags}
+
+	finalScore, brakeScore, accelScore, speedScore := takeInput(breakingPass, accelPass, speedingPass)
+
+	c.JSON(http.StatusOK, gin.H{
+		"totalScore":   finalScore * 100,
+		"braking":      brakeScore * 100,
+		"acceleration": accelScore * 100,
+		"speedControl": speedScore * 100,
+	})
+
 }
 
 //for second func that calculates score and updates
