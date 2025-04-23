@@ -11,13 +11,20 @@ class ScorePage extends StatefulWidget {
 }
 
 class _ScorePage extends State<ScorePage> {
-  double score = 0;
+  final double score = 85;
   int _selectedIndex = 2;
   late String role;
   bool isLoading = true;
 
+  // RESPOND TO BACKEND
   // Static data for testing
-  Map<String, String> breakdown = {};
+  Map<String, String> breakdown = {
+    "Smoothness": "Good",
+    "Braking": "Needs Improvement",
+    "Acceleration": "Excellent",
+    "Cornering": "Average",
+    "Speed Control": "Good",
+  };
 
  @override
   void initState() {
@@ -25,46 +32,26 @@ class _ScorePage extends State<ScorePage> {
     _loadUserInfo();
   }
 
+  
+
+
   Future<void> _loadUserInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     role = prefs.getString('role')!;
-    final token = prefs.getString('token');
 
 
-    final response = await http.get(
-      Uri.parse('http://yourserver.com/score'), // Replace with your actual API endpoint
-      headers: {
-        'Authorization': token ?? '',
-      },
-    );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
+    setState((){
         isLoading = false;
-        score = data['totalScore']?.toDouble() ?? 0;
-        breakdown = {
-          "Braking": _ratingLabel(data['braking']),
-          "Acceleration": _ratingLabel(data['acceleration']),
-          "Speed Control": _ratingLabel(data['speedControl']),
-        };
-      });
-    } else {
-      print('Failed to load score');
-      setState(() {
-        isLoading = false;
-      });
-    }
+    });
+    //String? firstName = prefs.getString('first_name');
+    //String? lastName = prefs.getString('last_name');
+    //String? email = prefs.getString('email');
+
   }
 
-  String _ratingLabel(double? value) {
-    if (value == null) return "Unknown";
-    if (value >= 90) return "Excellent";
-    if (value >= 70) return "Good";
-    if (value >= 50) return "Average";
-    return "Needs Improvement";
-  }
+
 
   @override
   Widget build(BuildContext context) {
