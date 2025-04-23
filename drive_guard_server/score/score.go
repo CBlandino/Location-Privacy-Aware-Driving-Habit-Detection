@@ -6,10 +6,11 @@ import (
 	"net/http"
 
 	"database/sql"
+
 	_ "github.com/lib/pq"
 
 	"github.com/gin-gonic/gin"
-	
+
 	"drive_guard_server/util"
 )
 
@@ -39,7 +40,7 @@ func getUserScore(c *gin.Context, db *sql.DB) {
 
 	claims, err := util.GetClaims(token)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, err)	
+		c.JSON(http.StatusBadRequest, err)
 		log.Println("BAD REQUEST! :", err)
 		return
 	}
@@ -76,6 +77,7 @@ func newHabit(name string, totalSeverity int, threshold int, decrementFn func(in
 
 // Calculates individual score depending on the threshold
 func linearDecrement(totalSeverity, threshold int) float64 {
+	// If severity is over threshold, decrement score by .1, this is only for testing, change in future
 	decrementFromInput := 0.1
 
 	if totalSeverity <= threshold {
@@ -101,7 +103,7 @@ func takeInput(breakingPass metricPass, accelerationPass metricPass, speedingPas
 
 	finalScore := total / float64(len(habits))
 	log.Printf("Final Average Score: %.2f\n", finalScore)
-	//return the total score for the trip, the total score for harsh braking, accelration and 
+	//return the total score for the trip, the total score for harsh braking, accelration and
 	return finalScore, habits[0].score, habits[1].score, habits[2].score
 }
 
