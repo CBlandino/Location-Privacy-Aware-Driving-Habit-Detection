@@ -3,11 +3,13 @@ package main
 import (
 	"flag"
 	"log"
+	"time"
 
 	"database/sql"
 
 	_ "github.com/lib/pq"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"context"
@@ -63,6 +65,19 @@ func main() {
 
 	//initialize the web server and handlers
 	server := gin.Default()
+
+	server.Use(cors.New(cors.Config{
+		AllowOriginFunc: func(origin string) bool {
+			log.Println("Origin request:", origin)
+			return true
+		},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	server.POST("/7d2abf2d0fa7c3a0c13236910f30bc43", func(c *gin.Context) {
 		auth.SignupUser(c, db)
 	})
