@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
 import 'login_page.dart'; // Ensure you import the correct file
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 
@@ -24,7 +23,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home:  HomePage(role: 'admin'), // Correct the reference here
+      home: LoginPageWidget(), // Correct the reference here
     );
   }
 }
