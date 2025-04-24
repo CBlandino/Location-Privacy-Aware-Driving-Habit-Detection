@@ -301,25 +301,38 @@ Widget _buildPreviousTripsSection() {
   );
 }
 
-Widget _buildUserSearchCard() {
-  return Card(
-    elevation: 4,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Padding(
+  Widget _buildUserSearchCard({bool showCloseButton = false}) {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Find User',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue.shade800,
+          if (showCloseButton)
+            Row(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Search Users',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ),
+          if (!showCloseButton)
+            Text(
+              'Find User',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
+            ),
           SizedBox(height: 16),
           TextField(
             decoration: InputDecoration(
@@ -338,7 +351,6 @@ Widget _buildUserSearchCard() {
             Center(child: CircularProgressIndicator())
           else if (_foundUsers.isNotEmpty)
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Search Results',
@@ -350,23 +362,21 @@ Widget _buildUserSearchCard() {
                 SizedBox(height: 8),
                 ..._foundUsers.map((user) => ListTile(
                   leading: CircleAvatar(
-                    child: Text(
-                      user['first_name'] != null && user['first_name'].isNotEmpty
-                        ? user['first_name'][0].toUpperCase()
-                        : '?',
-                    ),
+                    child: Text(user['name'][0]),
                   ),
-                  title: Text('${user['first_name']} ${user['last_name']}'),
+                  title: Text(user['name']),
                   subtitle: Text(user['email']),
-                  onTap: () => _selectUser(user),
-                )),
+                  onTap: () {
+                    _selectUser(user);
+                    if (showCloseButton) Navigator.pop(context);
+                  },
+                )).toList(),
               ],
             ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 
 Widget _buildUserScoreCard() {
   return Card(
@@ -551,151 +561,204 @@ Widget _buildWelcomeCard({required String title, required String description}) {
   );
 }
 
-Widget _buildAdminHomePage() {
-  return SingleChildScrollView(
-    child: Padding(
+  Widget _buildAdminHomePage() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildWelcomeCard(
+              title: 'Admin Dashboard',
+              description: 'Manage users, insurance companies, and server status',
+            ),
+            SizedBox(height: 16),
+            
+            // Server Status - using _buildServerStatusCard()
+            _buildServerStatusCard(),
+            SizedBox(height: 16),
+            
+            // Quick Actions Grid
+            GridView.count(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              childAspectRatio: 1.5,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              children: [
+                _buildAdminActionCard(
+                  icon: Icons.person_add,
+                  title: 'Create Account',
+                  onTap: () => _showCreateAccountModal(),
+                ),
+                _buildAdminActionCard(
+                  icon: Icons.search,
+                  title: 'Search Users',
+                  onTap: () => _showUserSearch(),
+                ),
+                _buildAdminActionCard(
+                  icon: Icons.business,
+                  title: 'Search Insurance',
+                  onTap: () => _showInsuranceSearch(),
+                ),
+                _buildAdminActionCard(
+                  icon: Icons.analytics,
+                  title: 'View Analytics',
+                  onTap: () => _showAnalytics(),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAnalytics() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            child: _buildAnalyticsCard(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsCard() {
+    return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildWelcomeCard(
-            title: 'Admin Dashboard',
-            description: 'Manage users, insurance companies, and server status',
-          ),
-          SizedBox(height: 16),
-          
-          // Server Status Card
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.dns, color: Colors.blue.shade800),
-                      SizedBox(width: 8),
-                      Text(
-                        'Server Status',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  FutureBuilder<bool>(
-                    future: _checkServerStatus(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      }
-                      return Row(
-                        children: [
-                          Icon(
-                            snapshot.data == true ? Icons.check_circle : Icons.error,
-                            color: snapshot.data == true ? Colors.green : Colors.red,
-                            size: 40,
-                          ),
-                          SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                snapshot.data == true 
-                                  ? 'Server is online' 
-                                  : 'Server is offline',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                '${AppConfig.server}',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 16),
-          
-          // Quick Actions Grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 1.5,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
+          Row(
             children: [
-              _buildAdminActionCard(
-                icon: Icons.person_add,
-                title: 'Create Account',
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    builder: (context) => Padding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).viewInsets.bottom,
-                      ),
-                      child: _buildCreateAccountCard(),
-                    ),
-                  );
-                },
+              IconButton(
+                icon: Icon(Icons.close),
+                onPressed: () => Navigator.pop(context),
               ),
-              _buildAdminActionCard(
-                icon: Icons.search,
-                title: 'Search Users',
-                onTap: () {
-                  setState(() {
-                    _searchQuery = '';
-                    _foundUsers = [];
-                    _selectedUser = null;
-                  });
-                  FocusScope.of(context).requestFocus(FocusNode());
-                },
-              ),
-              _buildAdminActionCard(
-                icon: Icons.business,
-                title: 'Search Insurance',
-                onTap: () {
-                  setState(() {
-                    _searchQuery = '';
-                    _foundUsers = [];
-                    _selectedUser = null;
-                  });
-                  FocusScope.of(context).requestFocus(FocusNode());
-                },
-              ),
-              _buildAdminActionCard(
-                icon: Icons.settings,
-                title: 'Server Settings',
-                onTap: () {
-                  // Add server settings functionality
-                },
+              SizedBox(width: 8),
+              Text(
+                'Analytics Dashboard',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
+          SizedBox(height: 16),
+          Text(
+            'Platform Usage',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade800,
+            ),
+          ),
+          SizedBox(height: 8),
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(child: Text('Usage charts will appear here')),
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Recent Activity',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.blue.shade800,
+            ),
+          ),
+          SizedBox(height: 8),
+          ...List.generate(5, (index) => ListTile(
+            leading: Icon(Icons.notifications, color: Colors.blue),
+            title: Text('System notification ${index + 1}'),
+            subtitle: Text('2${index} minutes ago'),
+          )),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
+
+void _showCreateAccountModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            child: _buildCreateAccountCard(),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showUserSearch() {
+    setState(() {
+      _searchQuery = '';
+      _foundUsers = [];
+      _selectedUser = null;
+    });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            child: _buildUserSearchCard(showCloseButton: true),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showInsuranceSearch() {
+    setState(() {
+      _searchQuery = '';
+      _foundUsers = [];
+      _selectedUser = null;
+    });
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) {
+          return SingleChildScrollView(
+            controller: scrollController,
+            child: _buildInsuranceSearchCard(showCloseButton: true),
+          );
+        },
+      ),
+    );
+  }
 
 Widget _buildAdminActionCard({
   required IconData icon,
@@ -789,25 +852,38 @@ Widget _buildServerStatusCard() {
   );
 }
 
-Widget _buildInsuranceSearchCard() {
-  return Card(
-    elevation: 4,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Padding(
+  Widget _buildInsuranceSearchCard({bool showCloseButton = false}) {
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Find Insurance Company',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue.shade800,
+          if (showCloseButton)
+            Row(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Search Insurance',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ),
+          if (!showCloseButton)
+            Text(
+              'Find Insurance Company',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
+            ),
           SizedBox(height: 16),
           TextField(
             decoration: InputDecoration(
@@ -841,15 +917,17 @@ Widget _buildInsuranceSearchCard() {
                   ),
                   title: Text(user['name']),
                   subtitle: Text(user['state']),
-                  onTap: () => _selectUser(user),
+                  onTap: () {
+                    _selectUser(user);
+                    if (showCloseButton) Navigator.pop(context);
+                  },
                 )).toList(),
               ],
             ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 
 Widget _buildCreateAccountCard() {
   final _formKey = GlobalKey<FormState>();
@@ -1333,31 +1411,31 @@ Widget _buildUserHomePage() {
       : SettingsPage();
 }
 
- @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: isLoading
-        ? null
-        : CustomAppBar(
-            selectedIndex: _selectedIndex,
-            onItemTapped: _onItemTapped,
-            role: widget.role,
-          ),
-    drawer: isLoading ? null : CustomDrawer(role: widget.role),
-    body: isLoading
-        ? Center(child: CircularProgressIndicator())
-        : widget.role == 'user'
-            ? _buildUserHomePage()
-            : widget.role == 'insurance'
-                ? _buildInsuranceHomePage()
-                : _buildAdminHomePage(),
-    bottomNavigationBar: isLoading
-        ? null
-        : CustomAppBar(
-            selectedIndex: _selectedIndex,
-            onItemTapped: _onItemTapped,
-            role: widget.role,
-          ).buildBottomNavBar(context),
-  );
-}
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: isLoading
+          ? null
+          : CustomAppBar(
+              selectedIndex: _selectedIndex,
+              onItemTapped: _onItemTapped,
+              role: widget.role,
+            ),
+      drawer: isLoading ? null : CustomDrawer(role: widget.role),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : widget.role == 'user'
+              ? _buildUserHomePage()
+              : widget.role == 'insurance'
+                  ? _buildInsuranceHomePage()
+                  : _buildAdminHomePage(),
+      bottomNavigationBar: isLoading
+          ? null
+          : CustomAppBar(
+              selectedIndex: _selectedIndex,
+              onItemTapped: _onItemTapped,
+              role: widget.role,
+            ).buildBottomNavBar(context),
+    );
+  }
 }

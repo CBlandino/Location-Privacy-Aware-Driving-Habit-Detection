@@ -277,43 +277,44 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
                       key: _formKey,
                       child: Column(
                         children: [
-                          DropdownButtonFormField<String>(
-                            value: _selectedRole,
-                            items: [
-                              DropdownMenuItem(
-                                value: 'user',
-                                child: Text('User'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'insurance',
-                                child: Text('Insurance'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'admin',
-                                child: Text('Admin'),
-                              ),
-                            ],
-                            onChanged: (String? value) {
-                              setState(() {
-                                _selectedRole = value;
-                              });
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'Select Role',
-                              labelStyle: TextStyle(color: Colors.blue),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(22),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue),
-                              ),
-                            ),
-                            validator:
-                                (value) =>
-                                    value == null
-                                        ? 'Please select a role'
-                                        : null,
-                          ),
+                          // //edit here for dropdown
+                          // DropdownButtonFormField<String>(
+                          //   value: _selectedRole,
+                          //   items: [
+                          //     DropdownMenuItem(
+                          //       value: 'user',
+                          //       child: Text('User'),
+                          //     ),
+                          //     DropdownMenuItem(
+                          //       value: 'insurance',
+                          //       child: Text('Insurance'),
+                          //     ),
+                          //     DropdownMenuItem(
+                          //       value: 'admin',
+                          //       child: Text('Admin'),
+                          //     ),
+                          //   ],
+                          //   onChanged: (String? value) {
+                          //     setState(() {
+                          //       _selectedRole = value;
+                          //     });
+                          //   },
+                          //   decoration: InputDecoration(
+                          //     labelText: 'Select Role',
+                          //     labelStyle: TextStyle(color: Colors.blue),
+                          //     border: OutlineInputBorder(
+                          //       borderRadius: BorderRadius.circular(22),
+                          //     ),
+                          //     focusedBorder: OutlineInputBorder(
+                          //       borderSide: BorderSide(color: Colors.blue),
+                          //     ),
+                          //   ),
+                          //   validator:
+                          //       (value) =>
+                          //           value == null
+                          //               ? 'Please select a role'
+                          //               : null,
+                          // ),
                           SizedBox(height: screenHeight * 0.02),
                           _buildTextField(
                             'Email',
