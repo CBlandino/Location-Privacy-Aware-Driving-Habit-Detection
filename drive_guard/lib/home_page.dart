@@ -338,6 +338,7 @@ Widget _buildUserSearchCard() {
             Center(child: CircularProgressIndicator())
           else if (_foundUsers.isNotEmpty)
             Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Search Results',
@@ -349,12 +350,16 @@ Widget _buildUserSearchCard() {
                 SizedBox(height: 8),
                 ..._foundUsers.map((user) => ListTile(
                   leading: CircleAvatar(
-                    child: Text(user['name'][0]),
+                    child: Text(
+                      user['first_name'] != null && user['first_name'].isNotEmpty
+                        ? user['first_name'][0].toUpperCase()
+                        : '?',
+                    ),
                   ),
-                  title: Text(user['name']),
+                  title: Text('${user['first_name']} ${user['last_name']}'),
                   subtitle: Text(user['email']),
                   onTap: () => _selectUser(user),
-                )).toList(),
+                )),
               ],
             ),
         ],
@@ -556,15 +561,173 @@ Widget _buildAdminHomePage() {
             title: 'Admin Dashboard',
             description: 'Manage users, insurance companies, and server status',
           ),
-          SizedBox(height: 24),
-          _buildServerStatusCard(),
-          SizedBox(height: 24),
-          _buildUserSearchCard(),
-          SizedBox(height: 24),
-          _buildInsuranceSearchCard(),
-          SizedBox(height: 24),
-          _buildCreateAccountCard(),
+          SizedBox(height: 16),
+          
+          // Server Status Card
+          Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.dns, color: Colors.blue.shade800),
+                      SizedBox(width: 8),
+                      Text(
+                        'Server Status',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  FutureBuilder<bool>(
+                    future: _checkServerStatus(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+                      return Row(
+                        children: [
+                          Icon(
+                            snapshot.data == true ? Icons.check_circle : Icons.error,
+                            color: snapshot.data == true ? Colors.green : Colors.red,
+                            size: 40,
+                          ),
+                          SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                snapshot.data == true 
+                                  ? 'Server is online' 
+                                  : 'Server is offline',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                '${AppConfig.server}',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 16),
+          
+          // Quick Actions Grid
+          GridView.count(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            childAspectRatio: 1.5,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            children: [
+              _buildAdminActionCard(
+                icon: Icons.person_add,
+                title: 'Create Account',
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (context) => Padding(
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom,
+                      ),
+                      child: _buildCreateAccountCard(),
+                    ),
+                  );
+                },
+              ),
+              _buildAdminActionCard(
+                icon: Icons.search,
+                title: 'Search Users',
+                onTap: () {
+                  setState(() {
+                    _searchQuery = '';
+                    _foundUsers = [];
+                    _selectedUser = null;
+                  });
+                  FocusScope.of(context).requestFocus(FocusNode());
+                },
+              ),
+              _buildAdminActionCard(
+                icon: Icons.business,
+                title: 'Search Insurance',
+                onTap: () {
+                  setState(() {
+                    _searchQuery = '';
+                    _foundUsers = [];
+                    _selectedUser = null;
+                  });
+                  FocusScope.of(context).requestFocus(FocusNode());
+                },
+              ),
+              _buildAdminActionCard(
+                icon: Icons.settings,
+                title: 'Server Settings',
+                onTap: () {
+                  // Add server settings functionality
+                },
+              ),
+            ],
+          ),
         ],
+      ),
+    ),
+  );
+}
+
+Widget _buildAdminActionCard({
+  required IconData icon,
+  required String title,
+  required VoidCallback onTap,
+}) {
+  return Card(
+    elevation: 2,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 32, color: Colors.blue.shade700),
+            SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade800,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -692,168 +855,176 @@ Widget _buildCreateAccountCard() {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _roleController = TextEditingController(text: 'user');
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _serverNumberController = TextEditingController();
   
   bool _isCreating = false;
+  String _selectedRole = 'user';
 
-  return Card(
-    elevation: 4,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Create New Account',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.blue.shade800,
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () => Navigator.pop(context),
             ),
-          ),
-          SizedBox(height: 16),
-          Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                DropdownButtonFormField<String>(
-                  value: 'user',
-                  items: [
-                    DropdownMenuItem(value: 'user', child: Text('User')),
-                    DropdownMenuItem(value: 'insurance', child: Text('Insurance')),
-                    DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _roleController.text = value!;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    labelText: 'Role',
-                    border: OutlineInputBorder(),
-                  ),
+            SizedBox(width: 8),
+            Text(
+              'Create New Account',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              DropdownButtonFormField<String>(
+                value: _selectedRole,
+                items: [
+                  DropdownMenuItem(value: 'user', child: Text('User')),
+                  DropdownMenuItem(value: 'insurance', child: Text('Insurance Company')),
+                  DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedRole = value!;
+                  });
+                },
+                decoration: InputDecoration(
+                  labelText: 'Account Type',
+                  border: OutlineInputBorder(),
                 ),
-                SizedBox(height: 16),
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an email';
+                  }
+                  if (!value.contains('@')) {
+                    return 'Please enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a password';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 16),
+              if (_selectedRole == 'user') ...[
                 TextFormField(
-                  controller: _emailController,
+                  controller: _firstNameController,
                   decoration: InputDecoration(
-                    labelText: 'Email',
+                    labelText: 'First Name',
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter an email';
+                      return 'Please enter first name';
                     }
                     return null;
                   },
                 ),
                 SizedBox(height: 16),
                 TextFormField(
-                  controller: _passwordController,
+                  controller: _lastNameController,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'Last Name',
                     border: OutlineInputBorder(),
                   ),
-                  obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a password';
+                      return 'Please enter last name';
                     }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                    return null;
+                  },
+                ),
+              ],
+              if (_selectedRole == 'insurance') ...[
+                TextFormField(
+                  controller: _firstNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Company Name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter company name';
                     }
                     return null;
                   },
                 ),
                 SizedBox(height: 16),
-                if (_roleController.text == 'user') ...[
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: InputDecoration(
-                      labelText: 'First Name',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter first name';
-                      }
-                      return null;
-                    },
+                TextFormField(
+                  controller: _lastNameController,
+                  decoration: InputDecoration(
+                    labelText: 'State',
+                    border: OutlineInputBorder(),
                   ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _lastNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Last Name',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter last name';
-                      }
-                      return null;
-                    },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter state';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+              if (_selectedRole == 'admin') ...[
+                TextFormField(
+                  controller: _serverNumberController,
+                  decoration: InputDecoration(
+                    labelText: 'Server Number',
+                    border: OutlineInputBorder(),
                   ),
-                ],
-                if (_roleController.text == 'insurance') ...[
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Company Name',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter company name';
-                      }
-                      return null;
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _lastNameController,
-                    decoration: InputDecoration(
-                      labelText: 'State',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter state';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-                if (_roleController.text == 'admin') ...[
-                  TextFormField(
-                    controller: _serverNumberController,
-                    decoration: InputDecoration(
-                      labelText: 'Server Number',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter server number';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-                SizedBox(height: 16),
-                ElevatedButton(
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter server number';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+              SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
                   onPressed: _isCreating 
                     ? null 
                     : () async {
                         if (_formKey.currentState!.validate()) {
                           setState(() => _isCreating = true);
                           try {
-                            switch (_roleController.text) {
+                            switch (_selectedRole) {
                               case 'admin':
                                 await TripService.createAdminAccount(
                                   email: _emailController.text,
@@ -881,11 +1052,7 @@ Widget _buildCreateAccountCard() {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Account created successfully')),
                             );
-                            _emailController.clear();
-                            _passwordController.clear();
-                            _firstNameController.clear();
-                            _lastNameController.clear();
-                            _serverNumberController.clear();
+                            Navigator.pop(context);
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Error creating account: $e')),
@@ -896,17 +1063,24 @@ Widget _buildCreateAccountCard() {
                         }
                       },
                   child: _isCreating 
-                    ? CircularProgressIndicator(color: Colors.white)
+                    ? SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
                     : Text('Create Account'),
                   style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 50),
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }

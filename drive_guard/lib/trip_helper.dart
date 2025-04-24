@@ -256,7 +256,7 @@ static Widget _buildDetailRow(BuildContext context, IconData icon, String label,
   }
 
 static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
-  final String url = '$server/search_users?query=$query';
+  final String url = '$server/userLookup$query';
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
 
