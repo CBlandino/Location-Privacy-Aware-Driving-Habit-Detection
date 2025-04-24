@@ -5,7 +5,6 @@ import 'login_page.dart';
 import 'account_page.dart';
 import 'package:geolocator/geolocator.dart';
 
-
 class PrivacyPage extends StatefulWidget {
   const PrivacyPage({super.key});
 
@@ -13,10 +12,9 @@ class PrivacyPage extends StatefulWidget {
   _PrivacyPageState createState() => _PrivacyPageState();
 }
 
-// location may not be functional
 class _PrivacyPageState extends State<PrivacyPage> {
-  bool? _isLocationEnabled = Settings.getValue<bool>('key-location-access', defaultValue: false);
-
+  bool _isLocationEnabled = Settings.getValue<bool>('key-location-access', defaultValue: false) ?? false;
+  String _locationDisplay = "Location: (off)";
 
   @override
   void initState() {
@@ -27,20 +25,17 @@ class _PrivacyPageState extends State<PrivacyPage> {
   Future<void> _checkLocationStatus() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     setState(() {
-      _isLocationEnabled = serviceEnabled;
+      _isLocationEnabled = (Settings.getValue<bool>('key-location-access', defaultValue: false) ?? false) && serviceEnabled;
     });
   }
-
 
   Future<void> _handleLocationPermission(bool value) async {
     if (value) {
       LocationPermission permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Handle denied permission
         setState(() => _isLocationEnabled = false);
         return;
       } else if (permission == LocationPermission.deniedForever) {
-        // Ask user to enable location from settings
         setState(() => _isLocationEnabled = false);
         _showLocationSettingsDialog();
         return;
@@ -53,9 +48,14 @@ class _PrivacyPageState extends State<PrivacyPage> {
         return;
       }
 
+      await Settings.setValue('key-location-access', true);
       setState(() => _isLocationEnabled = true);
     } else {
-      setState(() => _isLocationEnabled = false);
+      await Settings.setValue('key-location-access', false);
+      setState(() {
+        _isLocationEnabled = false;
+        _locationDisplay = "Location: (off)";
+      });
     }
   }
 
@@ -82,6 +82,26 @@ class _PrivacyPageState extends State<PrivacyPage> {
     );
   }
 
+  Future<void> _getLocation() async {
+    if (!_isLocationEnabled) {
+      setState(() {
+        _locationDisplay = "Location: (off)";
+      });
+      return;
+    }
+
+    try {
+      Position position = await Geolocator.getCurrentPosition();
+      setState(() {
+        _locationDisplay = "Location: ${position.latitude}, ${position.longitude}";
+      });
+    } catch (e) {
+      setState(() {
+        _locationDisplay = "Failed to get location";
+      });
+      print("Error getting location: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +119,12 @@ class _PrivacyPageState extends State<PrivacyPage> {
             leading: Icon(Icons.location_on, color: Colors.blue),
             onChange: (value) => _handleLocationPermission(value),
           ),
-          // Update in future to be functional
+          SimpleSettingsTile(
+            title: 'Test Location Access',
+            subtitle: _locationDisplay,
+            leading: Icon(Icons.my_location, color: Colors.purple),
+            onTap: _getLocation,
+          ),
           SwitchSettingsTile(
             settingKey: 'key-notifications',
             title: 'Allow App Notifications',
@@ -114,7 +139,6 @@ class _PrivacyPageState extends State<PrivacyPage> {
             leading: Icon(Icons.lock, color: Colors.orange),
             subtitle: 'Update your account password',
             onTap: () {
-              // Navigate to Change Password Page
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => ChangePasswordPage()),
@@ -127,7 +151,6 @@ class _PrivacyPageState extends State<PrivacyPage> {
   }
 }
 
-// Placeholder ChangePasswordPage
 class ChangePasswordPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -151,7 +174,7 @@ class ChangePasswordPage extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context); // Go back to the previous screen
+                Navigator.pop(context);
               },
               child: Text("Save"),
             ),
