@@ -17,8 +17,10 @@ class _ScorePage extends State<ScorePage> {
   late String role;
   bool isLoading = true;
 
-  // Static data for testing
-  Map<String, String> breakdown = {};
+
+
+  Map<String, String> breakdown = {};   // Map receiving from backend. Key is the name of the habit, value is the severity
+
 
  @override
   void initState() {
@@ -41,7 +43,7 @@ class _ScorePage extends State<ScorePage> {
       },
     );
 
-
+    // TODO Replace breakdown with correct names in database
     if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -149,12 +151,8 @@ class _ScorePage extends State<ScorePage> {
                             ),
                           ),
                           SizedBox(height: 8),
-                          // replace with name of habit, and severity
-                          _buildScoreDetail("Smoothness", "Good"),
-                          _buildScoreDetail("Braking", "Needs Improvement"),
-                          _buildScoreDetail("Acceleration", "Excellent"),
-                          _buildScoreDetail("Cornering", "Average"),
-                          _buildScoreDetail("Speed Control", "Good"),
+                          // In the expand button, these list the name of the habit, as well as a descriptor word to describe that score
+                          ...breakdown.entries.map((entry) => _buildScoreDetail(entry.key, entry.value)).toList(),
                         ],
                       ),
                       ElevatedButton(
