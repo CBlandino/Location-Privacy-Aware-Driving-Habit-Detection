@@ -11,7 +11,7 @@ class CustomDrawer extends StatefulWidget {
   final String role;
 
 
-  CustomDrawer({required this.role});
+  CustomDrawer({required this.role, required bool isWeb});
 
   @override
   _CustomDrawerState createState() => _CustomDrawerState();

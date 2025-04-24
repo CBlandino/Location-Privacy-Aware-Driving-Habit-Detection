@@ -16,369 +16,245 @@ class LoginPageWidget extends StatefulWidget {
 
 class _LoginPageWidgetState extends State<LoginPageWidget>
     with TickerProviderStateMixin {
+
+  static const Color primaryBlue = Color(0xFF1976D2);
+  static const Color darkBlue = Color(0xFF1565C0);
+  static const Color lightBlue = Color(0xFFE3F2FD);
+  static const Color black = Colors.black;
+  static const Color white = Colors.white;
+  static const Color grey = Color(0xFF9E9E9E);
+  static const Color lightGrey = Color(0xFFEEEEEE);
+
   final _formKey = GlobalKey<FormState>();
-
   late SharedPreferences _prefs;
-  bool isSignupMode = false;
   bool _isProcessing = false;
-  String? _selectedRole = 'user';
+  String _selectedRole = 'user';
+  bool _isSignupMode = false;
+  
 
-  TextEditingController emailController = TextEditingController();
-  TextEditingController firstNameController = TextEditingController();
-  TextEditingController lastNameController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  TextEditingController insuranceProviderController = TextEditingController();
-  TextEditingController stateController = TextEditingController();
-  TextEditingController serverNumberController = TextEditingController();
-  TextEditingController idController = TextEditingController();
+  // Controllers
+  final emailController = TextEditingController();
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final passwordController = TextEditingController();
+  final insuranceProviderController = TextEditingController();
+  final stateController = TextEditingController();
+  final serverNumberController = TextEditingController();
+  final idController = TextEditingController();
+
   late TabController _tabController;
-
   final String server = AppConfig.server;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-
-    SharedPreferences.getInstance().then((prefs) {
-      setState(() {
-        _prefs = prefs;
-      });
-    });
+    _initializePrefs();
   }
 
-  //   @override
-  // void dispose() {
-  //   emailController.dispose();
-  //   passwordController.dispose();
-  //   lastNameController.dispose();
-  //   passwordController.dispose();
-  //   insuranceProviderController.dispose();
-  //   stateController.dispose();
-  //   serverNumberController.dispose();
-  //   idController.dispose();
-
-  //   super.dispose();
-  // }
-
-  Future<Map<String, dynamic>> parseJson(String responseBody) async {
-    await Future.delayed(Duration(milliseconds: 100));
-    return compute(json.decode(responseBody), responseBody);
+  Future<void> _initializePrefs() async {
+    _prefs = await SharedPreferences.getInstance();
   }
 
-  // Function to handle signup
-  Future<void> _signup() async {
-    if (_isProcessing) return;
-    _isProcessing = true;
+  @override
+  void dispose() {
+    emailController.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
+    passwordController.dispose();
+    insuranceProviderController.dispose();
+    stateController.dispose();
+    serverNumberController.dispose();
+    idController.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
 
+  Future<void> _handleAuth() async {
+    if (_isProcessing || !_formKey.currentState!.validate()) return;
+    
+    setState(() => _isProcessing = true);
+    
     try {
-      final String url =
-          '$server/7d2abf2d0fa7c3a0c13236910f30bc43'; // Use 10.0.2.2 to connect to the host machine
-
-      // Prepare the data for signup based on the selected role
-      Map<String, dynamic> data = {
-        'email': emailController.text,
-        'password': passwordController.text,
-        'role': _selectedRole,
-      };
-
-      if (_selectedRole == 'user') {
-        data['first_name'] = firstNameController.text;
-        data['last_name'] = lastNameController.text;
-      } else if (_selectedRole == 'admin') {
-        data['first_name'] = firstNameController.text;
-        data['last_name'] = lastNameController.text;
-        data['admin_id'] = idController.text;  
-        //data['server_number'] = serverNumberController.text;
-      } else if (_selectedRole == 'insurance') {
-        data['first_name'] =
-        insuranceProviderController.text; // Provider = First Name
-        data['last_name'] = stateController.text; // State = Last Name
-        data['password'] = idController.text; // ID = Password
-      }
-
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(data),
-      );
-
-      if (response.statusCode == 201) {
-        print('STATUS: ${response.statusCode}');
-        print('BODY: ${response.body}');
-        final responseData = json.decode(response.body);
-        String token = responseData['access_token'];
-        await _prefs.setString('access_token', token);
-
-        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-
-        String role = decodedToken['role'];
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage(role: role)),
-        );
+      if (_isSignupMode) {
+        await _signup();
       } else {
-        final responseData = await parseJson(response.body);
-        _showErrorDialog(responseData['message']);
+        await _login();
       }
     } catch (error) {
-      _showErrorDialog('An error occurred. Please try again later.');
+      _showErrorDialog(_isSignupMode 
+          ? 'An error occurred during signup' 
+          : 'The server is down. Please try again later.');
     } finally {
-      setState(() => _isProcessing = false);
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 
-  // Function to handle login
+  Future<void> _signup() async {
+    final url = '$server/7d2abf2d0fa7c3a0c13236910f30bc43';
+    final data = _buildAuthData();
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(data),
+    );
+
+    if (response.statusCode == 201) {
+      await _handleSuccessfulAuth(response.body);
+    } else {
+      final responseData = await _parseJson(response.body);
+      _showErrorDialog(responseData['message'] ?? 'Signup failed');
+    }
+  }
+
   Future<void> _login() async {
-    if (_isProcessing) return;
-    _isProcessing = true;
+    final url = '$server/d56b699830e77ba53855679cb1d252da';
+    final data = _buildAuthData();
 
-    try {
-      final String url =
-          '$server/d56b699830e77ba53855679cb1d252da'; // use 10.0.2.2 to connect to the host machine
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(data),
+    );
 
-      Map<String, dynamic> data = {
-        'email': emailController.text,
-        'password': passwordController.text,
-        'role': _selectedRole,
-      };
+    if (response.statusCode == 202) {
+      await _handleSuccessfulAuth(response.body);
+    } else {
+      final responseData = await _parseJson(response.body);
+      _showErrorDialog(responseData['message'] ?? 'Login failed');
+    }
+  }
 
-      if (_selectedRole == 'admin') {
-      data['admin_id'] = idController.text;
-      data['server_number'] = serverNumberController.text;
-      } else if (_selectedRole == 'insurance') {
-        //data['id'] = idController.text;
-        //data['insurance_provider_name'] = insuranceProviderController.text;
-        //data['first_name'] = insuranceProviderController.text;
-        //data['last_name'] = stateController.text;
+  Map<String, dynamic> _buildAuthData() {
+    final data = {
+      'email': emailController.text,
+      'password': passwordController.text,
+      'role': _selectedRole,
+    };
+
+    if (_selectedRole == 'user') {
+      if (_isSignupMode) {
+        data.addAll({
+          'first_name': firstNameController.text,
+          'last_name': lastNameController.text,
+        });
+      }
+    } 
+    else if (_selectedRole == 'admin') {
+      if (_isSignupMode) {
+        data.addAll({
+          'first_name': firstNameController.text,
+          'last_name': lastNameController.text,
+          'admin_id': idController.text,
+          'server_number': serverNumberController.text,
+        });
+      } else {
+        data['admin_id'] = idController.text;
+        data['server_number'] = serverNumberController.text;
+      }
+    } 
+    else if (_selectedRole == 'insurance') {
+      if (_isSignupMode) {
+        data.addAll({
+          'first_name': insuranceProviderController.text,
+          'last_name': stateController.text,
+          'password': idController.text,
+        });
+      } else {
         data['password'] = idController.text;
       }
+    }
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(data),
+    return data;
+  }
+
+  Future<void> _handleSuccessfulAuth(String responseBody) async {
+    final responseData = json.decode(responseBody);
+    final token = responseData['access_token'];
+    await _prefs.setString('access_token', token);
+
+    final decodedToken = JwtDecoder.decode(token);
+    final role = decodedToken['role'];
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage(role: role)),
       );
-
-      if (response.statusCode == 202) {
-        final responseData = json.decode(response.body);
-        String token = responseData['access_token'];
-        await _prefs.setString('access_token', token);
-
-        Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-
-        String role = decodedToken['role'];
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage(role: role)),
-        );
-      } else {
-        // Error: Show error message
-        final responseData = await parseJson(response.body);
-        _showErrorDialog(responseData['message']);
-      }
-    } catch (error) {
-      _showErrorDialog('The Server is down. Please try again later.');
-    } finally {
-      setState(() => _isProcessing = false);
     }
   }
 
-  // Function to show error dialog
+  Future<Map<String, dynamic>> _parseJson(String responseBody) async {
+    return await compute((String jsonString) {
+      return json.decode(jsonString) as Map<String, dynamic>;
+    }, responseBody);
+  }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Error'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              child: Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
+    final isWeb = kIsWeb;
+    final maxWidth = isWeb ? 500.0 : double.infinity;
+    
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
+      backgroundColor: lightBlue,
+      body: Center(
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Container(
-                width: screenWidth * 0.8,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+              padding: const EdgeInsets.all(16),
+              child: Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                padding: EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Align(
-                      alignment: Alignment.center,
-                      child: Column(
-                        children: [
-                          Text(
-                            isSignupMode
-                                ? 'Create an Account'
-                                : 'Login to Your Account',
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.08,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: screenHeight * 0.02),
-                          Text(
-                            'Welcome back! Please log in to continue.',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                color: white,
+                child: Container(
+                  padding: const EdgeInsets.all(32),
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 32),
+                      _buildTabBar(),
+                      const SizedBox(height: 24),
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 16),
+                            _buildTextField('Email', emailController, Icons.email),
+                            const SizedBox(height: 20),
+                            ..._buildRoleSpecificFields(),
+                            const SizedBox(height: 32),
+                            _buildAuthButton(),
+                            const SizedBox(height: 24),
+                            _buildToggleAuthModeButton(),
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: screenHeight * 0.05),
-                    TabBar(
-                      controller: _tabController,
-                      tabs: [
-                        Tab(child: Text('Log In')),
-                        Tab(child: Text('Sign Up')),
-                      ],
-                      onTap: (index) {
-                        setState(() {
-                          isSignupMode = index == 1;
-                        });
-                      },
-                      indicatorColor: Colors.blue,
-                      labelColor: Colors.blue,
-                      unselectedLabelColor: Colors.grey,
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          DropdownButtonFormField<String>(
-                            value: _selectedRole,
-                            items: [
-                              DropdownMenuItem(
-                                value: 'user',
-                                child: Text('User'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'insurance',
-                                child: Text('Insurance'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'admin',
-                                child: Text('Admin'),
-                              ),
-                            ],
-                            onChanged: (String? value) {
-                              setState(() {
-                                _selectedRole = value;
-                              });
-                            },
-                            decoration: InputDecoration(
-                              labelText: 'Select Role',
-                              labelStyle: TextStyle(color: Colors.blue),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(22),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue),
-                              ),
-                            ),
-                            validator:
-                                (value) =>
-                                    value == null
-                                        ? 'Please select a role'
-                                        : null,
-                          ),
-                          SizedBox(height: screenHeight * 0.02),
-                          _buildTextField(
-                            'Email',
-                            emailController,
-                            Icons.email,
-                          ),
-                          _getRoleSpecificFields(),
-                          SizedBox(height: screenHeight * 0.03),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: screenWidth * 0.6,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    if (_formKey.currentState!.validate()) {
-                                      if (isSignupMode) {
-                                        _signup();
-                                      } else {
-                                        _login();
-                                      }
-                                    }
-                                  },
-                                  child: Text(
-                                    isSignupMode ? 'Sign Up' : 'Login',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
-                                    foregroundColor: Colors.black,
-                                    padding: EdgeInsets.symmetric(vertical: 16),
-                                    textStyle: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(22),
-                                    ),
-                                    elevation: 5,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          isSignupMode = !isSignupMode;
-                        });
-                      },
-                      child: Text(
-                        isSignupMode
-                            ? 'Already have an account? Log In'
-                            : 'Don\'t have an account? Sign Up',
-                        style: TextStyle(color: Colors.blue, fontSize: 16),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -388,92 +264,203 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
     );
   }
 
-  // Function to Show Role-Specific Fields
-  Widget _getRoleSpecificFields() {
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    if (_selectedRole == 'user') {
-      return Column(
-        children: [
-          if (isSignupMode) ...[
-            _buildTextField('First Name', firstNameController, Icons.person),
-            _buildTextField('Last Name', lastNameController, Icons.person),
-          ],
-          _buildTextField('Password', passwordController, Icons.lock),
-        ],
-      );
-    } else if (_selectedRole == 'insurance') {
-      return Column(
-        children: [
-          if (isSignupMode) ...[
-            _buildTextField(
-              'Insurance Name',
-              insuranceProviderController,
-              Icons.business,
-            ),
-            _buildTextField('State', stateController, Icons.location_city),
-          ],
-          _buildTextField('ID', idController, Icons.card_membership),
-        ],
-      );
-    } else if (_selectedRole == 'admin') {
-  return Column(
-    children: [
-      if (isSignupMode) ...[
-        _buildTextField('First Name', firstNameController, Icons.person),
-        _buildTextField('Last Name', lastNameController, Icons.person),
-        _buildTextField('Admin ID', idController, Icons.badge),
-        _buildTextField(
-          'Server Number',
-          serverNumberController,
-          Icons.computer,
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Text(
+          _isSignupMode ? 'Create Account' : 'Welcome Back',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: black,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          _isSignupMode 
+              ? 'Fill in your details to get started'
+              : 'Login to continue to your account',
+          style: TextStyle(
+            fontSize: 16,
+            color: grey,
+          ),
         ),
       ],
-      _buildTextField('Password', passwordController, Icons.lock),
-    ],
-  );
-}
-    return SizedBox.shrink();
+    );
   }
 
-  Widget _buildTextField(
+Widget _buildTabBar() {
+  return Container(
+    height: 50,
+    decoration: BoxDecoration(
+      color: lightGrey,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: TabBar(
+      controller: _tabController,
+      tabs: [
+        Container(
+          alignment: Alignment.center,
+          child: Text('Login', style: TextStyle(fontSize: 16)),
+        ),
+        Container(
+          alignment: Alignment.center,
+          child: Text('Sign Up', style: TextStyle(fontSize: 16)),
+        ),
+      ],
+      onTap: (index) => setState(() => _isSignupMode = index == 1),
+      indicator: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: primaryBlue,
+      ),
+      labelColor: white,
+      unselectedLabelColor: grey,
+      labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+      indicatorSize: TabBarIndicatorSize.tab,
+      indicatorPadding: EdgeInsets.zero,
+      labelPadding: EdgeInsets.zero,
+    ),
+  );
+}
+
+  List<Widget> _buildRoleSpecificFields() {
+    final fields = <Widget>[];
+    
+    if (_selectedRole == 'user') {
+      if (_isSignupMode) {
+        fields.addAll([
+          _buildTextField('First Name', firstNameController, Icons.person),
+          const SizedBox(height: 16),
+          _buildTextField('Last Name', lastNameController, Icons.person),
+          const SizedBox(height: 16),
+        ]);
+      }
+      fields.add(_buildTextField('Password', passwordController, Icons.lock));
+    } 
+    else if (_selectedRole == 'insurance') {
+      if (_isSignupMode) {
+        fields.addAll([
+          _buildTextField('Insurance Name', insuranceProviderController, Icons.business),
+          const SizedBox(height: 16),
+          _buildTextField('State', stateController, Icons.location_city),
+          const SizedBox(height: 16),
+        ]);
+      }
+      fields.add(_buildTextField('ID', idController, Icons.badge));
+    } 
+    else if (_selectedRole == 'admin') {
+      if (_isSignupMode) {
+        fields.addAll([
+          _buildTextField('First Name', firstNameController, Icons.person),
+          const SizedBox(height: 16),
+          _buildTextField('Last Name', lastNameController, Icons.person),
+          const SizedBox(height: 16),
+          _buildTextField('Admin ID', idController, Icons.admin_panel_settings),
+          const SizedBox(height: 16),
+          _buildTextField('Server Number', serverNumberController, Icons.computer),
+          const SizedBox(height: 16),
+        ]);
+      }
+      fields.add(_buildTextField('Password', passwordController, Icons.lock));
+    }
+
+    return fields;
+  }
+
+ Widget _buildTextField(
     String label,
     TextEditingController controller,
     IconData icon,
   ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.blue),
-          prefixIcon: Icon(icon, color: Colors.blue),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(22)),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.blue),
-          ),
+    return TextFormField(
+      controller: controller,
+      obscureText: label.toLowerCase().contains('password'),
+      style: TextStyle(color: black, fontSize: 16),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: grey),
+        prefixIcon: Icon(icon, color: primaryBlue, size: 24),
+        filled: true,
+        fillColor: white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: grey.withOpacity(0.3)),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter a valid $label';
-          }
-          return null;
-        },
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: grey.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryBlue, width: 2),
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter $label';
+        }
+        return null;
+      },
+    );
+  }
+
+
+  Widget _buildAuthButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isProcessing ? null : _handleAuth,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryBlue,
+          foregroundColor: white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 4,
+          shadowColor: primaryBlue.withOpacity(0.3),
+        ),
+        child: _isProcessing
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: white,
+                  strokeWidth: 3,
+                ),
+              )
+            : Text(
+                _isSignupMode ? 'Sign Up' : 'Login',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildToggleAuthModeButton() {
+    return TextButton(
+      onPressed: () {
+        setState(() => _isSignupMode = !_isSignupMode);
+        _tabController.animateTo(_isSignupMode ? 1 : 0);
+      },
+      style: TextButton.styleFrom(
+        foregroundColor: primaryBlue,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      ),
+      child: Text(
+        _isSignupMode
+            ? 'Already have an account? Login'
+            : 'Need an account? Sign Up',
+        style: const TextStyle(
+          fontSize: 16,
+          decoration: TextDecoration.underline,
+        ),
       ),
     );
   }
 }
-
-// place right below inouts, but aboce login/signup button
-// Expanded(
-//   child: TextButton(
-//     onPressed: () {
-//       // Handle Forgot Password action here
-//     },
-//     child: Text(
-//       'Forgot Password?',
-//       style: TextStyle(fontSize: 16, color: Colors.blue),
-//     ),
-//   ),
-// ),
