@@ -25,13 +25,19 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 		return err
 	}
 
+	// center of collins circle: 42.688309, -73.821711
+	// integer conversion (multiplied by 10^6): 42688309, -73821711
+	var PkLat int = 42688309
+	var PkLong int = -73821711
 	var totalDistance float64 = 0.0
 	for i, point := range data {
-		if d := getDistance(&point); d != math.NaN() {
+		if d := getDistance(&point, PkLat); d != math.NaN() {
 			totalDistance += d
 			velo := int((d / 5) * 3600)
 			data[i].Velo = velo
 		}
+		PkLat += point.Lat 
+		PkLong += point.Long
 	}
 
 	brakingPass := getBrakingFlags(data)
@@ -55,14 +61,19 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 
 // function that passes over all of the points in a transmitted point set prior to their inclusion in the db 
 // we can calculate distance on the set here, as well as any other metrics we wanted to/needed to
-func getDistance(p *point) float64 {
+func getDistance(p *point, lati int) float64 {
 
 	var totalDist float64 = 0.0
 
 	// radius of the earth in miles (6371km)
 	const R float64 = 3958.756 
+
+	latj := lati + p.Lat
+
+	latiRad := (float64(lati) * 0.000001) * (math.Pi / 180.0)
+	latjRad := (float64(latj) * 0.000001) * (math.Pi / 180.0)
 	// using beta approximation of 1 until implementation of R geographical points is done
-	const Beta float64 = 1.0
+	var Beta float64 = math.Cos(latiRad) * math.Cos(latjRad)
 
 	dLat := (float64(p.Lat) * 0.000001) * (math.Pi / 180.0)
 	dLong := (float64(p.Long) * 0.000001) * (math.Pi / 180.0)
