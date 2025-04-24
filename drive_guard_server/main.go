@@ -13,6 +13,7 @@ import (
 
 	"drive_guard_server/auth"
 	"drive_guard_server/trips"
+	"drive_guard_server/score"
 )
 
 var (
@@ -72,6 +73,10 @@ func main() {
 	})
 	server.GET("/55a4a318d8473bd5b80cea42331e473c", func(c *gin.Context) {
 		trips.Previous_trips(c, db)
+	})
+	// GetScore
+	server.GET("/ca1cd3c3055991bf20499ee86739f7e2", func(c *gin.Context) {
+		score.GetUserScore(c, db)
 	})
 
 	server.Run(ADDR)
