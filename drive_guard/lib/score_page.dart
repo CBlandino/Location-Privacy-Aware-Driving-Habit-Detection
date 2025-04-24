@@ -34,7 +34,7 @@ class _ScorePage extends State<ScorePage> {
     final token = prefs.getString('token');
 
     final response = await http.get(
-      Uri.parse('http://18.191.9.236:8080/score'), // Replace with actual API endpoint
+      Uri.parse('http://18.191.9.236:8080/ca1cd3c3055991bf20499ee86739f7e2'), 
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
