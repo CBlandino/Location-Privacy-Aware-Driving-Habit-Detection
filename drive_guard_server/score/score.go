@@ -26,7 +26,7 @@ import (
 // (second func) separeate function for the trip page to call on everytime it gets a new trip to update score, this func will recieve all points and data from phone
 
 // for first function
-func getUserScore(c *gin.Context, db *sql.DB) {
+func GetUserScore(c *gin.Context, db *sql.DB) {
 
 	log.Println("FETCHING USER SCORE")
 
