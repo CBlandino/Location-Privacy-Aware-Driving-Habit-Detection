@@ -132,7 +132,17 @@ func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) erro
 		return err
 	}	
 
-	updateSTR := "UPDATE trips SET data = data || $1::jsonb WHERE user_id = $2 ORDER BY start_time DESC LIMIT 1"
+	updateSTR := "WITH latest_trip AS ( " +
+		"SELECT id " +
+		"FROM trips " +
+		"WHERE user_id = $2 " +
+		"ORDER BY start_time DESC " +
+		"LIMIT 1 " +
+		" )"+
+		"UPDATE trips "+
+		"SET data = data || $1::jsonb "+
+		"WHERE id IN (SELECT id FROM latest_trip)"
+
 	_, err = db.Exec(updateSTR, jsonPoints, id)
 	if err != nil {
 		log.Println(err)
