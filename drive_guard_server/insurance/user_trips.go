@@ -3,6 +3,7 @@ package insurance
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,6 +11,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+type TripData struct {
+	Distance   float64 `json:"distance"`
+	Duration   float64 `json:"duration"`
+	AvgSpeed   float64 `json:"avg_speed"`
+	BrakeScore float64 `json:"brake_score"`
+	AccelScore float64 `json:"accel_score"`
+}
 
 func GetUserTrips(c *gin.Context, db *sql.DB) {
 	// 1. Authentication and validation
@@ -57,17 +66,14 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 			trip_id, 
 			user_id, 
 			start_time, 
-			distance, 
-			duration, 
-			average_speed,
-			created_at
-		FROM trips
+			data
+		FROM Trips
 		WHERE user_id = $1
 	`
 
 	switch sortBy {
 	case "distance":
-		query += " ORDER BY distance DESC"
+		query += " ORDER BY (data->>'distance')::float DESC"
 	default:
 		query += " ORDER BY start_time DESC"
 	}
@@ -95,26 +101,42 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 		Distance  float64   `json:"distance"`
 		Duration  float64   `json:"duration"`
 		AvgSpeed  float64   `json:"average_speed"`
-		CreatedAt time.Time `json:"created_at"`
 	}
 
 	var trips []Trip
 	for rows.Next() {
-		var t Trip
+		var t struct {
+			TripID    int
+			UserID    int
+			StartTime time.Time
+			Data      []byte
+		}
+
 		err := rows.Scan(
 			&t.TripID,
 			&t.UserID,
 			&t.StartTime,
-			&t.Distance,
-			&t.Duration,
-			&t.AvgSpeed,
-			&t.CreatedAt,
+			&t.Data,
 		)
 		if err != nil {
 			log.Printf("Error scanning trip row: %v", err)
 			continue
 		}
-		trips = append(trips, t)
+
+		var tripData TripData
+		if err := json.Unmarshal(t.Data, &tripData); err != nil {
+			log.Printf("Error unmarshaling trip data: %v", err)
+			continue
+		}
+
+		trips = append(trips, Trip{
+			TripID:    t.TripID,
+			UserID:    t.UserID,
+			StartTime: t.StartTime,
+			Distance:  tripData.Distance,
+			Duration:  tripData.Duration,
+			AvgSpeed:  tripData.AvgSpeed,
+		})
 	}
 
 	if err = rows.Err(); err != nil {

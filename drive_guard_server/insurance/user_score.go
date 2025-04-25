@@ -43,29 +43,29 @@ func GetUserScore(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// 4. Database query
+	// 4. Database query - updated to use Users table
 	log.Printf("Fetching score for user %d", userIDInt)
 	var score float64
-	var updatedAt string
+	var firstName, lastName string
 	err = db.QueryRow(`
-		SELECT score, updated_at 
-		FROM user_scores 
+		SELECT score, first_name, last_name 
+		FROM Users 
 		WHERE user_id = $1
-	`, userIDInt).Scan(&score, &updatedAt)
+	`, userIDInt).Scan(&score, &firstName, &lastName)
 
 	// 5. Handle query results
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("No score found for user %d", userIDInt)
+			log.Printf("No user found with ID %d", userIDInt)
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "User score not found",
-				"code":  "score_not_found",
+				"error": "User not found",
+				"code":  "user_not_found",
 			})
 			return
 		}
 		log.Printf("Database error for user %d: %v", userIDInt, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to retrieve score",
+			"error": "Failed to retrieve user score",
 			"code":  "database_error",
 		})
 		return
@@ -76,7 +76,8 @@ func GetUserScore(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, gin.H{
 		"user_id":    userIDInt,
 		"score":      score,
-		"updated_at": updatedAt,
+		"first_name": firstName,
+		"last_name":  lastName,
 		"status":     "success",
 	})
 }

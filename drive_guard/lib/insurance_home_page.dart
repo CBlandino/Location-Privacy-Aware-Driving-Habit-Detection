@@ -518,15 +518,21 @@ Future<void> _searchForUsers() async {
 
   try {
     final results = await TripService.searchUsers(_searchQuery);
-    print('API results: $results');
     
     setState(() {
       _foundUsers = results.map((user) {
+        // Ensure we have all required fields
+        if (user['user_id'] == null || 
+            user['first_name'] == null || 
+            user['last_name'] == null) {
+          throw Exception('Invalid user data received');
+        }
+        
         return {
-          'id': user['user_id'],
+          'user_id': user['user_id'], // Make sure this matches what the server sends
           'name': '${user['first_name']} ${user['last_name']}',
-          'email': user['email'],
-          'role': user['role'],
+          'email': user['email'] ?? 'No email',
+          'role': user['role'] ?? 'user',
         };
       }).toList();
       _isLoadingUsers = false;
@@ -540,7 +546,15 @@ Future<void> _searchForUsers() async {
   }
 }
 
+// Update the API call methods to validate the userId parameter
 Future<void> _loadUserScore(String userId) async {
+  if (userId.isEmpty) {
+    setState(() {
+      _searchError = 'Invalid user ID';
+    });
+    return;
+  }
+
   setState(() {
     _isLoadingScore = true;
     _userScore = null;
@@ -561,6 +575,13 @@ Future<void> _loadUserScore(String userId) async {
 }
 
 Future<void> _loadUserTrips(String userId) async {
+  if (userId.isEmpty) {
+    setState(() {
+      _searchError = 'Invalid user ID';
+    });
+    return;
+  }
+
   setState(() {
     _isLoadingTrips = true;
     _userTrips = [];

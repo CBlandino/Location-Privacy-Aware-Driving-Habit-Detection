@@ -292,9 +292,6 @@ static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
 }
 
 static Future<Map<String, dynamic>> getUserScore(String userId) async {
-    if (userId.isEmpty || userId == 'null') {
-    throw Exception('Invalid user ID');
-  }
   final String url = '$server/user_score/$userId';
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
@@ -312,8 +309,9 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
       final data = json.decode(response.body);
       return {
         'score': data['score']?.toDouble() ?? 0.0,
-        'updated_at': data['updated_at'] ?? '',
         'user_id': data['user_id']?.toString() ?? userId,
+        'first_name': data['first_name'] ?? '',
+        'last_name': data['last_name'] ?? '',
       };
     } else {
       throw Exception('Failed to get user score: ${response.statusCode}');
@@ -324,9 +322,6 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
 }
 
 static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? sortBy}) async {
-    if (userId.isEmpty || userId == 'null') {
-    throw Exception('Invalid user ID');
-  }
   String url = '$server/user_trips/$userId';
   if (sortBy != null) {
     url += '?sort=$sortBy';
@@ -345,14 +340,15 @@ static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? s
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((trip) => {
+      final Map<String, dynamic> data = json.decode(response.body);
+      final List<dynamic> trips = data['trips'] ?? [];
+      return trips.map((trip) => {
         'trip_id': trip['trip_id'],
         'user_id': trip['user_id'],
         'start_time': trip['start_time'],
         'distance': trip['distance']?.toDouble() ?? 0.0,
         'duration': trip['duration']?.toDouble() ?? 0.0,
-        'velocity': trip['velocity']?.toDouble() ?? 0.0,
+        'velocity': trip['average_speed']?.toDouble() ?? 0.0,
       }).toList();
     } else {
       throw Exception('Failed to get user trips: ${response.statusCode}');
