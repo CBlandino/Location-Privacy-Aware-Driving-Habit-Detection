@@ -20,6 +20,8 @@ type TripData struct {
 	AccelScore float64 `json:"accel_score"`
 }
 
+type TripDataArray []TripData
+
 func GetUserTrips(c *gin.Context, db *sql.DB) {
 	// 1. Authentication and validation
 	authHeader := c.GetHeader("Authorization")
@@ -73,7 +75,7 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 
 	switch sortBy {
 	case "distance":
-		query += " ORDER BY (data->>'distance')::float DESC"
+		query += " ORDER BY (data->0->>'distance')::float DESC"
 	default:
 		query += " ORDER BY start_time DESC"
 	}
@@ -123,20 +125,24 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 			continue
 		}
 
-		var tripData TripData
-		if err := json.Unmarshal(t.Data, &tripData); err != nil {
+		var tripDataArray TripDataArray
+		if err := json.Unmarshal(t.Data, &tripDataArray); err != nil {
 			log.Printf("Error unmarshaling trip data: %v", err)
 			continue
 		}
 
-		trips = append(trips, Trip{
-			TripID:    t.TripID,
-			UserID:    t.UserID,
-			StartTime: t.StartTime,
-			Distance:  tripData.Distance,
-			Duration:  tripData.Duration,
-			AvgSpeed:  tripData.AvgSpeed,
-		})
+		// Use the first element of the array if it exists
+		if len(tripDataArray) > 0 {
+			tripData := tripDataArray[0]
+			trips = append(trips, Trip{
+				TripID:    t.TripID,
+				UserID:    t.UserID,
+				StartTime: t.StartTime,
+				Distance:  tripData.Distance,
+				Duration:  tripData.Duration,
+				AvgSpeed:  tripData.AvgSpeed,
+			})
+		}
 	}
 
 	if err = rows.Err(); err != nil {
