@@ -254,25 +254,31 @@ static Widget _buildDetailRow(BuildContext context, IconData icon, String label,
        return [];
     }
   }
-
 static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
-  final String url = '$server/userLookup$query';
+
+  final uri = Uri.parse('$server/userLookup').replace(
+    queryParameters: {'query': query}
+  );
+  
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
 
   try {
     final response = await http.get(
-      Uri.parse(url),
+      uri, 
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
 
+      print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
     } else {
-      throw Exception('Failed to search users');
+      throw Exception('Failed to search users: ${response.statusCode}');
     }
   } catch (error) {
     throw Exception('Search failed: $error');

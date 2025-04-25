@@ -28,8 +28,11 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 	}
 
 	// Check if the user has admin role
-	if claims.Role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "You must be an admin to perform this action"})
+	isAllowed := claims.Role == "admin" || claims.Role == "insurance"
+	if !isAllowed {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error": "You must be an admin or insurance provider to perform this action",
+		})
 		return
 	}
 

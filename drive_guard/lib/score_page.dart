@@ -33,7 +33,7 @@ class _ScorePage extends State<ScorePage> {
 
     role = prefs.getString('role')!;
 
-    final token = prefs.getString('token');
+    final token = prefs.getString('auth_token');
 
     final response = await http.get(
       Uri.parse('http://18.191.9.236:8080/ca1cd3c3055991bf20499ee86739f7e2'), 
