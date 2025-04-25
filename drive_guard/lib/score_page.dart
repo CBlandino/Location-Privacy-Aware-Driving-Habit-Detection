@@ -58,7 +58,6 @@ class _ScorePage extends State<ScorePage> {
           breakdown = {
             "Braking": _ratingLabel(data['braking']),
             "Acceleration": _ratingLabel(data['acceleration']),
-            "Speed Control": _ratingLabel(data['speedControl']),
           };
         });
       } else {

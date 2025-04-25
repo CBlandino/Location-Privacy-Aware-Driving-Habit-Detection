@@ -338,10 +338,14 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return {
-        'score': data['score']?.toDouble() ?? 0.0,
+      'score': (data['score'] ?? 0).toDouble(),
+      'accel_score': (data['accel_score'] ?? data['avg_accel_score'] ?? 0).toDouble(),
+      'brake_score': (data['brake_score'] ?? data['avg_brake_score'] ?? 0).toDouble(),
+      'trip_score': (data['trip_score'] ?? data['avg_trip_score'] ?? 0).toDouble(),
         'user_id': data['user_id']?.toString() ?? userId,
         'first_name': data['first_name'] ?? '',
         'last_name': data['last_name'] ?? '',
+        'updated_at': data['updated_at'] ?? DateTime.now().toString(),
       };
     } else {
       throw Exception('Failed to get user score: ${response.statusCode}');
