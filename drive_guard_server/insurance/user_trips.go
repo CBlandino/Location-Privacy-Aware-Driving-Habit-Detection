@@ -11,13 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type LocationPoint struct {
-	PointNum  int     `json:"p"`
-	Timestamp string  `json:"t"`
-	DLat      float64 `json:"dlat"`
-	DLon      float64 `json:"dlon"`
-}
-
 func GetUserTrips(c *gin.Context, db *sql.DB) {
 	// 1. Authentication and validation
 	authHeader := c.GetHeader("Authorization")
@@ -58,14 +51,14 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 		sortBy = "recent"
 	}
 
-	// 5. Build query - join with TripMetrics and include duration calculation
+	// 5. Build query - join with TripMetrics
 	query := `
 		SELECT 
 			t.trip_id, 
 			t.user_id, 
 			t.start_time, 
 			EXTRACT(EPOCH FROM (SELECT MAX(p->>'t')::timestamp - MIN(p->>'t')::timestamp 
-			                   FROM jsonb_array_elements(t.data) as p)) / 60 AS duration_minutes,
+			                   FROM jsonb_array_elements(t.data) as p)) / 60 AS duration,
 			tm.distance,
 			tm.avg_velo,
 			tm.max_velo,
@@ -120,6 +113,7 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 			&t.TripID,
 			&t.UserID,
 			&t.StartTime,
+			&t.Duration,
 			&t.Distance,
 			&t.AvgSpeed,
 			&t.MaxSpeed,
