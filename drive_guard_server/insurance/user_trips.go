@@ -3,7 +3,6 @@ package insurance
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,13 +11,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type TripPoint struct {
-	Distance   float64 `json:"distance"`
-	Duration   float64 `json:"duration"`
-	AvgSpeed   float64 `json:"avg_speed"`
-	BrakeScore float64 `json:"brake_score"`
-	AccelScore float64 `json:"accel_score"`
-	Timestamp  int64   `json:"timestamp"`
+type LocationPoint struct {
+	PointNum  int     `json:"p"`
+	Timestamp string  `json:"t"`
+	DLat      float64 `json:"dlat"`
+	DLon      float64 `json:"dlon"`
 }
 
 func GetUserTrips(c *gin.Context, db *sql.DB) {
@@ -61,22 +58,28 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 		sortBy = "recent"
 	}
 
-	// 5. Build query with parameterized inputs
+	// 5. Build query - we should join with TripMetrics table
 	query := `
 		SELECT 
-			trip_id, 
-			user_id, 
-			start_time, 
-			data
-		FROM Trips
-		WHERE user_id = $1
+			t.trip_id, 
+			t.user_id, 
+			t.start_time, 
+			tm.distance,
+			tm.avg_velo,
+			tm.max_velo,
+			tm.brake_score,
+			tm.accel_score,
+			tm.trip_score
+		FROM Trips t
+		JOIN TripsMetrics tm ON t.trip_id = tm.trip_id
+		WHERE t.user_id = $1
 	`
 
 	switch sortBy {
 	case "distance":
-		query += " ORDER BY (data->0->>'distance')::float DESC"
+		query += " ORDER BY tm.distance DESC"
 	default:
-		query += " ORDER BY start_time DESC"
+		query += " ORDER BY t.start_time DESC"
 	}
 
 	// 6. Execute query with timeout
@@ -96,60 +99,45 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 
 	// 7. Process results
 	type Trip struct {
-		TripID    int       `json:"trip_id"`
-		UserID    int       `json:"user_id"`
-		StartTime time.Time `json:"start_time"`
-		Distance  float64   `json:"distance"`
-		Duration  float64   `json:"duration"`
-		AvgSpeed  float64   `json:"average_speed"`
+		TripID     int       `json:"trip_id"`
+		UserID     int       `json:"user_id"`
+		StartTime  time.Time `json:"start_time"`
+		Distance   float64   `json:"distance"`
+		AvgSpeed   float64   `json:"average_speed"`
+		MaxSpeed   float64   `json:"max_speed"`
+		BrakeScore float64   `json:"brake_score"`
+		AccelScore float64   `json:"accel_score"`
+		TripScore  float64   `json:"trip_score"`
 	}
 
 	var trips []Trip
 	for rows.Next() {
-		var t struct {
-			TripID    int
-			UserID    int
-			StartTime time.Time
-			Data      []byte
-		}
-
+		var t Trip
 		err := rows.Scan(
 			&t.TripID,
 			&t.UserID,
 			&t.StartTime,
-			&t.Data,
+			&t.Distance,
+			&t.AvgSpeed,
+			&t.MaxSpeed,
+			&t.BrakeScore,
+			&t.AccelScore,
+			&t.TripScore,
 		)
 		if err != nil {
 			log.Printf("Error scanning trip row: %v", err)
 			continue
 		}
+		trips = append(trips, t)
+	}
 
-		var tripPoints []TripPoint
-		if err := json.Unmarshal(t.Data, &tripPoints); err != nil {
-			log.Printf("Error unmarshaling trip data: %v", err)
-			continue
-		}
-
-		// Calculate aggregate values from all trip points
-		var totalDistance, totalDuration, totalSpeed float64
-		var pointCount int
-		for _, point := range tripPoints {
-			totalDistance += point.Distance
-			totalDuration += point.Duration
-			totalSpeed += point.AvgSpeed
-			pointCount++
-		}
-
-		if pointCount > 0 {
-			trips = append(trips, Trip{
-				TripID:    t.TripID,
-				UserID:    t.UserID,
-				StartTime: t.StartTime,
-				Distance:  totalDistance,
-				Duration:  totalDuration / 60,
-				AvgSpeed:  totalSpeed / float64(pointCount),
-			})
-		}
+	if err = rows.Err(); err != nil {
+		log.Printf("Row iteration error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to process trips",
+			"code":  "data_processing_error",
+		})
+		return
 	}
 
 	// 8. Successful response
