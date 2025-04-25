@@ -19,7 +19,7 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// 2. JWT claims parsing with better error handling
+	// 2. JWT claims parsing
 	claims, err := util.GetClaims(authHeader)
 	if err != nil {
 		log.Printf("JWT parsing error: %v", err)
@@ -30,12 +30,8 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// 3. Enhanced role validation
-	allowedRoles := map[string]bool{
-		"admin":     true,
-		"insurance": true,
-	}
-	if !allowedRoles[claims.Role] {
+	// 3. Role validation (using 'class' from JWT since DB uses 'class')
+	if claims.Role != "admin" && claims.Role != "insurance" {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error":  "Insufficient permissions",
 			"detail": fmt.Sprintf("Role '%s' not authorized", claims.Role),
@@ -50,13 +46,13 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// 5. Database query with improved error handling
+	// 5. Modified database query to use 'class' instead of 'role'
 	rows, err := db.Query(`
-		SELECT user_id, first_name, last_name, email, role 
+		SELECT user_id, first_name, last_name, email, class 
 		FROM users 
 		WHERE first_name ILIKE $1 
 		OR last_name ILIKE $1`,
-		"%"+query+"%") // Proper parameterization
+		"%"+query+"%")
 
 	if err != nil {
 		log.Printf("Database query error: %v", err)
@@ -72,17 +68,17 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 	var users []map[string]interface{}
 	for rows.Next() {
 		var id int
-		var firstName, lastName, email, role string
-		if err := rows.Scan(&id, &firstName, &lastName, &email, &role); err != nil {
+		var firstName, lastName, email, userClass string
+		if err := rows.Scan(&id, &firstName, &lastName, &email, &userClass); err != nil {
 			log.Printf("Row scanning error: %v", err)
-			continue // Skip bad rows instead of failing entire request
+			continue
 		}
 		users = append(users, gin.H{
 			"user_id":    id,
 			"first_name": firstName,
 			"last_name":  lastName,
 			"email":      email,
-			"role":       role,
+			"role":       userClass, // Mapping 'class' to 'role' in response
 		})
 	}
 
