@@ -342,13 +342,16 @@ static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? s
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
       final List<dynamic> trips = data['trips'] ?? [];
-      return trips.map((trip) => {
-        'trip_id': trip['trip_id'],
-        'user_id': trip['user_id'],
-        'start_time': trip['start_time'],
-        'distance': trip['distance']?.toDouble() ?? 0.0,
-        'duration': trip['duration']?.toDouble() ?? 0.0,
-        'velocity': trip['average_speed']?.toDouble() ?? 0.0,
+      return trips.map((trip) {
+        // Ensure we have valid values, default to 0 if null
+        return {
+          'trip_id': trip['trip_id'],
+          'user_id': trip['user_id'],
+          'start_time': trip['start_time'],
+          'distance': (trip['distance'] ?? 0).toDouble(),
+          'duration': (trip['duration'] ?? 0).toDouble(),
+          'velocity': (trip['average_speed'] ?? 0).toDouble(),
+        };
       }).toList();
     } else {
       throw Exception('Failed to get user trips: ${response.statusCode}');

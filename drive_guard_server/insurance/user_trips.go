@@ -12,15 +12,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type TripData struct {
+type TripPoint struct {
 	Distance   float64 `json:"distance"`
 	Duration   float64 `json:"duration"`
 	AvgSpeed   float64 `json:"avg_speed"`
 	BrakeScore float64 `json:"brake_score"`
 	AccelScore float64 `json:"accel_score"`
+	Timestamp  int64   `json:"timestamp"`
 }
-
-type TripDataArray []TripData
 
 func GetUserTrips(c *gin.Context, db *sql.DB) {
 	// 1. Authentication and validation
@@ -125,33 +124,32 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 			continue
 		}
 
-		var tripDataArray TripDataArray
-		if err := json.Unmarshal(t.Data, &tripDataArray); err != nil {
+		var tripPoints []TripPoint
+		if err := json.Unmarshal(t.Data, &tripPoints); err != nil {
 			log.Printf("Error unmarshaling trip data: %v", err)
 			continue
 		}
 
-		// Use the first element of the array if it exists
-		if len(tripDataArray) > 0 {
-			tripData := tripDataArray[0]
+		// Calculate aggregate values from all trip points
+		var totalDistance, totalDuration, totalSpeed float64
+		var pointCount int
+		for _, point := range tripPoints {
+			totalDistance += point.Distance
+			totalDuration += point.Duration
+			totalSpeed += point.AvgSpeed
+			pointCount++
+		}
+
+		if pointCount > 0 {
 			trips = append(trips, Trip{
 				TripID:    t.TripID,
 				UserID:    t.UserID,
 				StartTime: t.StartTime,
-				Distance:  tripData.Distance,
-				Duration:  tripData.Duration,
-				AvgSpeed:  tripData.AvgSpeed,
+				Distance:  totalDistance,
+				Duration:  totalDuration / 60,
+				AvgSpeed:  totalSpeed / float64(pointCount),
 			})
 		}
-	}
-
-	if err = rows.Err(); err != nil {
-		log.Printf("Row iteration error: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to process trips",
-			"code":  "data_processing_error",
-		})
-		return
 	}
 
 	// 8. Successful response
