@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"drive_guard_server/util"
 
@@ -30,7 +31,7 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// 3. Role validation (using 'class' from JWT since DB uses 'class')
+	// 3. Role validation
 	if claims.Role != "admin" && claims.Role != "insurance" {
 		c.JSON(http.StatusForbidden, gin.H{
 			"error":  "Insufficient permissions",
@@ -46,13 +47,24 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// 5. Modified database query to use 'class' instead of 'role'
-	rows, err := db.Query(`
-		SELECT user_id, first_name, last_name, email, class 
-		FROM users 
-		WHERE first_name ILIKE $1 
-		OR last_name ILIKE $1`,
-		"%"+query+"%")
+	// Check if query is numeric (potential ID)
+	var rows *sql.Rows
+	if id, err := strconv.Atoi(query); err == nil {
+		// Search by ID
+		rows, err = db.Query(`
+			SELECT user_id, first_name, last_name, email, class 
+			FROM users 
+			WHERE user_id = $1`, id)
+	} else {
+		// Search by name or email
+		rows, err = db.Query(`
+			SELECT user_id, first_name, last_name, email, class 
+			FROM users 
+			WHERE first_name ILIKE $1 
+			OR last_name ILIKE $1
+			OR email ILIKE $1`,
+			"%"+query+"%")
+	}
 
 	if err != nil {
 		log.Printf("Database query error: %v", err)
@@ -64,7 +76,7 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 	}
 	defer rows.Close()
 
-	// 6. Results processing
+	// Results processing
 	var users []map[string]interface{}
 	for rows.Next() {
 		var id int
@@ -78,7 +90,7 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 			"first_name": firstName,
 			"last_name":  lastName,
 			"email":      email,
-			"role":       userClass, // Mapping 'class' to 'role' in response
+			"role":       userClass,
 		})
 	}
 
@@ -91,7 +103,7 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	// 7. Success response
+	// Success response
 	c.JSON(http.StatusOK, gin.H{
 		"count": len(users),
 		"users": users,

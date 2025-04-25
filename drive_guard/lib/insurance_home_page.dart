@@ -928,18 +928,21 @@ Future<void> _searchForUsers() async {
     
     setState(() {
       _foundUsers = results.map((user) {
-        // Ensure we have all required fields
-        if (user['user_id'] == null || 
-            user['first_name'] == null || 
-            user['last_name'] == null) {
-          throw Exception('Invalid user data received');
+        // Create a display string that shows all available info
+        String displayInfo = '';
+        if (user['user_id'] != null) displayInfo += 'ID: ${user['user_id']} ';
+        if (user['first_name'] != null && user['last_name'] != null) {
+          displayInfo += '${user['first_name']} ${user['last_name']} ';
         }
+        if (user['email'] != null) displayInfo += '(${user['email']})';
         
         return {
-          'user_id': user['user_id'], // Make sure this matches what the server sends
-          'name': '${user['first_name']} ${user['last_name']}',
+          'user_id': user['user_id'],
+          'name': displayInfo.trim(), // Show combined info
           'email': user['email'] ?? 'No email',
           'role': user['role'] ?? 'user',
+          'first_name': user['first_name'],
+          'last_name': user['last_name'],
         };
       }).toList();
       _isLoadingUsers = false;
