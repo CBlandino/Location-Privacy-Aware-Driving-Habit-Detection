@@ -18,6 +18,7 @@ import (
 	"drive_guard_server/insurance"
 	"drive_guard_server/score"
 	"drive_guard_server/trips"
+	"drive_guard_server/util"
 )
 
 var (
@@ -57,10 +58,10 @@ func main() {
 
 	// ping database to ensure successful connection
 	if err := db.PingContext(context.Background()); err != nil {
-		log.Println("DATABASE CONNECTION UNSUCCESSFUL")
+		log.Println(util.ANSI_RED_BACKGROUND + "DATABASE CONNECTION UNSUCCESSFUL" + util.ANSI_RESET)
 		log.Println(err)
 	} else {
-		log.Println("DATABASE CONNECTION SUCCESSFUL")
+		log.Println(util.ANSI_GREEN_BACKGROUND + "DATABASE CONNECTION SUCCESSFUL" + util.ANSI_RESET)
 	}
 
 	//initialize the web server and handlers
@@ -79,24 +80,36 @@ func main() {
 	}))
 
 	server.POST("/7d2abf2d0fa7c3a0c13236910f30bc43", func(c *gin.Context) {
+		log.Println(util.ANSI_YELLOW + "SIGNUP REQ --------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 		auth.SignupUser(c, db)
+		log.Println(util.ANSI_YELLOW + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 	server.POST("/d56b699830e77ba53855679cb1d252da", func(c *gin.Context) {
+		log.Println(util.ANSI_YELLOW + "LOGIN REQ ---------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 		auth.LoginUser(c, db)
+		log.Println(util.ANSI_YELLOW + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 	server.POST("/2d13f826de6251aef204690750c1da99", func(c *gin.Context) {
+		log.Println(util.ANSI_YELLOW + "TRANSMIT REQ ------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 		trips.TransmitPoints(c, db)
+		log.Println(util.ANSI_YELLOW + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 	server.GET("/55a4a318d8473bd5b80cea42331e473c", func(c *gin.Context) {
+		log.Println(util.ANSI_YELLOW + "PREV TRIP REQ -----------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 		trips.Previous_trips(c, db)
+		log.Println(util.ANSI_YELLOW + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 	// GetScore
 	server.GET("/ca1cd3c3055991bf20499ee86739f7e2", func(c *gin.Context) {
+		log.Println(util.ANSI_YELLOW + "SIGNUP REQ --------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 		score.GetUserScore(c, db)
+		log.Println(util.ANSI_YELLOW + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 
 	server.GET("/userLookup", func(c *gin.Context) {
+		log.Println(util.ANSI_BLUE +   "USER LOOKUP REQ ---------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 		insurance.SearchUsers(c, db)
+		log.Println(util.ANSI_BLUE +   "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 
 	server.Run(ADDR)
