@@ -72,7 +72,7 @@ func GetClaims(tokenStr string) (*UserClaims, error) {
 		return signingKey, nil
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println("error parsing claims in JWT", err)
 		return nil, err
 	}
 

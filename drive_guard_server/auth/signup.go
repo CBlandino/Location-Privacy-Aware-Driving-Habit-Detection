@@ -20,7 +20,7 @@ func SignupUser(c *gin.Context, db *sql.DB) {
     var newUser util.User 
     err := c.BindJSON(&newUser)
     if err != nil {
-        log.Fatal(err)
+        log.Println("error parsing signup request", err)
     }
 
     result, err := insertUser(newUser, db)
