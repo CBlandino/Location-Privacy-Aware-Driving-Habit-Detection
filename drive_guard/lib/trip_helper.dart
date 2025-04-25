@@ -337,18 +337,28 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      // Convert scores to percentages if they're <= 1.0
-      double convertScore(double score) {
-        return score <= 1.0 ? score * 100 : score;
-      }
       
+      // Convert scores to proper decimal format
+      double convertScore(dynamic score) {
+        if (score == null) return 0.0;
+        double value = score.toDouble();
+        // If score appears to be multiplied by 100 (like 9929 instead of 99.29)
+        if (value > 100 && value <= 10000) {
+          return value / 100;
+        }
+        return value;
+      }
+
       return {
-        'score': convertScore((data['score'] ?? 0).toDouble()),
-        'accel_score': convertScore((data['accel_score'] ?? 0).toDouble()),
-        'brake_score': convertScore((data['brake_score'] ?? 0).toDouble()),
+        'score': convertScore(data['score']),
+        'accel_score': convertScore(data['accel_score']),
+        'brake_score': convertScore(data['brake_score']),
         'user_id': data['user_id']?.toString() ?? userId,
         'first_name': data['first_name'] ?? '',
         'last_name': data['last_name'] ?? '',
+        'trip_count': data['trip_count'] ?? 0,
+        'recent_trips': data['recent_trips'] ?? [],
+        'calculation': data['calculation'] ?? {},
         'updated_at': data['updated_at'] ?? DateTime.now().toString(),
       };
     } else {
@@ -357,6 +367,97 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
   } catch (error) {
     throw Exception('Failed to fetch score: $error');
   }
+}
+
+Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> scoreData) {
+  final calculation = scoreData['calculation'] as Map<String, dynamic>? ?? {};
+  final recentTrips = scoreData['recent_trips'] as List<dynamic>? ?? [];
+
+  return ExpansionTile(
+    title: Text('Score Calculation Details', style: TextStyle(fontWeight: FontWeight.bold)),
+    children: [
+      Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Calculation Formula:', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Text(calculation['formula'] ?? 'No formula available'),
+            SizedBox(height: 16),
+            Text('Weight Distribution:', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            if (calculation['weights'] != null)
+              ...(calculation['weights'] as Map<String, dynamic>).entries.map((e) => 
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Expanded(flex: 2, child: Text(e.key.replaceAll('_', ' ').toUpperCase())),
+                      Expanded(
+                        flex: 3,
+                        child: LinearProgressIndicator(
+                          value: e.value.toDouble(),
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text('${(e.value.toDouble() * 100).round()}%'),
+                    ],
+                  ),
+                ),
+              ),
+            SizedBox(height: 16),
+            Text('Recent Trips Data:', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            if (recentTrips.isEmpty)
+              Text('No recent trip data available')
+            else
+              Column(
+                children: recentTrips.map((trip) => _buildTripMetricCard(trip)).toList(),
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildTripMetricCard(Map<String, dynamic> trip) {
+  return Card(
+    margin: EdgeInsets.symmetric(vertical: 4),
+    child: Padding(
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Trip ID: ${trip['trip_id']}', style: TextStyle(fontWeight: FontWeight.bold)),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: Text('Distance: ${trip['distance']?.toStringAsFixed(2) ?? 'N/A'} miles')),
+              Expanded(child: Text('Avg Speed: ${trip['avg_speed']?.toStringAsFixed(1) ?? 'N/A'} mph')),
+            ],
+          ),
+          SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(child: Text('Max Speed: ${trip['max_speed']?.toStringAsFixed(1) ?? 'N/A'} mph')),
+              Expanded(child: Text('Score: ${trip['trip_score']?.toStringAsFixed(1) ?? 'N/A'}')),
+            ],
+          ),
+          SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(child: Text('Accel Score: ${trip['accel_score']?.toStringAsFixed(1) ?? 'N/A'}')),
+              Expanded(child: Text('Brake Score: ${trip['brake_score']?.toStringAsFixed(1) ?? 'N/A'}')),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? sortBy}) async {
@@ -400,7 +501,7 @@ static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? s
   }
 }
 
-static String formatTimestamp(dynamic timestamp) {
+static String formatTimestamp(dynamic timestamp,{bool dateOnly = false}) {
   if (timestamp == null) {
     return "No date";
   }
@@ -444,7 +545,9 @@ print("Raw timestamp received: $timestamp (Type: ${timestamp.runtimeType})");
     }
 
     // Format the final output
-    return DateFormat('MMM d, yyyy · hh:mm a').format(dateTime);
+      return dateOnly 
+      ? DateFormat('MMM d, yyyy').format(dateTime)
+      : DateFormat('MMM d, yyyy · hh:mm a').format(dateTime);
   } catch (e) {
     debugPrint("Timestamp parsing error: $e");
     debugPrint("Original timestamp value: $timestamp");

@@ -358,7 +358,7 @@ Widget _buildUserScoreCard({
                     ],
                   ),
                 ] else ...[
-                  // Web layout (unchanged from previous version)
+                  // Web layout
                   if (forWebLayout) ...[
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -433,6 +433,10 @@ Widget _buildUserScoreCard({
                     ),
                 ],
                 
+                // Calculation details section - added here
+                if (_userScore != null && _userScore!['calculation'] != null)
+                  _buildCalculationDetails(context, _userScore!),
+                
                 SizedBox(height: 8),
                 if (_userScore!.containsKey('updated_at'))
                   Text(
@@ -447,6 +451,165 @@ Widget _buildUserScoreCard({
         ],
       ),
     ),
+  );
+}
+
+Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> scoreData) {
+  final calculation = scoreData['calculation'] as Map<String, dynamic>? ?? {};
+  final allTrips = scoreData['all_trips'] as List<dynamic>? ?? [];
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Divider(),
+      SizedBox(height: 16),
+      Text('Score Calculation Details', 
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      SizedBox(height: 8),
+      
+      // Calculation formula
+      Text(calculation['formula'] ?? 'No formula available',
+          style: TextStyle(fontStyle: FontStyle.italic)),
+      SizedBox(height: 12),
+      
+      // Weight distribution
+      Text('Weight Distribution:', 
+          style: TextStyle(fontWeight: FontWeight.w500)),
+      SizedBox(height: 8),
+      
+      if (calculation['weights'] != null)
+        ...(calculation['weights'] as Map<String, dynamic>).entries.map((e) => 
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Expanded(flex: 2, 
+                  child: Text(e.key.replaceAll('_', ' ').toUpperCase())),
+                Expanded(
+                  flex: 3,
+                  child: LinearProgressIndicator(
+                    value: e.value.toDouble(),
+                    backgroundColor: Colors.grey[200],
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Text('${(e.value.toDouble() * 100).round()}%'),
+              ],
+            ),
+          ),
+        ),
+      
+      SizedBox(height: 12),
+      
+      // Trip data summary
+      Text('Trip Data Summary (${allTrips.length} trips):',
+          style: TextStyle(fontWeight: FontWeight.w500)),
+      SizedBox(height: 8),
+      
+      if (allTrips.isEmpty)
+        Text('No trip data available')
+      else
+        Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildTripStat('Total Distance', 
+                  '${allTrips.fold(0.0, (sum, trip) => sum + (trip['distance'] ?? 0.0)).toStringAsFixed(1)} miles'),
+                _buildTripStat('Avg. Score', 
+                  '${(allTrips.fold(0.0, (sum, trip) => sum + (trip['trip_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)}'),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildTripStat('Avg. Braking', 
+                  '${(allTrips.fold(0.0, (sum, trip) => sum + (trip['brake_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)}'),
+                _buildTripStat('Avg. Acceleration', 
+                  '${(allTrips.fold(0.0, (sum, trip) => sum + (trip['accel_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)}'),
+              ],
+            ),
+          ],
+        ),
+      
+      SizedBox(height: 16),
+      
+      // Show first 3 trips as examples (you can add pagination if needed)
+      if (allTrips.isNotEmpty) ...[
+        Text('Sample Trips:', style: TextStyle(fontWeight: FontWeight.w500)),
+        SizedBox(height: 8),
+        ...allTrips.take(3).map((trip) => _buildTripMetricCard(trip)).toList(),
+        if (allTrips.length > 3)
+          Text('+ ${allTrips.length - 3} more trips...',
+              style: TextStyle(color: Colors.grey)),
+      ],
+    ],
+  );
+}
+
+Widget _buildTripStat(String label, String value) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: TextStyle(fontSize: 12, color: Colors.grey)),
+      Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
+    ],
+  );
+}
+
+Widget _buildTripMetricCard(Map<String, dynamic> trip) {
+  return Card(
+    margin: EdgeInsets.symmetric(vertical: 4),
+    elevation: 1,
+    child: Padding(
+      padding: EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Trip ${trip['trip_id']}', 
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(TripService.formatTimestamp(trip['start_time'])),
+            ],
+          ),
+          SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: _buildTripMetricItem('Distance', '${trip['distance']?.toStringAsFixed(1) ?? 'N/A'} miles')),
+              Expanded(child: _buildTripMetricItem('Duration', '${trip['duration']?.toStringAsFixed(1) ?? 'N/A'} min')),
+            ],
+          ),
+          SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(child: _buildTripMetricItem('Avg Speed', '${trip['avg_speed']?.toStringAsFixed(1) ?? 'N/A'} mph')),
+              Expanded(child: _buildTripMetricItem('Max Speed', '${trip['max_speed']?.toStringAsFixed(1) ?? 'N/A'} mph')),
+            ],
+          ),
+          SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(child: _buildTripMetricItem('Score', '${trip['trip_score']?.toStringAsFixed(1) ?? 'N/A'}')),
+              Expanded(child: _buildTripMetricItem('Date', TripService.formatTimestamp(trip['start_time'], dateOnly: true))),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildTripMetricItem(String label, String value) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: TextStyle(fontSize: 12, color: Colors.grey)),
+      Text(value, style: TextStyle(fontSize: 14)),
+    ],
   );
 }
 
