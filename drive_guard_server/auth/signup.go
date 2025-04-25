@@ -61,9 +61,9 @@ func insertUser(newUser util.User, db *sql.DB) (sql.Result, error) {
 	// $4 = user class
 	// $5 = password hash 
 	// $6 = password salt
-	// $7 = default user score (1.0)
-    insertStmnt := "INSERT INTO users VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7)"
-    result, err := db.Exec(insertStmnt, newUser.Firstname, newUser.Lastname, newUser.Email, role, pass_hash[:], salt, 1.0) 
+	// $7-9 = default user scores (1.0)
+    insertStmnt := "INSERT INTO users VALUES (DEFAULT, $1, $2, $3, $4, $5, $6, $7, $8, $9)"
+    result, err := db.Exec(insertStmnt, newUser.Firstname, newUser.Lastname, newUser.Email, role, pass_hash[:], salt, 1.0, 1.0, 1.0) 
     // TODO: check for duplicate email
     if err != nil {
         log.Println(err)
