@@ -107,9 +107,21 @@ func main() {
 	})
 
 	server.GET("/userLookup", func(c *gin.Context) {
-		log.Println(util.ANSI_BLUE +   "USER LOOKUP REQ ---------------------------------------------------------------------------------------------" + util.ANSI_RESET)
+		log.Println(util.ANSI_BLUE + "USER LOOKUP REQ ---------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 		insurance.SearchUsers(c, db)
-		log.Println(util.ANSI_BLUE +   "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
+		log.Println(util.ANSI_BLUE + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
+	})
+
+	server.GET("/user_score/:userId", func(c *gin.Context) {
+		log.Println(util.ANSI_BLUE + "USER SCORE LOOKUP REQ ---------------------------------------------------------------------------------------------" + util.ANSI_RESET)
+		insurance.GetUserScore(c, db)
+		log.Println(util.ANSI_BLUE + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
+	})
+
+	server.GET("/user_trips/:userId", func(c *gin.Context) {
+		log.Println(util.ANSI_BLUE + "USER TRIPS LOOKUP REQ ---------------------------------------------------------------------------------------------" + util.ANSI_RESET)
+		insurance.GetUserTrips(c, db)
+		log.Println(util.ANSI_BLUE + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 
 	server.Run(ADDR)
