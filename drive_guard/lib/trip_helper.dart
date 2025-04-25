@@ -122,6 +122,9 @@ static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
   double durationMinutes = (trip['duration'] ?? 0).toDouble();
   DateTime endTime = startTime.add(Duration(minutes: durationMinutes.round()));
 
+  final avgSpeed = trip['average_speed']?.toDouble() ?? 0.0;
+  final maxSpeed = trip['max_speed']?.toDouble() ?? 0.0;
+
 showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -191,12 +194,18 @@ showModalBottomSheet(
                   "Distance:",
                   "${trip['distance']?.toStringAsFixed(2) ?? 'N/A'} miles",
                 ),
-                _buildDetailRow(
-                  context,
-                  Icons.speed,
-                  "Average Speed:",
-                  "${trip['average_speed']?.toStringAsFixed(1) ?? 'N/A'} mph",
-                ),
+            _buildDetailRow(
+              context,
+              Icons.speed,
+              "Max Speed:",
+              "${maxSpeed.toStringAsFixed(1)} mph",
+            ),
+                        _buildDetailRow(
+              context,
+              Icons.speed,
+              "Average Speed:",
+              "${avgSpeed.toStringAsFixed(1)} mph",
+            ),
                 const SizedBox(height: 20),
               ],
             ),

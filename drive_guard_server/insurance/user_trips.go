@@ -99,8 +99,8 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 		StartTime  time.Time `json:"start_time"`
 		Duration   float64   `json:"duration"`
 		Distance   float64   `json:"distance"`
-		AvgSpeed   float64   `json:"average_speed"`
-		MaxSpeed   float64   `json:"max_speed"`
+		AvgVelo    float64   `json:"average_speed"`
+		MaxVelo    float64   `json:"max_speed"`
 		BrakeScore float64   `json:"brake_score"`
 		AccelScore float64   `json:"accel_score"`
 		TripScore  float64   `json:"trip_score"`
@@ -115,8 +115,8 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 			&t.StartTime,
 			&t.Duration,
 			&t.Distance,
-			&t.AvgSpeed,
-			&t.MaxSpeed,
+			&t.AvgVelo,
+			&t.MaxVelo,
 			&t.BrakeScore,
 			&t.AccelScore,
 			&t.TripScore,
