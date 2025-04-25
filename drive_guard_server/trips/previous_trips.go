@@ -42,8 +42,8 @@ func Previous_trips(c *gin.Context, db *sql.DB) {
 	querySTR := "SELECT" +  
 		" trips.start_time," + 
 		" tripsmetrics.distance," +
-		" tripsmetrics.avg_velocity," +
-		" tripsmetrics.max_velocity," +
+		" tripsmetrics.avg_velo," +
+		" tripsmetrics.max_velo," +
 		" tripsmetrics.brake_score," +
 		" tripsmetrics.accel_score," + 
 		" tripsmetrics.trip_score" + 
