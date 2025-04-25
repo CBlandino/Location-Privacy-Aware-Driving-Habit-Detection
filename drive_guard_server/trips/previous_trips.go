@@ -44,8 +44,8 @@ func Previous_trips(c *gin.Context, db *sql.DB) {
 		" tripsmetrics.distance," +
 		" tripsmetrics.avg_velocity," +
 		" tripsmetrics.max_velocity," +
-		" tripsmetrics.brake_score" +
-		" tripsmetrics.accel_score" + 
+		" tripsmetrics.brake_score," +
+		" tripsmetrics.accel_score," + 
 		" tripsmetrics.trip_score" + 
 		" FROM trips JOIN tripmetrics ON trips.trip_id = tripsmetrics.trip_id WHERE trips.user_id = $1" 
 
