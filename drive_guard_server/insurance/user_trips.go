@@ -57,11 +57,11 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
         t.trip_id, 
         t.user_id, 
         t.start_time, 
-        EXTRACT(EPOCH FROM (SELECT MAX(p->>'t')::timestamp - MIN(p->>'t')::timestamp 
+        EXTRACT(EPOCH FROM (SELECT MAX((p->>'t')::timestamp) - MIN((p->>'t')::timestamp)
                            FROM jsonb_array_elements(t.data) as p)) / 60 AS duration,
         tm.distance,
-        COALESCE(tm.avg_velo, 0) AS avg_velo,  // Ensure non-null value
-        COALESCE(tm.max_velo, 0) AS max_velo,  // Ensure non-null value
+        COALESCE(tm.avg_velo, 0) AS avg_velo,
+        COALESCE(tm.max_velo, 0) AS max_velo,
         tm.brake_score,
         tm.accel_score,
         tm.trip_score
