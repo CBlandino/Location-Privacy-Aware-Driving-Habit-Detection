@@ -133,7 +133,7 @@ func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) erro
 	}	
 
 	updateSTR := "WITH latest_trip AS ( " +
-		"SELECT id " +
+		"SELECT trip_id " +
 		"FROM trips " +
 		"WHERE user_id = $2 " +
 		"ORDER BY start_time DESC " +
@@ -141,7 +141,7 @@ func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) erro
 		" )"+
 		"UPDATE trips "+
 		"SET data = data || $1::jsonb "+
-		"WHERE id IN (SELECT id FROM latest_trip)"
+		"WHERE trip_id IN (SELECT trip_id FROM latest_trip)"
 
 	_, err = db.Exec(updateSTR, jsonPoints, id)
 	if err != nil {
