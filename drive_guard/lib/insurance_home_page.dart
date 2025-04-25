@@ -256,6 +256,13 @@ Widget _buildUserScoreCard({
   bool forWebLayout = false,
   bool showFullDetails = true,
 }) {
+  // Convert score from 0-1 to 0-100 if needed
+  final score = _userScore != null 
+      ? (_userScore!['score'] is double && _userScore!['score'] <= 1.0 
+          ? (_userScore!['score'] * 100).round() 
+          : _userScore!['score'].round())
+      : 0;
+
   return Card(
     elevation: isWeb ? 4 : 2,
     shape: RoundedRectangleBorder(
@@ -275,6 +282,7 @@ Widget _buildUserScoreCard({
             ),
           ),
           SizedBox(height: isWeb ? 16 : 12),
+          
           if (_isLoadingScore)
             Center(child: CircularProgressIndicator())
           else if (_userScore == null)
@@ -282,74 +290,158 @@ Widget _buildUserScoreCard({
           else
             Column(
               children: [
-                if (forWebLayout) ...[
+                // Mobile-friendly score display
+                if (!isWeb && !forWebLayout) ...[
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      CircularProgressIndicator(
-                        value: _userScore!['score'] / 100,
-                        semanticsLabel: 'Safety score',
-                        strokeWidth: 10,
-                        backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _getScoreColor(_userScore!['score']),
-                        ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  value: score / 100,
+                                  semanticsLabel: 'Safety score',
+                                  strokeWidth: 8,
+                                  backgroundColor: Colors.grey[200],
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    _getScoreColor(score.toDouble()),
+                                  ),
+                                ),
+                                Text(
+                                  '$score%',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            _getScoreRating(score.toDouble()),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                      SizedBox(width: 24),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${_userScore!['score']}%',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
+                            if (_userScore!.containsKey('accel_score'))
+                              _buildMobileScoreRow(
+                                'Acceleration', 
+                                (_userScore!['accel_score'] * 100).round(),
                               ),
-                            ),
-                            Text(
-                              _getScoreRating(_userScore!['score']),
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
+                            if (_userScore!.containsKey('brake_score'))
+                              _buildMobileScoreRow(
+                                'Braking', 
+                                (_userScore!['brake_score'] * 100).round(),
                               ),
-                            ),
+                            if (_userScore!.containsKey('trip_score'))
+                              _buildMobileScoreRow(
+                                'Overall', 
+                                (_userScore!['trip_score'] * 100).round(),
+                              ),
                           ],
                         ),
                       ),
                     ],
                   ),
                 ] else ...[
-                  CircularProgressIndicator(
-                    value: _userScore!['score'] / 100,
-                    semanticsLabel: 'Safety score',
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    '${_userScore!['score']}%',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                  // Web layout (unchanged from previous version)
+                  if (forWebLayout) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: score / 100,
+                          semanticsLabel: 'Safety score',
+                          strokeWidth: 10,
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _getScoreColor(score.toDouble()),
+                          ),
+                        ),
+                        SizedBox(width: 24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '$score%',
+                                style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                _getScoreRating(score.toDouble()),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                  ] else ...[
+                    CircularProgressIndicator(
+                      value: score / 100,
+                      semanticsLabel: 'Safety score',
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      '$score%',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ],
-                SizedBox(height: 16),
+                
+                // Additional details for web layout
                 if (showFullDetails && forWebLayout) ...[
                   Divider(),
                   SizedBox(height: 16),
-                  _buildScoreDetailRow('Acceleration', 85),
-                  _buildScoreDetailRow('Braking', 72),
-                  _buildScoreDetailRow('Cornering', 91),
-                  _buildScoreDetailRow('Speed Compliance', 88),
+                  if (_userScore!.containsKey('accel_score'))
+                    _buildScoreDetailRow(
+                      'Acceleration', 
+                      (_userScore!['accel_score'] * 100).round()
+                    ),
+                  if (_userScore!.containsKey('brake_score'))
+                    _buildScoreDetailRow(
+                      'Braking', 
+                      (_userScore!['brake_score'] * 100).round()
+                    ),
+                  if (_userScore!.containsKey('trip_score'))
+                    _buildScoreDetailRow(
+                      'Overall Score', 
+                      (_userScore!['trip_score'] * 100).round()
+                    ),
                 ],
+                
                 SizedBox(height: 8),
-                Text(
-                  'Last updated: ${TripService.formatTimestamp(_userScore!['updated_at'])}',
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: isWeb ? 14 : 12,
+                if (_userScore!.containsKey('updated_at'))
+                  Text(
+                    'Last updated: ${TripService.formatTimestamp(_userScore!['updated_at'])}',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: isWeb ? 14 : 12,
+                    ),
                   ),
-                ),
               ],
             ),
         ],
@@ -357,6 +449,53 @@ Widget _buildUserScoreCard({
     ),
   );
 }
+
+Widget _buildMobileScoreRow(String label, int score) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4.0),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 5, // wider bar for progress
+          child: Row(
+            children: [
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: score / 100,
+                  minHeight: 6,
+                  backgroundColor: Colors.grey[200],
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    _getScoreColor(score.toDouble()),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Text(
+                '$score%',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: _getScoreColor(score.toDouble()),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
 Widget _buildScoreDetailRow(String label, double value) {
   return Padding(

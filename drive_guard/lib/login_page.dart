@@ -28,7 +28,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
   final _formKey = GlobalKey<FormState>();
   late SharedPreferences _prefs;
   bool _isProcessing = false;
-  String _selectedRole = 'user';
+  String _selectedRole = 'admin';
   bool _isSignupMode = false;
   
 
