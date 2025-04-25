@@ -156,6 +156,8 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 
 func UpdateUserScore(user_id int, db *sql.DB) error {
 
+	log.Println("User Score update triggered: userID =", user_id)
+
 	// fetch all of the users trips from the db
 	qString := "SELECT brake_score, accel_score, trip_score FROM tripsmetrics JOIN trips ON trips.trip_id = tripsmetrics.trip_id WHERE trips.user_id = $1" 
 	rows, err := db.Query(qString, user_id) 
@@ -194,6 +196,7 @@ func UpdateUserScore(user_id int, db *sql.DB) error {
 	avgAccel = avgAccel / float64(rowsCount)
 	avgScore = avgScore / float64(rowsCount)
 
+	log.Println("UPDATING USER SCORE")
 	// update user score in the db
 	_, err = db.Exec("UPDATE users SET brake_score = $1, accel_score = $2, score = $3 WHERE user_id = $4", avgBrake, avgAccel, avgScore, user_id)
 	return err
