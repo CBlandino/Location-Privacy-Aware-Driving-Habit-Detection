@@ -357,7 +357,7 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
         'first_name': data['first_name'] ?? '',
         'last_name': data['last_name'] ?? '',
         'trip_count': data['trip_count'] ?? 0,
-        'recent_trips': data['recent_trips'] ?? [],
+        'all_trips': data['all_trips'] ?? [],
         'calculation': data['calculation'] ?? {},
         'updated_at': data['updated_at'] ?? DateTime.now().toString(),
       };

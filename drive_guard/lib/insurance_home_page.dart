@@ -144,14 +144,21 @@ Widget _buildUserSearchCard({
   bool forWebLayout = false,
   double? availableHeight,
 }) {
+  final effectiveHeight = availableHeight ?? (isWeb ? 400.0 : 300.0);
+
   return Card(
     elevation: isWeb ? 4 : 2,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(isWeb ? 12 : 8),
     ),
     child: Container(
-      padding: EdgeInsets.all(isWeb ? 24 : 16),
+      padding: EdgeInsets.all(isWeb ? 16 : 12),
+      constraints: BoxConstraints(
+        minHeight: 200,
+        maxHeight: effectiveHeight,
+      ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (showCloseButton)
@@ -187,7 +194,7 @@ Widget _buildUserSearchCard({
                   Icon(Icons.search, color: Colors.blue.shade800),
               ],
             ),
-          SizedBox(height: isWeb ? 16 : 12),
+           SizedBox(height: isWeb ? 12 : 8),
           TextField(
             decoration: InputDecoration(
               labelText: 'Search by name, email or ID',
@@ -204,38 +211,85 @@ Widget _buildUserSearchCard({
             onChanged: (value) => _searchQuery = value,
             onSubmitted: (_) => _searchForUsers(),
           ),
-          SizedBox(height: isWeb ? 16 : 12),
+          SizedBox(height: isWeb ? 12 : 8),
+          
           if (_isLoadingUsers)
-            Center(child: CircularProgressIndicator())
-          else if (_foundUsers.isNotEmpty)
-            SizedBox(
-              height: availableHeight ?? 300,
-              child: ListView.builder(
-  shrinkWrap: true,
-  itemCount: _foundUsers.length,
-  itemBuilder: (context, index) {
-    final user = _foundUsers[index];
-    final name = user['name']?.toString() ?? 'Unknown';
-    final email = user['email']?.toString() ?? 'No email';
-    final firstChar = name.isNotEmpty ? name[0] : '?';
-    
-    return ListTile(
-      leading: CircleAvatar(child: Text(firstChar)),
-      title: Text(name),
-      subtitle: Text(email),
-      onTap: () {
-        _selectUser(user);
-        if (showCloseButton) Navigator.pop(context);
-      },
-    );
-  },
-),
+            Container(
+              height: effectiveHeight * 0.5,
+              alignment: Alignment.center,
+              child: CircularProgressIndicator(),
             )
-            else if (_searchError.isNotEmpty)
-            Center(child: Text(_searchError, style: TextStyle(color: Colors.red)))
+          else if (_foundUsers.isNotEmpty)
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: 100,
+                maxHeight: effectiveHeight - 100, // Account for header space
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                itemCount: _foundUsers.length,
+                itemBuilder: (context, index) {
+                  final user = _foundUsers[index];
+                  final name = user['name']?.toString() ?? 'Unknown';
+                  final email = user['email']?.toString() ?? 'No email';
+                  final firstChar = name.isNotEmpty ? name[0] : '?';
+
+                  return Container(
+                    margin: EdgeInsets.symmetric(vertical: 2),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isWeb ? 12 : 8,
+                        vertical: 4,
+                      ),
+                      dense: true,
+                      leading: CircleAvatar(
+                        radius: isWeb ? 20 : 16,
+                        backgroundColor: Colors.blue.shade100,
+                        child: Text(
+                          firstChar,
+                          style: TextStyle(color: Colors.blue.shade800),
+                        ),
+                      ),
+                      title: Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: isWeb ? 14 : 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        email,
+                        style: TextStyle(fontSize: isWeb ? 12 : 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () {
+                        if (user['user_id'] != null) {
+                          _selectUser(user);
+                          if (showCloseButton) Navigator.pop(context);
+                        }
+                      },
+                    ),
+                  );
+                },
+              ),
+            )
           else
-            Center(child: Text('No users found')),
-            
+            Container(
+              height: effectiveHeight * 0.5,
+              alignment: Alignment.center,
+              child: Text(
+                _searchError.isNotEmpty 
+                    ? _searchError
+                    : 'No users found',
+                style: TextStyle(
+                  color: _searchError.isNotEmpty ? Colors.red : Colors.grey,
+                ),
+              ),
+            ),
         ],
       ),
     ),
@@ -457,6 +511,7 @@ Widget _buildUserScoreCard({
 Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> scoreData) {
   final calculation = scoreData['calculation'] as Map<String, dynamic>? ?? {};
   final allTrips = scoreData['all_trips'] as List<dynamic>? ?? [];
+  final hasTrips = allTrips.isNotEmpty;
 
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -500,16 +555,15 @@ Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> score
           ),
         ),
       
-      SizedBox(height: 12),
-      
-      // Trip data summary
-      Text('Trip Data Summary (${allTrips.length} trips):',
-          style: TextStyle(fontWeight: FontWeight.w500)),
-      SizedBox(height: 8),
-      
-      if (allTrips.isEmpty)
-        Text('No trip data available')
-      else
+      // Only show trip data if trips exist
+      if (hasTrips) ...[
+        SizedBox(height: 12),
+        
+        // Trip data summary
+        Text('Trip Data Summary (${allTrips.length} trips):',
+            style: TextStyle(fontWeight: FontWeight.w500)),
+        SizedBox(height: 8),
+        
         Column(
           children: [
             Row(
@@ -533,17 +587,20 @@ Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> score
             ),
           ],
         ),
-      
-      SizedBox(height: 16),
-      
-      // Show first 3 trips as examples (you can add pagination if needed)
-      if (allTrips.isNotEmpty) ...[
-        Text('Sample Trips:', style: TextStyle(fontWeight: FontWeight.w500)),
+        
+        SizedBox(height: 16),
+        
+        // Show first 3 trips as examples
+        Text('User Trips:', style: TextStyle(fontWeight: FontWeight.w500)),
         SizedBox(height: 8),
         ...allTrips.take(3).map((trip) => _buildTripMetricCard(trip)).toList(),
         if (allTrips.length > 3)
           Text('+ ${allTrips.length - 3} more trips...',
               style: TextStyle(color: Colors.grey)),
+      ] else ...[
+        SizedBox(height: 12),
+        Text('No trip data available for this user',
+            style: TextStyle(color: Colors.grey)),
       ],
     ],
   );
@@ -571,7 +628,7 @@ Widget _buildTripMetricCard(Map<String, dynamic> trip) {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Trip ${trip['trip_id']}', 
+              Text('TripID ${trip['trip_id']}', 
                   style: TextStyle(fontWeight: FontWeight.bold)),
               Text(TripService.formatTimestamp(trip['start_time'])),
             ],
@@ -710,14 +767,21 @@ Widget _buildUserTripsCard({
   bool showSortControls = true,
   double? availableHeight,
 }) {
+  final effectiveHeight = availableHeight ?? (isWeb ? 400.0 : 300.0);
+
   return Card(
     elevation: isWeb ? 4 : 2,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(isWeb ? 12 : 8),
     ),
     child: Container(
-      padding: EdgeInsets.all(isWeb ? 24 : 16),
+      padding: EdgeInsets.all(isWeb ? 16 : 12),
+      constraints: BoxConstraints(
+        minHeight: 200,
+        maxHeight: effectiveHeight,
+      ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -748,46 +812,86 @@ Widget _buildUserTripsCard({
                 ),
             ],
           ),
-          SizedBox(height: isWeb ? 16 : 12),
-          SizedBox(
-            height: availableHeight ?? 300, // Dynamically provided or fallback
-            child: _isLoadingTrips
-                ? Center(child: CircularProgressIndicator())
-                : _userTrips.isEmpty
-                    ? Center(
-                        child: Text(
-                          _selectedUser == null
-                              ? 'Select a user to view trips'
-                              : 'No trips found',
+          SizedBox(height: isWeb ? 12 : 8),
+          
+          Flexible(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: 100,
+                maxHeight: effectiveHeight - 100,
+              ),
+              child: _isLoadingTrips
+                  ? Center(child: CircularProgressIndicator())
+                  : _userTrips.isEmpty
+                      ? Center(
+                          child: Text(
+                            _selectedUser == null
+                                ? 'Select a user to view trips'
+                                : 'No trips found',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.separated(
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: _userTrips.length,
+                          separatorBuilder: (context, index) => Divider(
+                            height: 1,
+                            thickness: 0.5,
+                            indent: isWeb ? 72 : 60,
+                          ),
+                          itemBuilder: (context, index) {
+                            final trip = _userTrips[index];
+                            final startTime = trip['start_time'] != null
+                                ? TripService.formatTimestamp(trip['start_time'])
+                                : 'Unknown time';
+                            final distance = (trip['distance'] ?? 0).toDouble();
+                            final duration = (trip['duration'] ?? 0).toDouble();
+
+                            return Container(
+                              margin: EdgeInsets.symmetric(vertical: 2),
+                              child: ListTile(
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: isWeb ? 8 : 4,
+                                  vertical: 4,
+                                ),
+                                dense: true,
+                                leading: Icon(
+                                  Icons.directions_car,
+                                  size: isWeb ? 24 : 20,
+                                  color: Colors.blue.shade800,
+                                ),
+                                title: Text(
+                                  startTime,
+                                  style: TextStyle(
+                                    fontSize: isWeb ? 14 : 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  '${distance.toStringAsFixed(1)} miles • '
+                                  '${duration.toStringAsFixed(1)} min',
+                                  style: TextStyle(fontSize: isWeb ? 12 : 11),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                trailing: IconButton(
+                                  icon: Icon(
+                                    Icons.info_outline,
+                                    size: isWeb ? 20 : 18,
+                                  ),
+                                  onPressed: () {
+                                    if (trip['trip_id'] != null) {
+                                      TripService.showTripDetails(context, trip);
+                                    }
+                                  },
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      )
-                    : ListView.separated(
-                        itemCount: _userTrips.length,
-                        separatorBuilder: (context, index) => Divider(),
-                        itemBuilder: (context, index) {
-                          final trip = _userTrips[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                            leading: Icon(
-                              Icons.directions_car,
-                              color: Colors.blue.shade800,
-                            ),
-                            title: Text(
-                              TripService.formatTimestamp(trip['start_time']),
-                              style: TextStyle(fontWeight: FontWeight.w500),
-                            ),
-                            subtitle: Text(
-                              '${trip['distance'].toStringAsFixed(2)} miles',
-                              
-                            ),
-                            trailing: IconButton(
-                              icon: Icon(Icons.info_outline),
-                              onPressed: () =>
-                                  TripService.showTripDetails(context, trip),
-                            ),
-                          );
-                        },
-                      ),
+            ),
           ),
         ],
       ),
