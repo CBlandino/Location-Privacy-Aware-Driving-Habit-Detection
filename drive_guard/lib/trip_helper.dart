@@ -215,6 +215,18 @@ showModalBottomSheet(
     },
   );
 }
+static Widget buildTripListItem(BuildContext context, Map<String, dynamic> trip) {
+  final avgSpeed = trip['average_speed']?.toDouble() ?? 0.0;
+  
+  return ListTile(
+
+    subtitle: Text(
+      '${trip['distance']?.toStringAsFixed(1) ?? '0.0'} miles • '
+      '${avgSpeed.toStringAsFixed(1)} mph',
+    ),
+  );
+}
+
 
 static double calculateTotalDistance(List<dynamic> trips) {
   return trips.fold(0.0, (sum, trip) => sum + (trip['distance'] ?? 0.0));
@@ -368,7 +380,8 @@ static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? s
           'start_time': trip['start_time'],
           'distance': (trip['distance'] ?? 0).toDouble(),
           'duration': (trip['duration'] ?? 0).toDouble(),
-          'velocity': (trip['average_speed'] ?? 0).toDouble(),
+          'average_speed': (trip['average_speed'] ?? 0).toDouble(),
+          'max_speed': (trip['max_speed'] ?? 0).toDouble(),         
         };
       }).toList();
     } else {

@@ -358,7 +358,7 @@ Widget _buildUserScoreCard({
   );
 }
 
-Widget _buildScoreDetailRow(String label, int value) {
+Widget _buildScoreDetailRow(String label, double value) {
   return Padding(
     padding: EdgeInsets.symmetric(vertical: 8),
     child: Row(
@@ -370,7 +370,7 @@ Widget _buildScoreDetailRow(String label, int value) {
         Expanded(
           flex: 3,
           child: LinearProgressIndicator(
-            value: value / 100,
+            value: value,
             backgroundColor: Colors.grey[200],
             valueColor: AlwaysStoppedAnimation<Color>(_getScoreColor(value)),
           ),
@@ -388,14 +388,14 @@ Widget _buildScoreDetailRow(String label, int value) {
   );
 }
 
-Color _getScoreColor(int score) {
+Color _getScoreColor(double score) {
   if (score >= 85) return Colors.green;
   if (score >= 70) return Colors.blue[700]!;
   if (score >= 50) return Colors.orange;
   return Colors.red;
 }
 
-String _getScoreRating(int score) {
+String _getScoreRating(double score) {
   if (score >= 85) return 'Excellent';
   if (score >= 70) return 'Good';
   if (score >= 50) return 'Fair';
@@ -476,6 +476,7 @@ Widget _buildUserTripsCard({
                             ),
                             subtitle: Text(
                               '${trip['distance'].toStringAsFixed(2)} miles',
+                              
                             ),
                             trailing: IconButton(
                               icon: Icon(Icons.info_outline),

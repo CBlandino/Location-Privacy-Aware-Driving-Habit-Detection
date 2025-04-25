@@ -53,22 +53,22 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 
 	// 5. Build query - join with TripMetrics
 	query := `
-		SELECT 
-			t.trip_id, 
-			t.user_id, 
-			t.start_time, 
-			EXTRACT(EPOCH FROM (SELECT MAX(p->>'t')::timestamp - MIN(p->>'t')::timestamp 
-			                   FROM jsonb_array_elements(t.data) as p)) / 60 AS duration,
-			tm.distance,
-			tm.avg_velo,
-			tm.max_velo,
-			tm.brake_score,
-			tm.accel_score,
-			tm.trip_score
-		FROM Trips t
-		JOIN TripsMetrics tm ON t.trip_id = tm.trip_id
-		WHERE t.user_id = $1
-	`
+    SELECT 
+        t.trip_id, 
+        t.user_id, 
+        t.start_time, 
+        EXTRACT(EPOCH FROM (SELECT MAX(p->>'t')::timestamp - MIN(p->>'t')::timestamp 
+                           FROM jsonb_array_elements(t.data) as p)) / 60 AS duration,
+        tm.distance,
+        COALESCE(tm.avg_velo, 0) AS avg_velo,  // Ensure non-null value
+        COALESCE(tm.max_velo, 0) AS max_velo,  // Ensure non-null value
+        tm.brake_score,
+        tm.accel_score,
+        tm.trip_score
+    FROM Trips t
+    JOIN TripsMetrics tm ON t.trip_id = tm.trip_id
+    WHERE t.user_id = $1
+`
 
 	switch sortBy {
 	case "distance":
@@ -99,8 +99,8 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 		StartTime  time.Time `json:"start_time"`
 		Duration   float64   `json:"duration"`
 		Distance   float64   `json:"distance"`
-		AvgVelo    float64   `json:"average_speed"`
-		MaxVelo    float64   `json:"max_speed"`
+		AvgVelo    float64   `json:"average_speed"` // Maps avg_velo to average_speed
+		MaxVelo    float64   `json:"max_speed"`     // Maps max_velo to max_speed
 		BrakeScore float64   `json:"brake_score"`
 		AccelScore float64   `json:"accel_score"`
 		TripScore  float64   `json:"trip_score"`
