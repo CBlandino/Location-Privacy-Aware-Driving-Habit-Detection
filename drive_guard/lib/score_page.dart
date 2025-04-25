@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart' show SharedPreferenc
 import 'dart:convert';
 import 'custom_app_bar.dart';
 import 'current_trip_page.dart';
+import 'graph_Score_Page.dart';
 
 class ScorePage extends StatefulWidget {
   @override
@@ -81,180 +82,197 @@ final double val = value.toDouble();
     }
 
 
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+@override
+Widget build(BuildContext context) {
+  final screenWidth = MediaQuery.of(context).size.width;
+  final screenHeight = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Your Score'),
-        backgroundColor: Colors.blue.shade700,
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text(
+        'Your Score',
+        style: TextStyle(fontWeight: FontWeight.bold),
       ),
-      body: isLoading
-        ? Center(child: CircularProgressIndicator())
+      backgroundColor: Colors.blue.shade700,
+      elevation: 0,
+    ),
+    body: isLoading
+        ? const Center(child: CircularProgressIndicator())
         : score == 0
-        ? _buildNoTripsYet(context)
-        : Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: screenHeight * .07),
-              Align(
-                alignment: Alignment.center,
-                child: CircularPercentIndicator(
-                  radius: 100.0,
-                  lineWidth: 12.0,
-                  percent: score / 100,
-                  center: Text(
-                    "${score.toInt()}%",
-                    style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-                  ),
-                  progressColor: scoreColor(score),
-                  backgroundColor: Colors.grey[300]!,
-                  circularStrokeCap: CircularStrokeCap.round,
-                  animation: true,
-                  animationDuration: 1000,
-                ),
-              ),
-              SizedBox(height: screenHeight * .03),
-              Align(
-                alignment: Alignment.center,
-                child: Text(
-                  'Your Current Score: ${score.toInt()}%',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              ),
-              SizedBox(height: screenHeight * .04),
-              Align(
-                alignment: Alignment.center,
-                child: Container(
-                  width: screenWidth * .8,
-                  height: screenHeight * .3,
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 1, 84, 143),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                        offset: Offset(0, 4),
+            ? _buildNoTripsYet(context)
+            : SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircularPercentIndicator(
+                      radius: 100.0,
+                      lineWidth: 12.0,
+                      percent: score / 100,
+                      center: Text(
+                        "$score%",
+                        style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                      progressColor: scoreColor(score),
+                      backgroundColor: Colors.grey[300]!,
+                      circularStrokeCap: CircularStrokeCap.round,
+                      animation: true,
+                      animationDuration: 1000,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Your Current Score: $score%',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 30),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF01548F),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 12,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             "Score Breakdown",
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 8),
-                          // In the expand button, these list the name of the habit, as well as a descriptor word to describe that score
-                          ...breakdown.entries.map((entry) => _buildScoreDetail(entry.key, entry.value)).toList(),
+                          const SizedBox(height: 12),
+                          ...breakdown.entries.map(
+                            (entry) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    entry.key,
+                                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                                  ),
+                                  Text(
+                                    entry.value,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                _showFullReportModal(context);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.blue.shade800,
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 4,
+                              ),
+                              child: const Text("View Full Report"),
+                            ),
+                          ),
                         ],
                       ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () {
-                          showModalBottomSheet(
-                            context: context,
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                            ),
-                            isScrollControlled: true,
-                            builder: (BuildContext context) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 4,
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey[300],
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                    SizedBox(height: 16),
-                                    Text(
-                                      "Full Driving Report",
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: 12),
-                                    Divider(),
-                                    ...breakdown.entries.map((entry) => ListTile(
-                                          leading: Icon(Icons.check_circle_outline,
-                                              color: Colors.blue.shade700),
-                                          title: Text(entry.key),
-                                          trailing: Text(
-                                            entry.value,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: _ratingColor(entry.value),
-                                            ),
-                                          ),
-                                        )),
-                                    SizedBox(height: 20),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text("Close"),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blue.shade700,
-                                        foregroundColor: Colors.white,
-                                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(height: 10),
-                                  ],
-                                ),
-                              );
-                            },
-                          );
-                        },
-                        child: Text('View Full Report'),
-                      ),
-                    ],
+                    ),
+                    const SizedBox(height: 30),
+                  MiniScoreGraph(
+                    scores: [0.72, 0.85, 0.88, 0.91, 0.95, 1.0], // Replace with real data
                   ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      bottomNavigationBar:  isLoading
+    bottomNavigationBar: isLoading
         ? null
         : CustomAppBar(
             selectedIndex: _selectedIndex,
             onItemTapped: _onItemTapped,
             role: role,
           ).buildBottomNavBar(context),
-    );
-  }
+  );
+}
+
+// Extracted method for cleaner code
+void _showFullReportModal(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    isScrollControlled: true,
+    builder: (BuildContext context) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Full Driving Report",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const Divider(),
+            ...breakdown.entries.map(
+              (entry) => ListTile(
+                leading: Icon(Icons.check_circle_outline, color: Colors.blue.shade700),
+                title: Text(entry.key),
+                trailing: Text(
+                  entry.value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _ratingColor(entry.value),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade700,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildNoTripsYet(BuildContext context) {
     return Center(
