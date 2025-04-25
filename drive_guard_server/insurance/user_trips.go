@@ -1,76 +1,137 @@
 package insurance
 
 import (
+	"context"
 	"database/sql"
+	"log"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func GetUserTrips(c *gin.Context, db *sql.DB) {
-	// 1. Authentication check
+	// 1. Authentication and validation
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing Authorization header"})
+		log.Println("Missing authorization header")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Authorization header required",
+			"code":  "missing_auth_header",
+		})
 		return
 	}
 
-	// 2. Get user ID from URL
+	// 2. Validate user ID
 	userID := c.Param("userId")
-	if userID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing user ID"})
+	if userID == "" || userID == "null" {
+		log.Println("Invalid user ID:", userID)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Valid user ID required",
+			"code":  "invalid_user_id",
+		})
 		return
 	}
 
-	// 3. Get sort parameter
-	sortBy := c.Query("sort")
+	// 3. Convert to integer and validate
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil || userIDInt <= 0 {
+		log.Println("Invalid user ID format:", userID)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "User ID must be a positive integer",
+			"code":  "invalid_id_format",
+		})
+		return
+	}
+
+	// 4. Get sort parameter with validation
+	sortBy := c.DefaultQuery("sort", "recent")
+	if sortBy != "recent" && sortBy != "distance" {
+		sortBy = "recent"
+	}
+
+	// 5. Build query with parameterized inputs
 	query := `
-		SELECT trip_id, user_id, start_time, distance, duration, velocity
+		SELECT 
+			trip_id, 
+			user_id, 
+			start_time, 
+			distance, 
+			duration, 
+			average_speed,
+			created_at
 		FROM trips
 		WHERE user_id = $1
 	`
 
-	// 4. Add sorting
 	switch sortBy {
 	case "distance":
 		query += " ORDER BY distance DESC"
-	default: // "recent"
+	default:
 		query += " ORDER BY start_time DESC"
 	}
 
-	// 5. Execute query
-	rows, err := db.Query(query, userID)
+	// 6. Execute query with timeout
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
+	rows, err := db.QueryContext(ctx, query, userIDInt)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		log.Printf("Database query error for user %d: %v", userIDInt, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to retrieve trips",
+			"code":  "database_error",
+		})
 		return
 	}
 	defer rows.Close()
 
-	// 6. Process results
-	var trips []map[string]interface{}
-	for rows.Next() {
-		var tripID int
-		var userID int
-		var startTime string
-		var distance float64
-		var duration float64
-		var velocity float64
-
-		err := rows.Scan(&tripID, &userID, &startTime, &distance, &duration, &velocity)
-		if err != nil {
-			continue // Skip malformed rows
-		}
-
-		trips = append(trips, gin.H{
-			"trip_id":    tripID,
-			"user_id":    userID,
-			"start_time": startTime,
-			"distance":   distance,
-			"duration":   duration,
-			"velocity":   velocity,
-		})
+	// 7. Process results
+	type Trip struct {
+		TripID    int       `json:"trip_id"`
+		UserID    int       `json:"user_id"`
+		StartTime time.Time `json:"start_time"`
+		Distance  float64   `json:"distance"`
+		Duration  float64   `json:"duration"`
+		AvgSpeed  float64   `json:"average_speed"`
+		CreatedAt time.Time `json:"created_at"`
 	}
 
-	// 7. Return results
-	c.JSON(http.StatusOK, trips)
+	var trips []Trip
+	for rows.Next() {
+		var t Trip
+		err := rows.Scan(
+			&t.TripID,
+			&t.UserID,
+			&t.StartTime,
+			&t.Distance,
+			&t.Duration,
+			&t.AvgSpeed,
+			&t.CreatedAt,
+		)
+		if err != nil {
+			log.Printf("Error scanning trip row: %v", err)
+			continue
+		}
+		trips = append(trips, t)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("Row iteration error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to process trips",
+			"code":  "data_processing_error",
+		})
+		return
+	}
+
+	// 8. Successful response
+	log.Printf("Returning %d trips for user %d", len(trips), userIDInt)
+	c.JSON(http.StatusOK, gin.H{
+		"user_id": userIDInt,
+		"count":   len(trips),
+		"trips":   trips,
+		"status":  "success",
+	})
 }

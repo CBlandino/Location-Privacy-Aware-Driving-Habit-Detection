@@ -292,6 +292,9 @@ static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
 }
 
 static Future<Map<String, dynamic>> getUserScore(String userId) async {
+    if (userId.isEmpty || userId == 'null') {
+    throw Exception('Invalid user ID');
+  }
   final String url = '$server/user_score/$userId';
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
@@ -321,6 +324,9 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
 }
 
 static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? sortBy}) async {
+    if (userId.isEmpty || userId == 'null') {
+    throw Exception('Invalid user ID');
+  }
   String url = '$server/user_trips/$userId';
   if (sortBy != null) {
     url += '?sort=$sortBy';
