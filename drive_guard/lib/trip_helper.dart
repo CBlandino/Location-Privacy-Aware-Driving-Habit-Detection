@@ -255,7 +255,6 @@ static Widget _buildDetailRow(BuildContext context, IconData icon, String label,
     }
   }
 static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
-
   final uri = Uri.parse('$server/userLookup').replace(
     queryParameters: {'query': query}
   );
@@ -272,15 +271,22 @@ static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
       },
     );
 
-      print('Response status: ${response.statusCode}');
+    print('Response status: ${response.statusCode}');
     print('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
-      return List<Map<String, dynamic>>.from(json.decode(response.body));
+      final Map<String, dynamic> data = json.decode(response.body);
+      
+      // Extract the users array from the response
+      if (data['users'] is List) {
+        return List<Map<String, dynamic>>.from(data['users']);
+      }
+      throw Exception('Invalid users data format');
     } else {
       throw Exception('Failed to search users: ${response.statusCode}');
     }
   } catch (error) {
+    print('Search error: $error');
     throw Exception('Search failed: $error');
   }
 }
@@ -300,9 +306,14 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
     );
 
     if (response.statusCode == 200) {
-      return Map<String, dynamic>.from(json.decode(response.body));
+      final data = json.decode(response.body);
+      return {
+        'score': data['score']?.toDouble() ?? 0.0,
+        'updated_at': data['updated_at'] ?? '',
+        'user_id': data['user_id']?.toString() ?? userId,
+      };
     } else {
-      throw Exception('Failed to get user score');
+      throw Exception('Failed to get user score: ${response.statusCode}');
     }
   } catch (error) {
     throw Exception('Failed to fetch score: $error');
@@ -328,9 +339,17 @@ static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? s
     );
 
     if (response.statusCode == 200) {
-      return List<Map<String, dynamic>>.from(json.decode(response.body));
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((trip) => {
+        'trip_id': trip['trip_id'],
+        'user_id': trip['user_id'],
+        'start_time': trip['start_time'],
+        'distance': trip['distance']?.toDouble() ?? 0.0,
+        'duration': trip['duration']?.toDouble() ?? 0.0,
+        'velocity': trip['velocity']?.toDouble() ?? 0.0,
+      }).toList();
     } else {
-      throw Exception('Failed to get user trips');
+      throw Exception('Failed to get user trips: ${response.statusCode}');
     }
   } catch (error) {
     throw Exception('Failed to fetch trips: $error');

@@ -211,35 +211,44 @@ Widget _buildUserSearchCard({
             SizedBox(
               height: availableHeight ?? 300,
               child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _foundUsers.length,
-                itemBuilder: (context, index) {
-                  final user = _foundUsers[index];
-                  return ListTile(
-                    leading: CircleAvatar(child: Text(user['name'][0])),
-                    title: Text(user['name']),
-                    subtitle: Text(user['email']),
-                    onTap: () {
-                      _selectUser(user);
-                      if (showCloseButton) Navigator.pop(context);
-                    },
-                  );
-                },
-              ),
-            ),
+  shrinkWrap: true,
+  itemCount: _foundUsers.length,
+  itemBuilder: (context, index) {
+    final user = _foundUsers[index];
+    final name = user['name']?.toString() ?? 'Unknown';
+    final email = user['email']?.toString() ?? 'No email';
+    final firstChar = name.isNotEmpty ? name[0] : '?';
+    
+    return ListTile(
+      leading: CircleAvatar(child: Text(firstChar)),
+      title: Text(name),
+      subtitle: Text(email),
+      onTap: () {
+        _selectUser(user);
+        if (showCloseButton) Navigator.pop(context);
+      },
+    );
+  },
+),
+            )
+            else if (_searchError.isNotEmpty)
+            Center(child: Text(_searchError, style: TextStyle(color: Colors.red)))
+          else
+            Center(child: Text('No users found')),
+            
         ],
       ),
     ),
   );
 }
 
-  void _selectUser(Map<String, dynamic> user) {
+void _selectUser(Map<String, dynamic> user) {
   setState(() {
     _selectedUser = user;
-    _searchedUserId = user['id'];
+    _searchedUserId = user['user_id'].toString(); // Convert to String
   });
-  _loadUserScore(user['id']);
-  _loadUserTrips(user['id']);
+  _loadUserScore(_searchedUserId);
+  _loadUserTrips(_searchedUserId);
 }
 
 Widget _buildUserScoreCard({
@@ -504,18 +513,29 @@ Future<void> _searchForUsers() async {
     _isLoadingUsers = true;
     _foundUsers = [];
     _selectedUser = null;
+    _searchError = '';
   });
 
   try {
     final results = await TripService.searchUsers(_searchQuery);
+    print('API results: $results');
+    
     setState(() {
-      _foundUsers = results;
+      _foundUsers = results.map((user) {
+        return {
+          'id': user['user_id'],
+          'name': '${user['first_name']} ${user['last_name']}',
+          'email': user['email'],
+          'role': user['role'],
+        };
+      }).toList();
       _isLoadingUsers = false;
     });
   } catch (e) {
+    print('Search error: $e');
     setState(() {
       _isLoadingUsers = false;
-      _searchError = 'Search failed: $e';
+      _searchError = 'Search failed: ${e.toString()}';
     });
   }
 }
