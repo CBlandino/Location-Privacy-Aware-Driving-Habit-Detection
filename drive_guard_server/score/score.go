@@ -64,17 +64,17 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 	log.Println("CALCULATING TRIP SCORE")
 	// WEIGHTS
 	// p1 = avergage speed
-	const P1W float64 = 0.2
+	const P1W float64 = 0.16
 	// p2 = max speed 
-	const P2W float64 = 0.2
+	const P2W float64 = 0.16
 	// p3 = average daily distance (coming soon)
-	const P3W float64 = 0.2
+	const P3W float64 = 0.16
 	// p4 = acceleration severity
-	const P4W float64 = 0.2
+	const P4W float64 = 0.16
 	// p5 braking 
-	const P5W float64 = 0.2
+	const P5W float64 = 0.16
 	// p6 abrupt turns (coming soon)
-	const P6W float64 = 0.2
+	const P6W float64 = 0.16
 
 	p1v := func() float64 {
 		avgv := tripMetrics.avg_velo
