@@ -24,16 +24,6 @@ type point struct {
 	Timestamp string `json:"t"`
 	// order of this point in the batch
 	Order int `json:"p"`
-	// calculated velocity of this point within its varying time interval
-	Velo float64 `json:"v"`
 }
 
-// struct for previous trip response to the client
-type PrevTrip struct {
-	// trip starting time
-	TimeStamp string `json:"timestamp"`
-	// total distance travelled during the trip
-	Distance float64 `json:"distance"`
-	// average velocity for the trip 
-	Velocity float64 `json:"velocity"`
-}
+

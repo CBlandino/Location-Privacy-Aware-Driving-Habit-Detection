@@ -73,6 +73,7 @@ func TransmitPoints(c *gin.Context, db *sql.DB) {
 		//updateExistingTrip
 		err = updateExistingTrip(set, claims, db)
 	}
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, err) 
 		log.Println(err)
@@ -97,10 +98,9 @@ func insertStartTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) error {
 
 	// $1 = user_id 
 	// $2 = trip start timestamp 
-	// $3 = boolean value for if the trip is still in progress
-	// $4 = json array representation of the points
-	insertSTR := "INSERT INTO trips (user_id, start_time, done, data) VALUES ($1, $2, $3, $4)"
-	_, err = db.Exec(insertSTR, id, set.Start_time, set.End, jsonPoints)
+	// $3 = json array representation of the points
+	insertSTR := "INSERT INTO trips (user_id, start_time, data) VALUES ($1, $2, $3)"
+	_, err = db.Exec(insertSTR, id, set.Start_time, jsonPoints)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func insertStartTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) error {
 			return err
 		}
 
-		err = score.TripMetricsPasses(trip_id, db)
+		err = endTrip(id, trip_id, db)
 		if err != nil {
 			return err
 		}
@@ -132,8 +132,8 @@ func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) erro
 		return err
 	}	
 
-	updateSTR := "UPDATE trips SET data = data || $1::jsonb, done = $2 WHERE user_id = $3 AND done = FALSE"
-	_, err = db.Exec(updateSTR, jsonPoints, set.End, id)
+	updateSTR := "UPDATE trips SET data = data || $1::jsonb WHERE user_id = $2 ORDER BY start_time DESC LIMIT 1"
+	_, err = db.Exec(updateSTR, jsonPoints, id)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -145,11 +145,24 @@ func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) erro
 			return err
 		}
 
-		err = score.TripMetricsPasses(trip_id, db)
+		err = endTrip(id, trip_id, db) 
 		if err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func endTrip(user_id, trip_id int, db *sql.DB) error {
+	err := score.TripMetricsPasses(trip_id, db) 
+	if err != nil {
+		return err
+	}
+
+	err = score.UpdateUserScore(user_id, db)
+	if err != nil {
+		return err
+	}
 	return nil
 }
