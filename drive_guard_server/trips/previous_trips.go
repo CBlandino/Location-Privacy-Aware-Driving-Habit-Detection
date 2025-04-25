@@ -47,7 +47,7 @@ func Previous_trips(c *gin.Context, db *sql.DB) {
 		" tripsmetrics.brake_score," +
 		" tripsmetrics.accel_score," + 
 		" tripsmetrics.trip_score" + 
-		" FROM trips JOIN tripmetrics ON trips.trip_id = tripsmetrics.trip_id WHERE trips.user_id = $1" 
+		" FROM trips JOIN tripsmetrics ON trips.trip_id = tripsmetrics.trip_id WHERE trips.user_id = $1" 
 
 	rows, err := db.Query(querySTR, id)
 	if err != nil {
