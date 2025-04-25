@@ -1,9 +1,11 @@
+
 DROP TABLE IF EXISTS Users CASCADE;
 CREATE TABLE IF NOT EXISTS Users (
     user_id         SERIAL PRIMARY KEY,        
     first_name      VARCHAR(100) NOT NULL, 
     last_name       VARCHAR(100) NOT NULL,
     email           VARCHAR(255) UNIQUE NOT NULL,
+    class           userclass NOT NULL, 
     password_hash   BYTEA NOT NULL, 
     salt            BYTEA NOT NULL,
     brake_score     REAL NOT NULL,  
