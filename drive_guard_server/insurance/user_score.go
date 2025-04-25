@@ -45,13 +45,13 @@ func GetUserScore(c *gin.Context, db *sql.DB) {
 
 	// 4. Database query - updated to use Users table
 	log.Printf("Fetching score for user %d", userIDInt)
-	var score float64
+	var score, brakeScore, accelScore float64
 	var firstName, lastName string
 	err = db.QueryRow(`
-		SELECT score, first_name, last_name 
+		SELECT score, brake_score, accel_score, first_name, last_name 
 		FROM Users 
 		WHERE user_id = $1
-	`, userIDInt).Scan(&score, &firstName, &lastName)
+	`, userIDInt).Scan(&score, &brakeScore, &accelScore, &firstName, &lastName)
 
 	// 5. Handle query results
 	if err != nil {
@@ -74,10 +74,12 @@ func GetUserScore(c *gin.Context, db *sql.DB) {
 	// 6. Successful response
 	log.Printf("Successfully fetched score for user %d", userIDInt)
 	c.JSON(http.StatusOK, gin.H{
-		"user_id":    userIDInt,
-		"score":      score,
-		"first_name": firstName,
-		"last_name":  lastName,
-		"status":     "success",
+		"user_id":     userIDInt,
+		"score":       score,
+		"brake_score": brakeScore,
+		"accel_score": accelScore,
+		"first_name":  firstName,
+		"last_name":   lastName,
+		"status":      "success",
 	})
 }

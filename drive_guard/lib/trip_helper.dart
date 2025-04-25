@@ -337,11 +337,15 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+      // Convert scores to percentages if they're <= 1.0
+      double convertScore(double score) {
+        return score <= 1.0 ? score * 100 : score;
+      }
+      
       return {
-      'score': (data['score'] ?? 0).toDouble(),
-      'accel_score': (data['accel_score'] ?? data['avg_accel_score'] ?? 0).toDouble(),
-      'brake_score': (data['brake_score'] ?? data['avg_brake_score'] ?? 0).toDouble(),
-      'trip_score': (data['trip_score'] ?? data['avg_trip_score'] ?? 0).toDouble(),
+        'score': convertScore((data['score'] ?? 0).toDouble()),
+        'accel_score': convertScore((data['accel_score'] ?? 0).toDouble()),
+        'brake_score': convertScore((data['brake_score'] ?? 0).toDouble()),
         'user_id': data['user_id']?.toString() ?? userId,
         'first_name': data['first_name'] ?? '',
         'last_name': data['last_name'] ?? '',
