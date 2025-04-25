@@ -12,7 +12,7 @@ class ScorePage extends StatefulWidget {
 }
 
 class _ScorePage extends State<ScorePage> {
-  double score = 0;
+  int score = 0;
   int _selectedIndex = 2;
   late String role;
   bool isLoading = true;
@@ -33,7 +33,7 @@ class _ScorePage extends State<ScorePage> {
 
     role = prefs.getString('role')!;
 
-    final token = prefs.getString('auth_token');
+    final token = prefs.getString('access_token');
 
     final response = await http.get(
       Uri.parse('http://18.191.9.236:8080/ca1cd3c3055991bf20499ee86739f7e2'), 
@@ -48,7 +48,12 @@ class _ScorePage extends State<ScorePage> {
         final data = json.decode(response.body);
         setState(() {
           isLoading = false;
-          score = data['totalScore']?.toInt() ?? 0;
+
+            final rawScore = data['totalScore'] ?? 0.0;
+            final roundedScore = double.parse(rawScore.toStringAsFixed(2));
+
+            score = (roundedScore * 100).toInt();
+          print('User Score : ${data['totalScore']}');
           breakdown = {
             "Braking": _ratingLabel(data['braking']),
             "Acceleration": _ratingLabel(data['acceleration']),
@@ -63,12 +68,16 @@ class _ScorePage extends State<ScorePage> {
       }
   }
 
-  String _ratingLabel(double? value) {
+  String _ratingLabel(num? value) {
       if (value == null) return "Unknown";
-      if (value >= 90) return "Excellent";
-      if (value >= 70) return "Good";
-      if (value >= 50) return "Average";
-      return "Needs Improvement";
+
+final double val = value.toDouble();
+
+
+  if (val >= 0.90) return "Excellent";
+  if (val >= 0.70) return "Good";
+  if (val >= 0.50) return "Average";
+  return "Needs Improvement";
     }
 
 
@@ -311,7 +320,7 @@ class _ScorePage extends State<ScorePage> {
     );
   }
 
-  Color scoreColor(double score) {
+  Color scoreColor(int score) {
     if (score >= 90) return Colors.green;
     if (score >= 50) return Colors.orange;
     return Colors.red;
