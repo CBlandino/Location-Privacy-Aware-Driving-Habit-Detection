@@ -13,10 +13,10 @@ import (
 // given a trip ID (with trip data that can be retrieved from the DB) pass over the data in the trip and look for windows
 // where particular metrics can be detected.
 func TripMetricsPasses(tripID int, db *sql.DB) error {
-	var data []point
-	var dataRaw []byte
+	var data []point 
+	var dataRaw []byte 
 
-	dataRow := db.QueryRow("SELECT data FROM trips WHERE trip_id = $1", tripID)
+	dataRow := db.QueryRow("SELECT data FROM trips WHERE trip_id = $1", tripID) 	
 	if err := dataRow.Scan(&dataRaw); err != nil {
 		return err
 	}
@@ -29,34 +29,38 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 	// integer conversion (multiplied by 10^6): 42688309, -73821711
 	var PkLat int = 42688309
 	var PkLong int = -73821711
-	var totalDistance float64 = 0.0
-	for i, point := range data {
+
+	var tripMetrics metrics
+	var prevVelocity float64 = 0.0
+
+	for _, point := range data {
 		if d := getDistance(&point, PkLat); d != math.NaN() {
-			totalDistance += d
-			velo := int((d / 5) * 3600)
-			data[i].Velo = velo
+			tripMetrics.distance += d
+			dvelocity := (d / 5) * 3600 
+			if tripMetrics.max_velo < dvelocity {
+				tripMetrics.max_velo = dvelocity
+			}
+			tripMetrics.avg_velo += dvelocity
+			tripMetrics.brake_sev += getBrakingSev(dvelocity, prevVelocity)
+			tripMetrics.accel_sev += getAccelSev(dvelocity, prevVelocity)
+			prevVelocity = dvelocity
 		}
 		PkLat += point.Lat 
 		PkLong += point.Long
 	}
 
-	brakingPass := getBrakingFlags(data)
-	accelPass := getAccelerationFlags(data)
-	speedingPass := getSpeedingFlags(data)
+	tripMetrics.avg_velo = (tripMetrics.distance / (5.0 * float64(len(data)))) * 3600
+	tripMetrics.trip_length = len(data)
 
-	log.Println("braking severity:", brakingPass.totalSeverity)
-	log.Println("accel severity:", accelPass.totalSeverity)
-	log.Println("speeding severity:", speedingPass.totalSeverity)
-	
-	var averageVelocity float64 = (totalDistance / (5.0 * float64(len(data)))) * 3600.0
+	score, accel_score, brake_score := scoreTrip(&tripMetrics)
 
-	// calculate score for the trip
-	tripScore, brakingScore, accelScore, speedingScore := takeInput(brakingPass, accelPass, speedingPass)
-
-	// store calculated information in the trips table
-	updateStmnt := "UPDATE trips SET distance = $1, velocity = $2, trip_score = $3, speed_score = $4, brake_score = $5, accel_score = $6 WHERE trip_id = $7"
-	_, err := db.Exec(updateStmnt, totalDistance, averageVelocity, tripScore, speedingScore, brakingScore, accelScore, tripID)
-	return err
+	insrtString := "INSERT INTO tripsmetrics VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	_, err := db.Exec(insrtString, tripID, tripMetrics.distance, tripMetrics.avg_velo, tripMetrics.max_velo, brake_score, accel_score, score)
+	if err != nil {
+		log.Println("error entering metrics into tripsmetrics table", err.Error())
+		return err
+	}
+	return nil
 }
 
 // function that passes over all of the points in a transmitted point set prior to their inclusion in the db 
@@ -72,7 +76,7 @@ func getDistance(p *point, lati int) float64 {
 
 	latiRad := (float64(lati) * 0.000001) * (math.Pi / 180.0)
 	latjRad := (float64(latj) * 0.000001) * (math.Pi / 180.0)
-	// using beta approximation of 1 until implementation of R geographical points is done
+	
 	var Beta float64 = math.Cos(latiRad) * math.Cos(latjRad)
 
 	dLat := (float64(p.Lat) * 0.000001) * (math.Pi / 180.0)
@@ -94,78 +98,26 @@ func getDistance(p *point, lati int) float64 {
 }
 
 
-func getSpeedingFlags(data []point) metricPass {
-
-	metrics := make([]metricFlag, 0)
-	totalSev := 0
-
-	for _, point := range data {
-		var severity int
-		if point.Velo >= 85 {
-			severity = 2
-		} else if point.Velo >= 75  {
-			severity = 1
-		} else {
-			severity = 0
-		}
-
-		totalSev += severity
-		metrics = append(metrics, metricFlag{severity, point.Velo, -1})
+func getBrakingSev(velocity, prevVelocity float64) int {
+	decel := (prevVelocity - velocity) / 5 
+	if decel >= 7 {
+		return 2 
+	} else if decel >= 5 {
+		return 1
+	} else {
+		return 0
 	}
-
-	return metricPass{metrics, totalSev}
 }
 
-func getBrakingFlags(data []point) metricPass {
-	metrics := make([]metricFlag, 0)
-	totalSev := 0
-
-	previousVelo := 0
-	for _, point := range data {
-		var severity int
-
-		//calculate deceleration between points
-		decel := (previousVelo - point.Velo) / 5
-		if decel >= 7 {
-			severity = 2
-		} else if decel >= 5 {
-			severity = 1
-		} else {
-			severity = 0
-		}
-
-		totalSev += severity
-		metrics = append(metrics, metricFlag{severity, point.Velo, decel})
-		previousVelo = point.Velo
+func getAccelSev(velocity, prevVelocity float64) int {
+	accel := (velocity - prevVelocity) / 5 
+	if accel >= 8 {
+		return 2
+	} else if accel >= 6 {
+		return 1
+	} else {
+		return 0
 	}
-
-	return metricPass{metrics, totalSev}
-}
-
-func getAccelerationFlags(data []point) metricPass {
-	metrics := make([]metricFlag, 0) 
-	totalSev := 0
-	
-	previousVelo := 0
-	for _, point := range data {
-		var severity int
-
-		//calculate acceleration between points
-		accel := (point.Velo - previousVelo) / 5 
-		if accel >= 8 {
-			severity = 2
-		} else if accel >= 6 {
-			severity = 1 
-		} else {
-			severity = 0
-		}
-
-		totalSev += severity
-		metrics = append(metrics, metricFlag{severity, point.Velo, accel})
-		previousVelo = point.Velo
-	}
-
-	return metricPass{metrics, totalSev}
 }
 
 type point struct {
@@ -181,16 +133,17 @@ type point struct {
 	Velo int `json:"v"`
 }
 
-type metricPass struct {
-	flags []metricFlag 
-	totalSeverity int
-}
-
-type metricFlag struct {
-	// severity of the event ranging from 0(no severity), 1(mild severity), 2(high severity)
-	Severity int
-	// speed recorded at the current point
-	Velo int 
-	// acceleration recorded at the current point
-	Accel int
+type metrics struct {
+	//total distance travelled in the trip
+	distance float64
+	// average velocity captured during the trip
+	avg_velo float64 
+	// maximum velocity captured during the trip
+	max_velo float64 
+	// braking severity measurement
+	brake_sev int 
+	// acceleration severity measurement
+	accel_sev int
+	// length of the trip in points
+	trip_length int 
 }
