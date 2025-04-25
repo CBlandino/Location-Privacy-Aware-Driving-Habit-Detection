@@ -104,16 +104,25 @@ static Future<List<Map<String, dynamic>>> searchInsurance(String query) async {
 
 
 static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
-  int timestamp;
+  // Parse the start time
+  DateTime startTime;
   try {
-    timestamp = trip['timestamp'] is int
-        ? trip['timestamp']
-        : DateTime.parse(trip['timestamp']).millisecondsSinceEpoch ~/ 1000;
+    if (trip['start_time'] is String) {
+      startTime = DateTime.parse(trip['start_time']);
+    } else if (trip['start_time'] is int) {
+      startTime = DateTime.fromMillisecondsSinceEpoch(trip['start_time'] * 1000);
+    } else {
+      startTime = DateTime.now();
+    }
   } catch (e) {
-    timestamp = 0;
+    startTime = DateTime.now();
   }
 
-  showModalBottomSheet(
+  // Calculate duration - convert from minutes to milliseconds if needed
+  double durationMinutes = (trip['duration'] ?? 0).toDouble();
+  DateTime endTime = startTime.add(Duration(minutes: durationMinutes.round()));
+
+showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.white,
@@ -156,19 +165,25 @@ static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
                   context,
                   Icons.calendar_today,
                   "Date:",
-                  timestamp > 0
-                      ? DateFormat('MMM dd, yyyy').format(
-                          DateTime.fromMillisecondsSinceEpoch(timestamp * 1000))
-                      : 'N/A',
+                  DateFormat('MMM dd, yyyy').format(startTime),
                 ),
                 _buildDetailRow(
                   context,
                   Icons.access_time,
-                  "Time:",
-                  timestamp > 0
-                      ? DateFormat('hh:mm a').format(
-                          DateTime.fromMillisecondsSinceEpoch(timestamp * 1000))
-                      : 'N/A',
+                  "Start Time:",
+                  DateFormat('hh:mm a').format(startTime),
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.timer,
+                  "Duration:",
+                  "${durationMinutes.toStringAsFixed(1)} minutes",
+                ),
+                _buildDetailRow(
+                  context,
+                  Icons.timer,
+                  "End Time:",
+                  DateFormat('hh:mm a').format(endTime),
                 ),
                 _buildDetailRow(
                   context,
@@ -180,13 +195,7 @@ static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
                   context,
                   Icons.speed,
                   "Average Speed:",
-                  "${trip['velocity']?.toStringAsFixed(1) ?? 'N/A'} mph",
-                ),
-                _buildDetailRow(
-                  context,
-                  Icons.timer,
-                  "Duration:",
-                  "${trip['duration']?.toStringAsFixed(1) ?? 'N/A'} minutes",
+                  "${trip['average_speed']?.toStringAsFixed(1) ?? 'N/A'} mph",
                 ),
                 const SizedBox(height: 20),
               ],

@@ -58,12 +58,14 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 		sortBy = "recent"
 	}
 
-	// 5. Build query - we should join with TripMetrics table
+	// 5. Build query - join with TripMetrics and include duration calculation
 	query := `
 		SELECT 
 			t.trip_id, 
 			t.user_id, 
 			t.start_time, 
+			EXTRACT(EPOCH FROM (SELECT MAX(p->>'t')::timestamp - MIN(p->>'t')::timestamp 
+			                   FROM jsonb_array_elements(t.data) as p)) / 60 AS duration_minutes,
 			tm.distance,
 			tm.avg_velo,
 			tm.max_velo,
@@ -102,6 +104,7 @@ func GetUserTrips(c *gin.Context, db *sql.DB) {
 		TripID     int       `json:"trip_id"`
 		UserID     int       `json:"user_id"`
 		StartTime  time.Time `json:"start_time"`
+		Duration   float64   `json:"duration"`
 		Distance   float64   `json:"distance"`
 		AvgSpeed   float64   `json:"average_speed"`
 		MaxSpeed   float64   `json:"max_speed"`
