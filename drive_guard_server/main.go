@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"context"
+	"drive_guard_server/AdminInfo" // just added
 
 	"drive_guard_server/auth"
 	"drive_guard_server/insurance"
@@ -41,7 +42,7 @@ func init() {
 func main() {
 	log.Println("STARTING SERVER")
 
-	//connect and configure database
+	// Connect and configure database
 	dbConnStr := " user=" + DB_USER + " password=" + DB_PASS + " dbname=" + DB_NAME
 	if DB_HOST != "" {
 		dbConnStr += " host=" + DB_HOST + " sslmode=require"
@@ -56,7 +57,7 @@ func main() {
 	db.SetMaxIdleConns(50)
 	db.SetMaxOpenConns(50)
 
-	// ping database to ensure successful connection
+	// Ping database to ensure successful connection
 	if err := db.PingContext(context.Background()); err != nil {
 		log.Println(util.ANSI_RED_BACKGROUND + "DATABASE CONNECTION UNSUCCESSFUL" + util.ANSI_RESET)
 		log.Println(err)
@@ -64,7 +65,7 @@ func main() {
 		log.Println(util.ANSI_GREEN_BACKGROUND + "DATABASE CONNECTION SUCCESSFUL" + util.ANSI_RESET)
 	}
 
-	//initialize the web server and handlers
+	// Initialize the web server and handlers
 	server := gin.Default()
 
 	server.Use(cors.New(cors.Config{
@@ -124,5 +125,17 @@ func main() {
 		log.Println(util.ANSI_BLUE + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 
+	// Add routes for Ping Server
+	AdminInfo.SetupPingRoutes(server)
+
+	// Add routes for Insurance Lookup
+	AdminInfo.SetupInsuranceRoutes(server, db)
+
+	// Add routes for Server Information
+	AdminInfo.SetupServerRoutes(server, db)
+
+	// Add routes for ID Generator
+	AdminInfo.SetupIDRoutes(server, db)
+	// Start the server
 	server.Run(ADDR)
 }
