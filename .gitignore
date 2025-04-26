@@ -1,0 +1,9 @@
+# Ignore local database files and directories
+drive_guardDB/
+*.db
+*.sqlite
+db_log.log
+
+# Ignore system files
+.DS_Store
+Thumbs.db
