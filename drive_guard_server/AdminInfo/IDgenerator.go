@@ -1,18 +1,26 @@
 package AdminInfo
 
 import (
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
 	"log"
-	"math/rand" // Import the math/rand package
+	mathrand "math/rand" // Using alias to avoid confusion
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// GenerateID generates a random ID
-func GenerateID(length int) string {
+var seededRand = mathrand.New(mathrand.NewSource(time.Now().UnixNano())) //global seeded rnd gen
+
+func GenerateID(length int) string { //id that is random is generated using math rand
+	if length <= 0 {
+		log.Println("Invalid length for ID generation")
+		return ""
+	}
+
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	seededRand := rand.New(rand.NewSource(time.Now().UnixNano())) // Use math/rand
 	id := make([]byte, length)
 	for i := range id {
 		id[i] = charset[seededRand.Intn(len(charset))]
@@ -20,24 +28,91 @@ func GenerateID(length int) string {
 	return string(id)
 }
 
-// HandleIDGeneration handles ID generation requests and saves the ID to the database
-func HandleIDGeneration(c *gin.Context, db *sql.DB) {
-	id := GenerateID(12) // Generate a 12-character ID
+func HandleIDGeneration(c *gin.Context, db *sql.DB) { //id generation is dealt with creates an account for the user
+	log.Println("HandleIDGeneration: Function called")
 
-	// Insert the generated ID into the database
-	_, err := db.Exec("INSERT INTO generated_ids (generated_id) VALUES ($1)", id)
+	var newUser struct { //user is parsed
+		Firstname string `json:"firstname"`
+		Lastname  string `json:"lastname"`
+		Email     string `json:"email"`
+		Password  string `json:"password"`
+		Role      string `json:"role"`
+	}
+	if err := c.BindJSON(&newUser); err != nil {
+		log.Println("HandleIDGeneration: There was an error parsing user details:", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+	log.Println("HandleIDGeneration: The user details were parsed successfully")
+
+	if newUser.Firstname == "" || newUser.Lastname == "" || newUser.Email == "" || newUser.Password == "" || newUser.Role == "" {
+		log.Println("HandleIDGeneration:Required fields are missing ")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "All fields are required"})
+		return
+	}
+	log.Println("HandleIDGeneration: Input validation passed")
+
+	newUserID := GenerateID(12) //unique id is gen
+	if newUserID == "" {
+		log.Println("HandleIDGeneration: Failed to generate unique ID")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate unique ID"})
+		return
+	}
+	log.Println("HandleIDGeneration: Generated ID:", newUserID)
+
+	// salt and hash
+	salt := make([]byte, 50)
+	_, err := rand.Read(salt)
 	if err != nil {
-		log.Println("Error inserting generated ID:", err)
-		c.JSON(500, gin.H{"error": "Failed to save generated ID"})
+		log.Println("HandleIDGeneration: There was an error generating salt:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process password"})
+		return
+	}
+	passHash := sha256.Sum256(append([]byte(newUser.Password), salt...))
+	log.Println("HandleIDGeneration:The password hashed successfully")
+
+	role := newUser.Role //role is validated
+	if role != "user" && role != "admin" && role != "insurance" {
+		log.Println("HandleIDGeneration: Invalid role provided:", role)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user role provided"})
+		return
+	}
+	log.Println("HandleIDGeneration: Role validated:", role)
+
+	//user is completely inserted into data base
+	insertStmt := `
+        INSERT INTO users (generated_id, first_name, last_name, email, class, password_hash, salt, brake_score, accel_score, score)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `
+	_, err = db.Exec(insertStmt, newUserID, newUser.Firstname, newUser.Lastname, newUser.Email, role, passHash[:], salt, 1.0, 1.0, 1.0)
+	if err != nil {
+		log.Println("HandleIDGeneration: Error inserting user into database:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create account", "details": err.Error()})
 		return
 	}
 
-	c.JSON(200, gin.H{"id": id})
+	log.Println("HandleIDGeneration: User inserted into database successfully")
+
+	// Respond with success and the generated ID
+	c.JSON(http.StatusCreated, gin.H{"message": "Account created successfully", "account_id": newUserID})
 }
 
 // SetupIDRoutes registers the ID generator routes with Gin
 func SetupIDRoutes(router *gin.Engine, db *sql.DB) {
-	router.GET("/generate-id", func(c *gin.Context) {
+	log.Println("SetupIDRoutes: Registering routes")
+
+	// Main endpoint for ID generation and account creation
+	router.POST("/generate-id", func(c *gin.Context) {
+		log.Println("SetupIDRoutes: /generate-id route triggered")
 		HandleIDGeneration(c, db)
+	})
+
+	router.GET("/id-test", func(c *gin.Context) { // Simple test endpoint that doesn't require database access
+		log.Println("SetupIDRoutes: /id-test route triggered")
+		testID := GenerateID(8)
+		c.JSON(http.StatusOK, gin.H{
+			"status":    "success",
+			"message":   "ID generator test endpoint is working",
+			"sample_id": testID})
 	})
 }

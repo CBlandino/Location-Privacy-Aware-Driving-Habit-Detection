@@ -43,9 +43,17 @@ func HandleInsuranceLookup(c *gin.Context, db *sql.DB) {
 	c.JSON(http.StatusOK, insurances)
 }
 
-// SetupInsuranceRoutes registers the Insurance Lookup routes with Gin
 func SetupInsuranceRoutes(router *gin.Engine, db *sql.DB) {
+	// Original insurance endpoint
 	router.GET("/insurance", func(c *gin.Context) {
 		HandleInsuranceLookup(c, db)
+	})
+
+	// New test endpoint for insurance
+	router.GET("/insurance-test", func(c *gin.Context) {
+		// This endpoint doesn't access the database
+		c.JSON(200, gin.H{
+			"status":  "success",
+			"message": "Insurance test endpoint is working"})
 	})
 }
