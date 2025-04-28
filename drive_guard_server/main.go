@@ -137,5 +137,7 @@ func main() {
 	// Add routes for ID Generator
 	AdminInfo.SetupIDRoutes(server, db)
 	// Start the server
+	// Add this line to your route setup section in main.go
+	AdminInfo.SetupStatsRoutes(server, db)
 	server.Run(ADDR)
 }
