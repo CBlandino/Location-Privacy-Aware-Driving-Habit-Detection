@@ -36,7 +36,7 @@ class _ScorePage extends State<ScorePage> {
 
     final token = prefs.getString('access_token');
 
-    final response = await http.get(
+    final responseScore = await http.get(
       Uri.parse('http://18.191.9.236:8080/ca1cd3c3055991bf20499ee86739f7e2'), 
       headers: {
         'Authorization': 'Bearer $token',
@@ -45,8 +45,8 @@ class _ScorePage extends State<ScorePage> {
     );
 
     // TODO Replace breakdown with correct names in database
-    if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+    if (responseScore.statusCode == 200) {
+        final data = json.decode(responseScore.body);
         setState(() {
           isLoading = false;
 
@@ -66,6 +66,20 @@ class _ScorePage extends State<ScorePage> {
           isLoading = false;
         });
       }
+
+
+    final responsePrevTrips = await http.get(
+        Uri.parse('http://18.191.9.236:8080/55a4a318d8473bd5b80cea42331e473c'), 
+        headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+        }
+    );
+
+    if (responsePrevTrips.statusCode == 200) {
+        final data = json.decode(responsePrevTrips.body)
+        //TODO 
+    }
   }
 
   String _ratingLabel(num? value) {
