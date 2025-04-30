@@ -138,6 +138,11 @@ Widget build(BuildContext context) {
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 30),
+                    MiniScoreGraph(
+                      scores: convertScore([0.72, 0.85, 0.88, 0.91, 0.95, 1.0, 0.8]),   // replace with real score
+                      height: screenHeight *.22, 
+                    ),
+                    const SizedBox(height: 30),
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -207,11 +212,6 @@ Widget build(BuildContext context) {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 30),
-                  MiniScoreGraph(
-                    scores: [0.72, 0.85, 0.88, 0.91, 0.95, 1.0], // Replace with real data
-                    height: screenHeight *.22, 
-                  ),
                   ],
                 ),
               ),
@@ -372,7 +372,22 @@ void _showFullReportModal(BuildContext context) {
         return Colors.black;
     }
   }
+
+  List<double> convertScore(List<double> scores) {
+    return scores.map((score) => score * 100).toList();
+  }
+
+
+  
+  // Converts list of scores 
+//   List<double> GetScores(){
+
+//     return List<double>;
+
+//   }
 }
+
+
 
 
 /*
