@@ -258,9 +258,7 @@ static Widget _buildDetailRow(BuildContext context, IconData icon, String label,
   );
 }
 
-
-
-static Future<List<Map<String, dynamic>>> fetchPreviousTrips() async {
+static Future<List<Map<String, dynamic>>> fetchPreviousTripsData() async {
   final String url = '$server/55a4a318d8473bd5b80cea42331e473c';
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
@@ -313,6 +311,33 @@ static Future<List<Map<String, dynamic>>> fetchPreviousTrips() async {
     throw Exception('Failed to fetch trips: $error');
   }
 }
+
+  static Future<List<dynamic>> fetchPreviousTrips() async {
+    final String url = '$server/55a4a318d8473bd5b80cea42331e473c';
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = json.decode(response.body);
+        return data; 
+      } else {
+        print('Error fetching trips');
+        return [];
+      }
+    } catch (error) {
+      print('Error: $error');
+       return [];
+    }
+  }
 
 static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
   final uri = Uri.parse('$server/userLookup').replace(
