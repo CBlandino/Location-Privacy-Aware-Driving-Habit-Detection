@@ -105,7 +105,7 @@ Widget build(BuildContext context) {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     CircularPercentIndicator(
-                      radius: 100.0,
+                      radius: screenHeight *.1, 
                       lineWidth: 12.0,
                       percent: score / 100,
                       center: Text(
@@ -128,7 +128,7 @@ Widget build(BuildContext context) {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF01548F),
+                        color: Colors.lightBlueAccent,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
@@ -180,7 +180,7 @@ Widget build(BuildContext context) {
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
-                                foregroundColor: Colors.blue.shade800,
+                                foregroundColor: Colors.lightBlueAccent,
                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
@@ -196,6 +196,7 @@ Widget build(BuildContext context) {
                     const SizedBox(height: 30),
                   MiniScoreGraph(
                     scores: [0.72, 0.85, 0.88, 0.91, 0.95, 1.0], // Replace with real data
+                    height: screenHeight *.22, 
                   ),
                   ],
                 ),
