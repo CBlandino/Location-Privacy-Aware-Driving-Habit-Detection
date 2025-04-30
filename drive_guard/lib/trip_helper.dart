@@ -258,32 +258,62 @@ static Widget _buildDetailRow(BuildContext context, IconData icon, String label,
   );
 }
 
-  static Future<List<dynamic>> fetchPreviousTrips() async {
-    final String url = '$server/55a4a318d8473bd5b80cea42331e473c';
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('access_token');
 
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
 
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        return data; 
-      } else {
-        print('Error fetching trips');
-        return [];
-      }
-    } catch (error) {
-      print('Error: $error');
-       return [];
+static Future<List<Map<String, dynamic>>> fetchPreviousTrips() async {
+  final String url = '$server/55a4a318d8473bd5b80cea42331e473c';
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? token = prefs.getString('access_token');
+
+  try {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      
+      // Transform the data to include both original and new fields
+      return data.map((trip) {
+        // Original fields
+        Map<String, dynamic> tripData = {
+          'trip_id': trip['trip_id'],
+          'user_id': trip['user_id'],
+          'start_time': trip['start_time'],
+          'distance': (trip['distance'] ?? 0).toDouble(),
+          'duration': (trip['duration'] ?? 0).toDouble(),
+          'average_speed': (trip['average_speed'] ?? 0).toDouble(),
+          'max_speed': (trip['max_speed'] ?? 0).toDouble(),
+          'data': trip['data'], // Original trip data if exists
+        };
+
+        // New score-related fields (with fallbacks if not available)
+        tripData.addAll({
+          'brake_score': (trip['brake_score'] ?? trip['metrics']?['brake_score'] ?? 0).toDouble(),
+          'accel_score': (trip['accel_score'] ?? trip['metrics']?['accel_score'] ?? 0).toDouble(),
+          'trip_score': (trip['trip_score'] ?? trip['metrics']?['trip_score'] ?? 0).toDouble(),
+          // Convert scores if they're stored as percentages (e.g., 85 instead of 0.85)
+          'brake_score_percent': ((trip['brake_score'] ?? trip['metrics']?['brake_score'] ?? 0) * 100).toDouble(),
+          'accel_score_percent': ((trip['accel_score'] ?? trip['metrics']?['accel_score'] ?? 0) * 100).toDouble(),
+          'trip_score_percent': ((trip['trip_score'] ?? trip['metrics']?['trip_score'] ?? 0) * 100).toDouble(),
+        });
+
+        return tripData;
+      }).toList();
+    } else {
+      print('Error fetching trips: ${response.statusCode}');
+      throw Exception('Failed to fetch trips: ${response.statusCode}');
     }
+  } catch (error) {
+    print('Error fetching trips: $error');
+    throw Exception('Failed to fetch trips: $error');
   }
+}
+
 static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
   final uri = Uri.parse('$server/userLookup').replace(
     queryParameters: {'query': query}
