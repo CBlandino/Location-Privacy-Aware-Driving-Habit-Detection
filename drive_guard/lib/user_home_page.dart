@@ -90,6 +90,12 @@ class _UserHomePageState extends State<UserHomePage> {
                           )
                         : Column(
                             children: recentTrips.take(3).map((trip) {
+                                final mappedTrip = {
+    'timestamp': trip['start_time'] ?? '',
+    'distance': (trip['distance'] ?? 0).toDouble(),
+    'average_speed': (trip['avg_velo'] ?? 0).toDouble(),
+    'max_speed': (trip['max_velo'] ?? 0).toDouble(),
+  };
                               return Container(
                                 margin: EdgeInsets.only(bottom: 8),
                                 decoration: BoxDecoration(
@@ -116,7 +122,7 @@ class _UserHomePageState extends State<UserHomePage> {
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                  subtitle: Text(
+                                  subtitle: Text( 
                                     '${trip['distance']?.toStringAsFixed(2) ?? '0.00'} miles',
                                     style: TextStyle(
                                       color: Colors.white.withOpacity(0.8),

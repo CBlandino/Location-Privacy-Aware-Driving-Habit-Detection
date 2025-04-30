@@ -122,8 +122,9 @@ static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
   double durationMinutes = (trip['duration'] ?? 0).toDouble();
   DateTime endTime = startTime.add(Duration(minutes: durationMinutes.round()));
 
-  final avgSpeed = trip['average_speed']?.toDouble() ?? 0.0;
-  final maxSpeed = trip['max_speed']?.toDouble() ?? 0.0;
+  final avgSpeed = trip['velocity']?.toDouble() ?? 0.0;
+  final maxSpeed = trip['max_velocity']?.toDouble() ?? 0.0;
+  final distance = trip['distance']?.toDouble() ?? 0.0;
 
 showModalBottomSheet(
     context: context,
@@ -328,6 +329,7 @@ static Future<List<Map<String, dynamic>>> fetchPreviousTripsData() async {
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
+        print('Raw trip data from backend: $data');
         return data; 
       } else {
         print('Error fetching trips');
@@ -492,13 +494,13 @@ Widget _buildTripMetricCard(Map<String, dynamic> trip) {
           Row(
             children: [
               Expanded(child: Text('Distance: ${trip['distance']?.toStringAsFixed(2) ?? 'N/A'} miles')),
-              Expanded(child: Text('Avg Speed: ${trip['avg_speed']?.toStringAsFixed(1) ?? 'N/A'} mph')),
+              Expanded(child: Text('Avg Speed: ${trip['velocity']?.toStringAsFixed(1) ?? 'N/A'} mph')),
             ],
           ),
           SizedBox(height: 4),
           Row(
             children: [
-              Expanded(child: Text('Max Speed: ${trip['max_speed']?.toStringAsFixed(1) ?? 'N/A'} mph')),
+              Expanded(child: Text('Max Speed: ${trip['max_velocity']?.toStringAsFixed(1) ?? 'N/A'} mph')),
               Expanded(child: Text('Score: ${trip['trip_score']?.toStringAsFixed(1) ?? 'N/A'}')),
             ],
           ),

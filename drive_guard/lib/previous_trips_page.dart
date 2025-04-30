@@ -195,6 +195,7 @@ class _PreviousTripsPageState extends State<PreviousTripsPage> {
                               separatorBuilder: (context, index) => const Divider(height: 1),
                               itemBuilder: (context, index) {
                                 final trip = trips[index];
+                                
                                 final timestamp = trip['timestamp'] is int
                                     ? trip['timestamp']
                                     : DateTime.parse(trip['timestamp']).millisecondsSinceEpoch ~/ 1000;
