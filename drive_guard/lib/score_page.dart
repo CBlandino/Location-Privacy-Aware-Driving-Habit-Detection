@@ -77,7 +77,7 @@ class _ScorePage extends State<ScorePage> {
     );
 
     if (responsePrevTrips.statusCode == 200) {
-        final data = json.decode(responsePrevTrips.body)
+        final data = json.decode(responsePrevTrips.body);
         //TODO 
     }
   }
