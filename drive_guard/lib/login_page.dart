@@ -18,7 +18,6 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
     with TickerProviderStateMixin {
 
   static const Color primaryBlue = Color(0xFF1976D2);
-  static const Color darkBlue = Color(0xFF1565C0);
   static const Color lightBlue = Color(0xFFE3F2FD);
   static const Color black = Colors.black;
   static const Color white = Colors.white;
@@ -28,7 +27,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
   final _formKey = GlobalKey<FormState>();
   late SharedPreferences _prefs;
   bool _isProcessing = false;
-  String _selectedRole = 'user';
+  final String _selectedRole = 'user';
   bool _isSignupMode = false;
   
 
@@ -386,11 +385,11 @@ Widget _buildTabBar() {
         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: grey.withOpacity(0.3)),
+          borderSide: BorderSide(color: grey.withAlpha(75)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: grey.withOpacity(0.3)),
+          borderSide: BorderSide(color: grey.withAlpha(75)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -420,7 +419,7 @@ Widget _buildTabBar() {
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 4,
-          shadowColor: primaryBlue.withOpacity(0.3),
+          shadowColor: primaryBlue.withAlpha(75),
         ),
         child: _isProcessing
             ? const SizedBox(

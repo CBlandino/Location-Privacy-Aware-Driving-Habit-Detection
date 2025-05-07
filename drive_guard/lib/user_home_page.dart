@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'current_trip_page.dart';
 import 'trip_helper.dart';
 
@@ -11,11 +10,11 @@ class UserHomePage extends StatefulWidget {
   final File? profileImage;
 
   const UserHomePage({
-    Key? key,
+    super.key,
     required this.firstName,
     required this.lastName,
     required this.profileImage,
-  }) : super(key: key);
+  });
 
   @override
   _UserHomePageState createState() => _UserHomePageState();
@@ -90,16 +89,11 @@ class _UserHomePageState extends State<UserHomePage> {
                           )
                         : Column(
                             children: recentTrips.take(3).map((trip) {
-                                final mappedTrip = {
-    'timestamp': trip['start_time'] ?? '',
-    'distance': (trip['distance'] ?? 0).toDouble(),
-    'average_speed': (trip['avg_velo'] ?? 0).toDouble(),
-    'max_speed': (trip['max_velo'] ?? 0).toDouble(),
-  };
+                               
                               return Container(
                                 margin: EdgeInsets.only(bottom: 8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.1),
+                                  color: Colors.white.withAlpha(26),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: ListTile(
@@ -125,7 +119,7 @@ class _UserHomePageState extends State<UserHomePage> {
                                   subtitle: Text( 
                                     '${trip['distance']?.toStringAsFixed(2) ?? '0.00'} miles',
                                     style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
+                                      color: Colors.white.withAlpha(204),
                                     ),
                                   ),
                                   trailing: IconButton(
@@ -233,7 +227,7 @@ class _UserHomePageState extends State<UserHomePage> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blue.withOpacity(0.4),
+                        color: Colors.blue.withAlpha(102),
                         blurRadius: 15,
                         spreadRadius: 2,
                       ),
@@ -304,7 +298,7 @@ class _UserHomePageState extends State<UserHomePage> {
                   border: Border.all(color: Colors.blue.shade100),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withAlpha(13),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),

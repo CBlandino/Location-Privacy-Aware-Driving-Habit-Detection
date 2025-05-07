@@ -6,11 +6,13 @@ import 'trip_helper.dart';
 import 'current_trip_page.dart';
 
 class PreviousTripsPage extends StatefulWidget {
+  const PreviousTripsPage({super.key});
+
   @override
-  _PreviousTripsPageState createState() => _PreviousTripsPageState();
+  PreviousTripsPageState createState() => PreviousTripsPageState();
 }
 
-class _PreviousTripsPageState extends State<PreviousTripsPage> {
+class PreviousTripsPageState extends State<PreviousTripsPage> {
   List<dynamic> trips = [];
   late String role;
   bool isLoading = true;

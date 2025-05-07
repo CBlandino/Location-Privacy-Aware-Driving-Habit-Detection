@@ -11,10 +11,10 @@ import 'ipconfig.dart';
 
 class CurrentTripPage extends StatefulWidget {
   @override
-  _CurrentTripPageState createState() => _CurrentTripPageState();
+  CurrentTripPageState createState() => CurrentTripPageState();
 }
 
-class _CurrentTripPageState extends State<CurrentTripPage> {
+class CurrentTripPageState extends State<CurrentTripPage> {
   bool isTripStarted = false;
   bool isLoading = true;
   Timer? _deltaTimer;
@@ -115,7 +115,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
 
     if (permission == LocationPermission.deniedForever) {
       // If the permission is denied permanently, inform the user to enable it manually in settings
-      print(
+      debugPrint(
         "Location permissions are permanently denied. Please enable them in app settings.",
       );
       _showPermissionDialog(
@@ -123,13 +123,13 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
       );
     } else if (permission == LocationPermission.denied) {
       // If permission is denied (not permanently), inform the user that permission was denied
-      print("Location permission was denied.");
+      debugPrint("Location permission was denied.");
       _showPermissionDialog(
         "Location permission was denied. Please enable it to use this feature.",
       );
     } else {
       // Permission granted
-      print("Location permission granted.");
+      debugPrint("Location permission granted.");
     }
   }
 
@@ -163,7 +163,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
   Future<void> _openAppSettings() async {
     bool opened = await Geolocator.openAppSettings();
     if (!opened) {
-      print('Could not open app settings.');
+      debugPrint('Could not open app settings.');
     }
   }
 
@@ -208,7 +208,7 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
       await _showLoadingDialog("Getting ready... warming up GPS");
 
       // wakes up GPS
-      print("Waking up GPS...");
+      debugPrint("Waking up GPS...");
       await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.low,
       );
@@ -216,13 +216,13 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
       // let GPS stabilize
       await Future.delayed(Duration(seconds: 3));
 
-      print("Getting accurate location...");
+      debugPrint("Getting accurate location...");
       Position pos = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      print("Accurate: ${pos.latitude}, ${pos.longitude}");
+      debugPrint("Accurate: ${pos.latitude}, ${pos.longitude}");
 
-      print("GPS warmup complete. Starting timers.");
+      debugPrint("GPS warmup complete. Starting timers.");
       Navigator.of(context, rootNavigator: true).pop();
 
       // Start listening to GPS updates
@@ -339,10 +339,10 @@ class _CurrentTripPageState extends State<CurrentTripPage> {
       if (response.statusCode == 202) {
         deltaPoints.clear();
       } else {
-        print('Error sending trip data');
+        debugPrint('Error sending trip data');
       }
     } catch (error) {
-      print('Error: $error');
+      debugPrint('Error: $error');
     }
   }
 
@@ -656,10 +656,10 @@ class CountdownDialog extends StatefulWidget {
   const CountdownDialog({super.key, required this.initialSeconds});
 
   @override
-  _CountdownDialogState createState() => _CountdownDialogState();
+  CountdownDialogState createState() => CountdownDialogState();
 }
 
-class _CountdownDialogState extends State<CountdownDialog> {
+class CountdownDialogState extends State<CountdownDialog> {
   late int remaining;
 
   @override

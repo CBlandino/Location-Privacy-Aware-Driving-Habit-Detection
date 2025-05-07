@@ -126,7 +126,7 @@ Widget build(BuildContext context) {
                     'Manage user data and driving scores',
                     style: TextStyle(
                       fontSize: isWeb ? 18 : 16,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withAlpha(230),
                     ),
                   ),
                 ],
@@ -572,7 +572,7 @@ Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> score
                 _buildTripStat('Total Distance', 
                   '${allTrips.fold(0.0, (sum, trip) => sum + (trip['distance'] ?? 0.0)).toStringAsFixed(1)} miles'),
                 _buildTripStat('Avg. Score', 
-                  '${(allTrips.fold(0.0, (sum, trip) => sum + (trip['trip_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)}'),
+                  (allTrips.fold(0.0, (sum, trip) => sum + (trip['trip_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)),
               ],
             ),
             SizedBox(height: 8),
@@ -580,9 +580,9 @@ Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> score
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildTripStat('Avg. Braking', 
-                  '${(allTrips.fold(0.0, (sum, trip) => sum + (trip['brake_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)}'),
+                 (allTrips.fold(0.0, (sum, trip) => sum + (trip['brake_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)),
                 _buildTripStat('Avg. Acceleration', 
-                  '${(allTrips.fold(0.0, (sum, trip) => sum + (trip['accel_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)}'),
+                  (allTrips.fold(0.0, (sum, trip) => sum + (trip['accel_score'] ?? 0.0)) / allTrips.length).toStringAsFixed(1)),
               ],
             ),
           ],
@@ -593,7 +593,7 @@ Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> score
         // Show first 3 trips as examples
         Text('User Trips:', style: TextStyle(fontWeight: FontWeight.w500)),
         SizedBox(height: 8),
-        ...allTrips.take(3).map((trip) => _buildTripMetricCard(trip)).toList(),
+        ...allTrips.take(3).map((trip) => _buildTripMetricCard(trip)),
         if (allTrips.length > 3)
           Text('+ ${allTrips.length - 3} more trips...',
               style: TextStyle(color: Colors.grey)),

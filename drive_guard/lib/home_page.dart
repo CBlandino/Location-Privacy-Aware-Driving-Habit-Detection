@@ -5,12 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 
 import 'custom_app_bar.dart';
-import 'custom_drawer.dart';
 import 'user_home_page.dart';
 import 'insurance_home_page.dart';
 import 'admin_home_page.dart';
-import 'settings_page.dart';
-import 'trip_helper.dart';
 
 class HomePage extends StatefulWidget {
   final String role;
@@ -18,10 +15,10 @@ class HomePage extends StatefulWidget {
   const HomePage({Key? key, required this.role}) : super(key: key);
 
   @override
-  _HomePageState createState() => _HomePageState();
+  HomePageState createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   File? _profileImage;
   bool isLoading = true;
@@ -57,7 +54,7 @@ class _HomePageState extends State<HomePage> {
       await prefs.setString('last_name', lastName);
       await prefs.setString('email', email);
     } else {
-      print('No token found in SharedPreferences');
+      debugPrint('No token found in SharedPreferences');
       setState(() => isLoading = false);
     }
   }
@@ -109,7 +106,6 @@ class _HomePageState extends State<HomePage> {
               onItemTapped: _onItemTapped,
               role: widget.role,
             ),
-      drawer: isLoading ? null : CustomDrawer(role: widget.role, isWeb: isWeb),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Center(

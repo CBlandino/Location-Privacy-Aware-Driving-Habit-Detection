@@ -3,10 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ipconfig.dart';
 import 'package:flutter/material.dart';
-//import 'package:intl/intl.dart'; // Import for date formatting
 import 'package:intl/intl.dart';
-import 'custom_app_bar.dart';
-import 'login_page.dart';
 
 class TripService {
   static final String server = AppConfig.server;
@@ -124,7 +121,6 @@ static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
 
   final avgSpeed = trip['velocity']?.toDouble() ?? 0.0;
   final maxSpeed = trip['max_velocity']?.toDouble() ?? 0.0;
-  final distance = trip['distance']?.toDouble() ?? 0.0;
 
 showModalBottomSheet(
     context: context,
@@ -304,11 +300,9 @@ static Future<List<Map<String, dynamic>>> fetchPreviousTripsData() async {
         return tripData;
       }).toList();
     } else {
-      print('Error fetching trips: ${response.statusCode}');
       throw Exception('Failed to fetch trips: ${response.statusCode}');
     }
   } catch (error) {
-    print('Error fetching trips: $error');
     throw Exception('Failed to fetch trips: $error');
   }
 }
@@ -329,14 +323,11 @@ static Future<List<Map<String, dynamic>>> fetchPreviousTripsData() async {
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
-        print('Raw trip data from backend: $data');
         return data; 
       } else {
-        print('Error fetching trips');
         return [];
       }
     } catch (error) {
-      print('Error: $error');
        return [];
     }
   }
@@ -358,9 +349,6 @@ static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
       },
     );
 
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
       
@@ -373,7 +361,6 @@ static Future<List<Map<String, dynamic>>> searchUsers(String query) async {
       throw Exception('Failed to search users: ${response.statusCode}');
     }
   } catch (error) {
-    print('Search error: $error');
     throw Exception('Search failed: $error');
   }
 }
@@ -426,97 +413,6 @@ static Future<Map<String, dynamic>> getUserScore(String userId) async {
   }
 }
 
-Widget _buildCalculationDetails(BuildContext context, Map<String, dynamic> scoreData) {
-  final calculation = scoreData['calculation'] as Map<String, dynamic>? ?? {};
-  final recentTrips = scoreData['recent_trips'] as List<dynamic>? ?? [];
-
-  return ExpansionTile(
-    title: Text('Score Calculation Details', style: TextStyle(fontWeight: FontWeight.bold)),
-    children: [
-      Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Calculation Formula:', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text(calculation['formula'] ?? 'No formula available'),
-            SizedBox(height: 16),
-            Text('Weight Distribution:', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            if (calculation['weights'] != null)
-              ...(calculation['weights'] as Map<String, dynamic>).entries.map((e) => 
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      Expanded(flex: 2, child: Text(e.key.replaceAll('_', ' ').toUpperCase())),
-                      Expanded(
-                        flex: 3,
-                        child: LinearProgressIndicator(
-                          value: e.value.toDouble(),
-                          backgroundColor: Colors.grey[200],
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Text('${(e.value.toDouble() * 100).round()}%'),
-                    ],
-                  ),
-                ),
-              ),
-            SizedBox(height: 16),
-            Text('Recent Trips Data:', style: TextStyle(fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            if (recentTrips.isEmpty)
-              Text('No recent trip data available')
-            else
-              Column(
-                children: recentTrips.map((trip) => _buildTripMetricCard(trip)).toList(),
-              ),
-          ],
-        ),
-      ),
-    ],
-  );
-}
-
-Widget _buildTripMetricCard(Map<String, dynamic> trip) {
-  return Card(
-    margin: EdgeInsets.symmetric(vertical: 4),
-    child: Padding(
-      padding: EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Trip ID: ${trip['trip_id']}', style: TextStyle(fontWeight: FontWeight.bold)),
-          SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(child: Text('Distance: ${trip['distance']?.toStringAsFixed(2) ?? 'N/A'} miles')),
-              Expanded(child: Text('Avg Speed: ${trip['velocity']?.toStringAsFixed(1) ?? 'N/A'} mph')),
-            ],
-          ),
-          SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(child: Text('Max Speed: ${trip['max_velocity']?.toStringAsFixed(1) ?? 'N/A'} mph')),
-              Expanded(child: Text('Score: ${trip['trip_score']?.toStringAsFixed(1) ?? 'N/A'}')),
-            ],
-          ),
-          SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(child: Text('Accel Score: ${trip['accel_score']?.toStringAsFixed(1) ?? 'N/A'}')),
-              Expanded(child: Text('Brake Score: ${trip['brake_score']?.toStringAsFixed(1) ?? 'N/A'}')),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
 static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? sortBy}) async {
   String url = '$server/user_trips/$userId';
   if (sortBy != null) {
@@ -562,9 +458,6 @@ static String formatTimestamp(dynamic timestamp,{bool dateOnly = false}) {
   if (timestamp == null) {
     return "No date";
   }
-
-print("Raw timestamp received: $timestamp (Type: ${timestamp.runtimeType})");
-
   try {
     DateTime dateTime;
 
