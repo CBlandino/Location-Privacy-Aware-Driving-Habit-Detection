@@ -1,18 +1,17 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'trip_helper.dart';
 
-//tripservice.fetchprevioustrips
-//List<dynamic>
-//format time stamp
+
 
 class MiniScoreGraph extends StatelessWidget {
   // Possibly change to FlSPot instead of double
-  final List<double> scores; // Scores over time
-  final double height;
+  final List<double> scores;    // Scores over time
+  final List<String> dates;     // Dates and time for trips
+  final double height;          // height of graph container
+  
 
 
-  const MiniScoreGraph({super.key, required this.scores, required this.height});
+  const MiniScoreGraph({super.key, required this.scores, required this.dates, required this.height});
 
 
   @override

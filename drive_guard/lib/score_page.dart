@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart' show SharedPreferences;
@@ -6,6 +7,9 @@ import 'dart:convert';
 import 'custom_app_bar.dart';
 import 'current_trip_page.dart';
 import 'graph_Score_Page.dart';
+import 'trip_helper.dart';
+
+
 
 class ScorePage extends StatefulWidget {
   @override
@@ -20,6 +24,13 @@ class _ScorePage extends State<ScorePage> {
 
 
 
+
+
+  List<double> scores = [];
+  List<String> dates = [];
+
+
+
   Map<String, String> breakdown = {};   // Map receiving from backend. Key is the name of the habit, value is the severity
 
 
@@ -27,6 +38,7 @@ class _ScorePage extends State<ScorePage> {
   void initState() {
     super.initState();
     _loadUserInfo();
+    loadTripData();
   }
 
   Future<void> _loadUserInfo() async {
@@ -82,17 +94,34 @@ class _ScorePage extends State<ScorePage> {
     }
   }
 
+  Future<void> loadTripData() async {
+  try {
+    List<TripData> trips = await getPrevTripData();
+    setState(() {
+      scores = trips.map((t) => t.score).toList();
+      dates = trips.map((t) => t.date).toList();
+      isLoading = false;
+    });
+  } catch (e) {
+    // handle error, show fallback UI or message
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
+
+
   String _ratingLabel(num? value) {
-      if (value == null) return "Unknown";
+    if (value == null) return "Unknown";
 
-final double val = value.toDouble();
+    final double val = value.toDouble();
 
-
-  if (val >= 0.90) return "Excellent";
-  if (val >= 0.70) return "Good";
-  if (val >= 0.50) return "Average";
-  return "Needs Improvement";
-    }
+    if (val >= 0.90) return "Excellent";
+    if (val >= 0.70) return "Good";
+    if (val >= 0.50) return "Average";
+    return "Needs Improvement";
+  }
 
 
 @override
@@ -139,8 +168,9 @@ Widget build(BuildContext context) {
                     ),
                     const SizedBox(height: 30),
                     MiniScoreGraph(
-                      scores: convertScore([0.72, 0.85, 0.88, 0.91, 0.95, 1.0, 0.8]),   // replace with real score
-                      height: screenHeight *.22, 
+                      scores: convertScore(scores),   
+                      height: screenHeight *.22,
+                      dates: dates
                     ),
                     const SizedBox(height: 30),
                     Container(
@@ -288,6 +318,7 @@ void _showFullReportModal(BuildContext context) {
   );
 }
 
+  // Builds a page that directs user to start a trip if they have no trips recorded
   Widget _buildNoTripsYet(BuildContext context) {
     return Center(
       child: Column(
@@ -377,25 +408,57 @@ void _showFullReportModal(BuildContext context) {
     return scores.map((score) => score * 100).toList();
   }
 
+  // Gets all trips scores and dates they were done on and puts it in a list to be used by the graph
+  Future<List<TripData>> getPrevTripData () async {
+    
 
+    List<TripData> dateScoreList = [];    // list of all scores dates and associated scores
+    
+    List<Map<String, dynamic>> prevTripList = await TripService.fetchPreviousTripsData();   // list for previous trip structs
+    
+    // counter for testing
+    int counter = 0;
+
+    for (var prevTrip in prevTripList){
+      prevTrip.forEach((key, value) {
+        counter++;
+        // gets each scores score and start time
+        double? score = prevTrip['trip_score'];
+        String? date = prevTrip['start_time'];
+
+        // used for testing date and score
+        print(counter.toString() + ") score: " + score.toString() + "    date: " + date.toString());
+        
+
+        // update to use actual date
+        if (/*date != null &&*/ score != null) { 
+          dateScoreList.add(TripData(date: "date", score: score));
+        }
+        
+
+      });
+    }
+
+    print("Dates and Scores: "+dateScoreList.toList().toString());
+
+    
+    if (dateScoreList.isNotEmpty){
+      return dateScoreList;
+    }
+
+    else {
+      throw Exception('No valid trip data found.');
+    }
+      
+  }
   
-  // Converts list of scores 
-//   List<double> GetScores(){
 
-//     return List<double>;
-
-//   }
 }
 
+// Class to hold date and score to display on graph
+class TripData {
+  final String date;
+  final double score;
 
-
-
-/*
-Score will be socre of all trips combined
-for now make it out of 100
-
-
-
-
-
-*/
+  TripData({required this.date, required this.score});
+} 
