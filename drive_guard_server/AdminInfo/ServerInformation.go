@@ -8,20 +8,39 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ServerInfo struct { // this struct function to print out a server info board
+type ServerInfo struct {
 	ID      int    `json:"id"`
 	BaseURL string `json:"base_url"`
 	Port    string `json:"port"`
 	APIKey  string `json:"api_key"`
 }
 
-func HandleServerInfo(c *gin.Context, db *sql.DB) { //server infpo requests
-
-	var serverInfo ServerInfo //data  base is querid for sever info
-	err := db.QueryRow("SELECT id, base_url, port, api_key FROM server_information LIMIT 1").
-		Scan(&serverInfo.ID, &serverInfo.BaseURL, &serverInfo.Port, &serverInfo.APIKey)
-
-	if err != nil {
+func HandleServerInfo(c *gin.Context, db *sql.DB) {
+	// Get server ID from the request parameters
+	serverID := c.Query("server_id")
+	
+	// If no server ID is provided, use a default value like 1
+	if serverID == "" {
+		log.Println("No server ID provided, using default server")
+		serverID = "1" // Default server ID
+	}
+	
+	// Query the database for the specific server
+	var serverInfo ServerInfo
+	query := "SELECT id, base_url, port, api_key FROM server_information WHERE id = $1"
+	
+	err := db.QueryRow(query, serverID).Scan(
+		&serverInfo.ID,
+		&serverInfo.BaseURL,
+		&serverInfo.Port,
+		&serverInfo.APIKey,
+	)
+	
+	if err == sql.ErrNoRows {
+		log.Println("No server found with ID:", serverID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Server not found"})
+		return
+	} else if err != nil {
 		log.Println("Error querying server information:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve server information"})
 		return
@@ -32,16 +51,17 @@ func HandleServerInfo(c *gin.Context, db *sql.DB) { //server infpo requests
 }
 
 func SetupServerRoutes(router *gin.Engine, db *sql.DB) {
-	// Original server-info endpoint
+	// Server info endpoint
 	router.GET("/server-info", func(c *gin.Context) {
 		HandleServerInfo(c, db)
 	})
 
-	// New test endpoint for server information
+	// Test endpoint for server information
 	router.GET("/server-test", func(c *gin.Context) {
 		// This endpoint doesn't access the database
 		c.JSON(200, gin.H{
 			"status":  "success",
-			"message": "Server info test endpoint is working"})
+			"message": "Server info test endpoint is working",
+		})
 	})
 }

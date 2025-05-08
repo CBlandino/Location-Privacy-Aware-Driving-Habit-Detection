@@ -52,14 +52,6 @@ func HandleIDGeneration(c *gin.Context, db *sql.DB) { //id generation is dealt w
 	}
 	log.Println("HandleIDGeneration: Input validation passed")
 
-	newUserID := GenerateID(12) //unique id is gen
-	if newUserID == "" {
-		log.Println("HandleIDGeneration: Failed to generate unique ID")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate unique ID"})
-		return
-	}
-	log.Println("HandleIDGeneration: Generated ID:", newUserID)
-
 	// salt and hash
 	salt := make([]byte, 50)
 	_, err := rand.Read(salt)
@@ -79,22 +71,24 @@ func HandleIDGeneration(c *gin.Context, db *sql.DB) { //id generation is dealt w
 	}
 	log.Println("HandleIDGeneration: Role validated:", role)
 
-	//user is completely inserted into data base
+	// Insert user into the database and let the database auto-generate the ID
 	insertStmt := `
-        INSERT INTO users (generated_id, first_name, last_name, email, class, password_hash, salt, brake_score, accel_score, score)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO users (first_name, last_name, email, class, password_hash, salt, brake_score, accel_score, score)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id
     `
-	_, err = db.Exec(insertStmt, newUserID, newUser.Firstname, newUser.Lastname, newUser.Email, role, passHash[:], salt, 1.0, 1.0, 1.0)
+	var generatedID int
+	err = db.QueryRow(insertStmt, newUser.Firstname, newUser.Lastname, newUser.Email, role, passHash[:], salt, 1.0, 1.0, 1.0).Scan(&generatedID)
 	if err != nil {
 		log.Println("HandleIDGeneration: Error inserting user into database:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create account", "details": err.Error()})
 		return
 	}
 
-	log.Println("HandleIDGeneration: User inserted into database successfully")
+	log.Println("HandleIDGeneration: User inserted into database successfully with ID:", generatedID)
 
 	// Respond with success and the generated ID
-	c.JSON(http.StatusCreated, gin.H{"message": "Account created successfully", "account_id": newUserID})
+	c.JSON(http.StatusCreated, gin.H{"message": "Account created successfully", "account_id": generatedID})
 }
 
 // SetupIDRoutes registers the ID generator routes with Gin
