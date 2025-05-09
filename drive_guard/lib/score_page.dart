@@ -420,23 +420,20 @@ void _showFullReportModal(BuildContext context) {
     int counter = 0;
 
     for (var prevTrip in prevTripList){
-      prevTrip.forEach((key, value) {
-        counter++;
-        // gets each scores score and start time
-        double? score = prevTrip['trip_score'];
-        String? date = prevTrip['start_time'];
+      counter++;
+      // gets each scores score and start time
+      double? score = prevTrip['trip_score'];
+      String? date = prevTrip['start_time'];
 
-        // used for testing date and score
-        print(counter.toString() + ") score: " + score.toString() + "    date: " + date.toString());
+      // used for testing date and score
+      print(counter.toString() + ") score: " + score.toString() + "    date: " + date.toString());
+      
+
+      // update to use actual date
+      if (/*date != null &&*/ score != null) { 
+        dateScoreList.add(TripData(date: "date", score: score));
+      }
         
-
-        // update to use actual date
-        if (/*date != null &&*/ score != null) { 
-          dateScoreList.add(TripData(date: "date", score: score));
-        }
-        
-
-      });
     }
 
     print("Dates and Scores: "+dateScoreList.toList().toString());
