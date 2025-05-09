@@ -162,7 +162,16 @@ class MiniScoreGraph extends StatelessWidget {
       color: Colors.yellow,
       barWidth: 3,
       isStrokeCapRound: true,
-      dotData: FlDotData(show: false),
+      dotData: FlDotData(
+        show: true,
+        getDotPainter: (spot, percent, barData, index) {
+          return FlDotCirclePainter(
+            radius: 3,
+            color: const Color.fromARGB(255, 99, 185, 255),
+           
+          );
+        },
+      ),
       belowBarData: BarAreaData(
         show: true,
         gradient: LinearGradient(
