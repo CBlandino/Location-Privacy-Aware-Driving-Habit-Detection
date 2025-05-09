@@ -19,7 +19,7 @@ class MiniScoreGraph extends StatelessWidget {
 
     return Container(
       height: height,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -39,12 +39,15 @@ class MiniScoreGraph extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 99, 185, 255)
             ),
           ),
 
           Expanded(
             child: LineChart(
               LineChartData(
+                minY: 0,
+                maxY: 100,
                 titlesData: _buildFlTitlesData(),
                 borderData: _buildFlBorderData(),
                 gridData: _buildFlGridData(),
@@ -62,24 +65,30 @@ class MiniScoreGraph extends StatelessWidget {
   }
 
   LineTouchData _buildLineTouchData() {
-
-    return LineTouchData(
-      enabled: true,
-      touchTooltipData: LineTouchTooltipData(
-        getTooltipItems: (touchedSpots) {
-          return touchedSpots.map((spot) {
-            return LineTooltipItem(
-              'Trip ${spot.x.toInt() + 1}\nScore: ${spot.y.toStringAsFixed(1)}',
-              const TextStyle(
-                color: Colors.white
-              ),
-            );
-          }).toList();
-        },
-      ),
-      handleBuiltInTouches: true,
-    );
-  }
+  return LineTouchData(
+    enabled: true,
+    handleBuiltInTouches: true,
+    touchTooltipData: LineTouchTooltipData(
+      //decoration: BoxDecoration(),
+      //tooltipBgColor: Colors.black.withOpacity(0.8), // sleek dark background
+      tooltipRoundedRadius: 12,
+      tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      tooltipMargin: 16,
+      getTooltipItems: (touchedSpots) {
+        return touchedSpots.map((spot) {
+          return LineTooltipItem(
+            'Trip ${spot.x.toInt() + 1}\nScore: ${spot.y.toStringAsFixed(0)}%',
+            TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          );
+        }).toList();
+      },
+    ),
+  );
+}
 
 
 
@@ -94,9 +103,9 @@ class MiniScoreGraph extends StatelessWidget {
       ),
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
-          showTitles: true,
+          showTitles: false,
           reservedSize: 40,
-          interval: 100,
+          interval: 20,
           minIncluded: true,
         )
       ),
@@ -108,9 +117,10 @@ class MiniScoreGraph extends StatelessWidget {
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: false,
+
         )
       ),
-
+      
 
     );
   }
@@ -150,7 +160,9 @@ class MiniScoreGraph extends StatelessWidget {
           .toList(),
       isCurved: true,
       color: Colors.yellow,
-      barWidth: 4,
+      barWidth: 3,
+      isStrokeCapRound: true,
+      dotData: FlDotData(show: false),
       belowBarData: BarAreaData(
         show: true,
         gradient: LinearGradient(
