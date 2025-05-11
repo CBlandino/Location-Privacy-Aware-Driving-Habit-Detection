@@ -49,19 +49,3 @@ func HandleServerInfo(c *gin.Context, db *sql.DB) {
 	// Return the server information as JSON
 	c.JSON(http.StatusOK, serverInfo)
 }
-
-func SetupServerRoutes(router *gin.Engine, db *sql.DB) {
-	// Server info endpoint
-	router.GET("/server-info", func(c *gin.Context) {
-		HandleServerInfo(c, db)
-	})
-
-	// Test endpoint for server information
-	router.GET("/server-test", func(c *gin.Context) {
-		// This endpoint doesn't access the database
-		c.JSON(200, gin.H{
-			"status":  "success",
-			"message": "Server info test endpoint is working",
-		})
-	})
-}

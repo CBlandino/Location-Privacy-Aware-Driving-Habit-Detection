@@ -5,28 +5,12 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"log"
-	mathrand "math/rand" // Using alias to avoid confusion
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-var seededRand = mathrand.New(mathrand.NewSource(time.Now().UnixNano())) //global seeded rnd gen
 
-func GenerateID(length int) string { //id that is random is generated using math rand
-	if length <= 0 {
-		log.Println("Invalid length for ID generation")
-		return ""
-	}
-
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	id := make([]byte, length)
-	for i := range id {
-		id[i] = charset[seededRand.Intn(len(charset))]
-	}
-	return string(id)
-}
 
 func HandleIDGeneration(c *gin.Context, db *sql.DB) { //id generation is dealt with creates an account for the user
 	log.Println("HandleIDGeneration: Function called")
@@ -89,24 +73,4 @@ func HandleIDGeneration(c *gin.Context, db *sql.DB) { //id generation is dealt w
 
 	// Respond with success and the generated ID
 	c.JSON(http.StatusCreated, gin.H{"message": "Account created successfully", "account_id": generatedID})
-}
-
-// SetupIDRoutes registers the ID generator routes with Gin
-func SetupIDRoutes(router *gin.Engine, db *sql.DB) {
-	log.Println("SetupIDRoutes: Registering routes")
-
-	// Main endpoint for ID generation and account creation
-	router.POST("/generate-id", func(c *gin.Context) {
-		log.Println("SetupIDRoutes: /generate-id route triggered")
-		HandleIDGeneration(c, db)
-	})
-
-	router.GET("/id-test", func(c *gin.Context) { // Simple test endpoint that doesn't require database access
-		log.Println("SetupIDRoutes: /id-test route triggered")
-		testID := GenerateID(8)
-		c.JSON(http.StatusOK, gin.H{
-			"status":    "success",
-			"message":   "ID generator test endpoint is working",
-			"sample_id": testID})
-	})
 }

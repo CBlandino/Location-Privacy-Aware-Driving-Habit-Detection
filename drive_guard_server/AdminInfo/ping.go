@@ -11,4 +11,5 @@ func HandlePing(c *gin.Context) {//this fuctios to handle ping requests
 
 
 func SetupPingRoutes(router *gin.Engine) {//this setups ping route regis
-	router.GET("/ping", HandlePing)}
+	router.GET("/ping", HandlePing)
+}
