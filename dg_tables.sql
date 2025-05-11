@@ -36,15 +36,6 @@ CREATE TABLE IF NOT EXISTS TripsMetrics (
     FOREIGN KEY (trip_id) REFERENCES Trips(trip_id) ON DELETE CASCADE
 );
 
-CREATE TABLE accounts (
-    id SERIAL PRIMARY KEY,          -- Auto-incrementing unique ID
-    account_id VARCHAR(12) NOT NULL UNIQUE, -- The generated ID (12 characters)
-    username VARCHAR(255) NOT NULL, -- Username of the account
-    email VARCHAR(255) NOT NULL UNIQUE, -- Email address of the account
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Timestamp of account creation
-);
-
-
 CREATE TABLE insurance (
     id SERIAL PRIMARY KEY,          -- Auto-incrementing unique ID
     policy_name VARCHAR(255) NOT NULL, -- Name of the insurance policy
@@ -59,14 +50,6 @@ CREATE TABLE server_information (
     base_url VARCHAR(255) NOT NULL, -- Base URL of the server
     port VARCHAR(10) NOT NULL,      -- Port number as a string
     api_key VARCHAR(255) NOT NULL   -- API key for the server
-);
-
-
-
-CREATE TABLE generate_id (
-    id SERIAL PRIMARY KEY,          -- Auto-incrementing unique ID
-    generated_id VARCHAR(12) NOT NULL UNIQUE, -- The generated ID (12 characters)
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Timestamp of ID generation
 );
 
 -- DO $$ 
