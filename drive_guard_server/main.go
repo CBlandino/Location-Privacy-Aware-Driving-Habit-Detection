@@ -13,13 +13,13 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"context"
-	"drive_guard_server/AdminInfo" // just added
 
 	"drive_guard_server/auth"
 	"drive_guard_server/insurance"
 	"drive_guard_server/score"
 	"drive_guard_server/trips"
 	"drive_guard_server/util"
+	"drive_guard_server/AdminInfo"
 )
 
 var (
@@ -126,18 +126,27 @@ func main() {
 	})
 
 	// Add routes for Ping Server
-	AdminInfo.SetupPingRoutes(server)
+	server.GET("/ping", AdminInfo.HandlePing)
 
 	// Add routes for Insurance Lookup
-	AdminInfo.SetupInsuranceRoutes(server, db)
+	server.GET("/insurance", func(c *gin.Context) {
+		AdminInfo.HandleInsuranceLookup(c, db)
+	})
 
 	// Add routes for Server Information
-	AdminInfo.SetupServerRoutes(server, db)
+	server.GET("/server-info", func(c *gin.Context) {
+		AdminInfo.HandleServerInfo(c, db)
+	})
 
 	// Add routes for ID Generator
-	AdminInfo.SetupIDRoutes(server, db)
-	// Start the server
-	// Add this line to your route setup section in main.go
-	AdminInfo.SetupStatsRoutes(server, db)
+	server.POST("/generate-id", func(c *gin.Context) {
+		log.Println("SetupIDRoutes: /generate-id route triggered")
+		AdminInfo.HandleIDGeneration(c, db)
+	})
+
+	server.GET("/admin/stats", func(c *gin.Context) {
+		log.Println("SetupStatsRoutes: /admin/stats route triggered")
+		AdminInfo.HandleQuickStats(c, db)
+	})
 	server.Run(ADDR)
 }

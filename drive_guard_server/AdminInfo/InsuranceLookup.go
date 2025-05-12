@@ -57,11 +57,4 @@ func SetupInsuranceRoutes(router *gin.Engine, db *sql.DB) {
 	router.GET("/insurance", func(c *gin.Context) {
 		HandleInsuranceLookup(c, db)
 	})
-
-	router.GET("/insurance-test", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"status":  "success",
-			"message": "Insurance test endpoint is working",
-		})
-	})
 }

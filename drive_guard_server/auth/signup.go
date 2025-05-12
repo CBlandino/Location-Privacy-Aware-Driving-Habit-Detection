@@ -76,7 +76,7 @@ func insertUser(newUser util.User, db *sql.DB) (sql.Result, error) {
 
 func checkRole(input string) (string, error) {
 
-	if input != "user" && input != "admin" && input != "insurance" {
+	if input != "user" {
 		return "", errors.New("invalid user class provided!")
 	}
 

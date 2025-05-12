@@ -53,22 +53,3 @@ func HandleQuickStats(c *gin.Context, db *sql.DB) {
 	log.Println("HandleQuickStats: Statistics retrieved successfully")
 	c.JSON(http.StatusOK, stats)
 }
-
-// SetupStatsRoutes registers the statistics routes with Gin
-func SetupStatsRoutes(router *gin.Engine, db *sql.DB) {
-	log.Println("SetupStatsRoutes: Registering routes")
-	
-	// Quick stats endpoint
-	router.GET("/admin/stats", func(c *gin.Context) {
-		log.Println("SetupStatsRoutes: /admin/stats route triggered")
-		HandleQuickStats(c, db)
-	})
-	
-	// Test endpoint that doesn't require database access
-	router.GET("/stats-test", func(c *gin.Context) {
-		log.Println("SetupStatsRoutes: /stats-test route triggered")
-		c.JSON(http.StatusOK, gin.H{
-			"status": "success",
-			"message": "Stats test endpoint is working"})
-	})
-}
