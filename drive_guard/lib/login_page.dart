@@ -40,6 +40,9 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
   final stateController = TextEditingController();
   final serverNumberController = TextEditingController();
   final idController = TextEditingController();
+  final _adminIdController = TextEditingController();
+final _serverNumberController = TextEditingController();
+
 
   late TabController _tabController;
   final String server = AppConfig.server;
@@ -66,6 +69,7 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
     serverNumberController.dispose();
     idController.dispose();
     _tabController.dispose();
+    
     super.dispose();
   }
 

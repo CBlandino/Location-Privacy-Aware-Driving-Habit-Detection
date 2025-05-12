@@ -46,6 +46,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
   final _passwordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _adminIdController = TextEditingController();
+final _serverNumberController = TextEditingController();
+
   String _selectedRole = 'user';
   bool _isCreatingAccount = false;
   String _createAccountError = '';
@@ -69,6 +72,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
     _passwordController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _adminIdController.dispose();
+_serverNumberController.dispose();
+
     super.dispose();
   }
 
@@ -456,58 +462,52 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
-  Widget _buildQuickStatsRow() {
-    if (_isLoadingStats) {
-      return Card(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      );
-    }
-
-    if (_statsError.isNotEmpty) {
-      return Card(
-        child: Padding(padding: EdgeInsets.all(24), child: Text(_statsError)),
-      );
-    }
-
+Widget _buildQuickStatsRow() {
+  if (_isLoadingStats) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+
+  if (_statsError.isNotEmpty) {
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text(_statsError),
+      ),
+    );
+  }
+
+  final isWeb = kIsWeb;
+  final screenWidth = MediaQuery.of(context).size.width;
+  final isLargeScreen = screenWidth > 1000;
+  final maxStatWidth = isWeb ? 1200.0 : 800.0;
+
+  return Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxStatWidth),
+      child: Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24, horizontal: isLargeScreen ? 40 : 16),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildStatItem(
-                Icons.people,
-                'Total Users',
-                _quickStats['total_users'].toString(),
-                Colors.blue,
-              ),
-              SizedBox(width: 16),
-              _buildStatItem(
-                Icons.admin_panel_settings,
-                'Total Admins',
-                _quickStats['total_admins'].toString(),
-                Colors.green,
-              ),
-              SizedBox(width: 16),
-              _buildStatItem(
-                Icons.business,
-                'Insurance Cos',
-                _quickStats['total_insurance'].toString(),
-                Colors.orange,
-              ),
+              _buildStatItem(Icons.people, 'Total Users', _quickStats['total_users'].toString(), Colors.blue, isLargeScreen),
+              _buildStatItem(Icons.admin_panel_settings, 'Total Admins', _quickStats['total_admins'].toString(), Colors.green, isLargeScreen),
+              _buildStatItem(Icons.business, 'Insurance Cos', _quickStats['total_insurance'].toString(), Colors.orange, isLargeScreen),
             ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Widget _buildServerStatusCard({required bool isWeb}) {
     return Card(
@@ -644,36 +644,39 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
-  Widget _buildStatItem(
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
-    return ConstrainedBox(
-      constraints: BoxConstraints(minWidth: 120),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 4),
-          Text(label, style: TextStyle(color: Colors.grey[600])),
-        ],
+Widget _buildStatItem(
+  IconData icon,
+  String label,
+  String value,
+  Color color,
+  bool isLarge,
+) {
+  final iconSize = isLarge ? 36.0 : 28.0;
+  final numberSize = isLarge ? 28.0 : 22.0;
+  final labelSize = isLarge ? 16.0 : 14.0;
+
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        padding: EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: color, size: iconSize),
       ),
-    );
-  }
+      SizedBox(height: 12),
+      Text(
+        value,
+        style: TextStyle(fontSize: numberSize, fontWeight: FontWeight.bold),
+      ),
+      SizedBox(height: 6),
+      Text(label, style: TextStyle(color: Colors.grey[600], fontSize: labelSize)),
+    ],
+  );
+}
+
 
   // MODAL DIALOGS
   void _showCreateAccountModal() {
@@ -879,6 +882,56 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     },
                   ),
                 ],
+                if (_selectedRole == 'admin') ...[
+  _buildFormField(
+    controller: _firstNameController,
+    label: 'First Name',
+    icon: Icons.person,
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Please enter first name';
+      }
+      return null;
+    },
+  ),
+  SizedBox(height: 12),
+  _buildFormField(
+    controller: _lastNameController,
+    label: 'Last Name',
+    icon: Icons.person_outline,
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Please enter last name';
+      }
+      return null;
+    },
+  ),
+  SizedBox(height: 12),
+  _buildFormField(
+    controller: _adminIdController,
+    label: 'Admin ID',
+    icon: Icons.admin_panel_settings,
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Please enter admin ID';
+      }
+      return null;
+    },
+  ),
+  SizedBox(height: 12),
+  _buildFormField(
+    controller: _serverNumberController,
+    label: 'Server Number',
+    icon: Icons.computer,
+    validator: (value) {
+      if (value == null || value.isEmpty) {
+        return 'Please enter server number';
+      }
+      return null;
+    },
+  ),
+],
+
               ],
             ),
             SizedBox(height: 16),
@@ -978,180 +1031,324 @@ class _AdminHomePageState extends State<AdminHomePage> {
     final isWeb = kIsWeb;
 
     if (isWeb) {
-      showDialog(
-        context: context,
-        builder:
-            (context) => Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 600,
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                ),
-                child: Dialog(
-                  insetPadding: EdgeInsets.all(20),
-                  child: _buildUserSearchForm(),
-                ),
-              ),
-            ),
-      );
+     showDialog(
+  context: context,
+  builder: (context) => Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: 600,
+        maxHeight: MediaQuery.of(context).size.height * 0.8,
+      ),
+child: Dialog(
+  insetPadding: EdgeInsets.all(20),
+  child: StatefulBuilder(
+    builder: (context, setModalState) {
+      return _buildUserSearchForm(setModalState);
+    },
+  ),
+),
+    ),
+  ),
+);
     } else {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder:
-            (context) => DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: 0.7,
-              minChildSize: 0.5,
-              maxChildSize: 0.9,
-              builder: (context, scrollController) {
-                return SingleChildScrollView(
-                  controller: scrollController,
-                  child: _buildUserSearchForm(),
-                );
-              },
-            ),
-      );
+showModalBottomSheet(
+  context: context,
+  isScrollControlled: true,
+  builder: (context) {
+    return StatefulBuilder(
+      builder: (context, setModalState) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.8,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: _buildUserSearchForm(setModalState),
+            );
+          },
+        );
+      },
+    );
+  },
+);
+
     }
   }
 
-  Widget _buildUserSearchForm() {
-    final isWeb = kIsWeb;
-    final isLargeScreen = MediaQuery.of(context).size.width > 600;
+void _showUserDetailsDialog(Map<String, dynamic> user) {
+  final isWeb = kIsWeb;
+  final maxDialogWidth = isWeb ? 500.0 : double.infinity;
 
-    return Container(
-      padding: EdgeInsets.all(isWeb ? 20 : 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(isWeb ? 16 : 12),
-          topRight: Radius.circular(isWeb ? 16 : 12),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxDialogWidth),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Search Users',
-                style: TextStyle(
-                  fontSize: isLargeScreen ? 20 : 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundColor: Colors.blue[100],
+                    child: Icon(Icons.person, color: Colors.blue[700], size: 30),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      '${user['first_name'] ?? ''} ${user['last_name'] ?? ''}',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[900],
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
-              IconButton(
-                icon: Icon(Icons.close, size: 20),
-                onPressed: () => Navigator.pop(context),
+              SizedBox(height: 16),
+              Divider(),
+              SizedBox(height: 8),
+              _buildUserDetailRow('Email', user['email']),
+              _buildUserDetailRow('Role', user['role']),
+              _buildUserDetailRow('User ID', user['user_id']),
+              if (user.containsKey('policy_number'))
+                _buildUserDetailRow('Policy Number', user['policy_number']),
+              SizedBox(height: 20),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.check),
+                  label: Text('Close'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.blue[800],
+                  ),
+                ),
               ),
             ],
           ),
-          SizedBox(height: 16),
-          TextField(
-            decoration: InputDecoration(
-              labelText: 'Search by name, email or ID',
-              border: OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(Icons.search),
-                onPressed: _searchUsers,
-              ),
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 12,
-                horizontal: 12,
-              ),
-            ),
-            onChanged: (value) => _userSearchQuery = value,
-            onSubmitted: (_) => _searchUsers(),
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildUserDetailRow(String label, dynamic value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6.0),
+    child: Row(
+      children: [
+        Text(
+          '$label:',
+          style: TextStyle(fontWeight: FontWeight.w600, color: Colors.grey[700]),
+        ),
+        SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value?.toString() ?? 'N/A',
+            style: TextStyle(color: Colors.black87),
+            overflow: TextOverflow.ellipsis,
           ),
-          SizedBox(height: 16),
-          if (_isLoadingUsers)
-            Center(child: CircularProgressIndicator())
-          else if (_userSearchError.isNotEmpty)
-            Text(_userSearchError, style: TextStyle(color: Colors.red))
-          else if (_userResults.isNotEmpty)
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.5,
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _userResults.length,
-                itemBuilder: (context, index) {
-                  final user = _userResults[index];
-                  return Card(
-                    margin: EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        child: Text(user['name'].toString().substring(0, 1)),
-                      ),
-                      title: Text(user['name'], style: TextStyle(fontSize: 14)),
-                      subtitle: Text(
-                        user['email'],
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      trailing: Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  );
-                },
+        ),
+      ],
+    ),
+  );
+}
+
+
+  Widget _buildUserSearchForm([void Function(VoidCallback fn)? setModalState])
+ {
+    final isWeb = kIsWeb;
+    final isLargeScreen = MediaQuery.of(context).size.width > 600;
+
+return SingleChildScrollView(
+  child: Container(
+    padding: EdgeInsets.all(isWeb ? 20 : 16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(isWeb ? 16 : 12),
+        topRight: Radius.circular(isWeb ? 16 : 12),
+      ),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+           Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Search Users',
+              style: TextStyle(
+                fontSize: isLargeScreen ? 20 : 18,
+                fontWeight: FontWeight.bold,
               ),
             ),
-        ],
+            IconButton(
+              icon: Icon(Icons.close, size: 20),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        TextField(
+          decoration: InputDecoration(
+            labelText: 'Search by name, email or ID',
+            border: OutlineInputBorder(),
+  suffixIcon: IconButton(
+    icon: Icon(Icons.search),
+    onPressed: () => _searchUsers(setModalState, context),
+  ),
+            contentPadding: EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 12,
+            ),
+          ),
+          onChanged: (value) => _userSearchQuery = value,
+onSubmitted: (value) {
+  _userSearchQuery = value;
+  if (setModalState != null) {
+    _searchUsers(setModalState);
+  } else {
+    _searchUsers();
+  }
+},
+
+        ),
+        SizedBox(height: 16),
+        Builder(
+          builder: (context) {
+            if (_isLoadingUsers) {
+              return Center(child: CircularProgressIndicator());
+            } else if (_userSearchError.isNotEmpty) {
+              return Text(_userSearchError, style: TextStyle(color: Colors.red));
+            } else if (_userResults.isEmpty && _userSearchQuery.isNotEmpty) {
+              return Text('No users found matching "$_userSearchQuery".');
+            } else {
+              return _buildUserList();
+            }
+          },
+        ),
+      ],
+    ),
+  ),
+);
+  }
+
+Widget _buildUserList() {
+  return ConstrainedBox(
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * 0.5,
+    ),
+    child: ListView.separated(
+      shrinkWrap: true,
+      itemCount: _userResults.length,
+      separatorBuilder: (_, __) => SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final user = _userResults[index];
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            leading: CircleAvatar(
+              backgroundColor: Colors.green[100],
+              child: Icon(Icons.person, color: Colors.green[800]),
+            ),
+            title: Text(
+              '${user['first_name']} ${user['last_name']}',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 4),
+                Text(user['email'], style: TextStyle(color: Colors.grey[700])),
+                Text('Role: ${user['role'] ?? 'N/A'}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              ],
+            ),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () => _showUserDetailsDialog(user),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+
+
+void _showInsuranceSearch() {
+  final isWeb = kIsWeb;
+
+  if (isWeb) {
+    showDialog(
+      context: context,
+      builder: (context) => Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 600,
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: Dialog(
+            insetPadding: EdgeInsets.all(20),
+            child: StatefulBuilder(
+              builder: (context, setModalState) {
+                return _buildInsuranceSearchForm(setModalState);
+              },
+            ),
+          ),
+        ),
       ),
     );
-  }
-
-  void _showInsuranceSearch() {
-    final isWeb = kIsWeb;
-
-    if (isWeb) {
-      showDialog(
-        context: context,
-        builder:
-            (context) => Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 600,
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                ),
-                child: Dialog(
-                  insetPadding: EdgeInsets.all(20),
-                  child: _buildInsuranceSearchForm(),
-                ),
-              ),
-            ),
-      );
-    } else {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder:
-            (context) => DraggableScrollableSheet(
+  } else {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return DraggableScrollableSheet(
               expand: false,
-              initialChildSize: 0.7,
+              initialChildSize: 0.8,
               minChildSize: 0.5,
-              maxChildSize: 0.9,
+              maxChildSize: 0.95,
               builder: (context, scrollController) {
                 return SingleChildScrollView(
                   controller: scrollController,
-                  child: _buildInsuranceSearchForm(),
+                  child: _buildInsuranceSearchForm(setModalState),
                 );
               },
-            ),
-      );
-    }
+            );
+          },
+        );
+      },
+    );
   }
+}
 
-  // Enhanced Insurance Search Form
-  Widget _buildInsuranceSearchForm() {
-    final isWeb = kIsWeb;
-    final isLargeScreen = MediaQuery.of(context).size.width > 600;
 
-    return Container(
+Widget _buildInsuranceSearchForm([void Function(VoidCallback fn)? setModalState]) {
+  final isWeb = kIsWeb;
+  final isLargeScreen = MediaQuery.of(context).size.width > 600;
+
+  return SingleChildScrollView(
+    child: Container(
       padding: EdgeInsets.all(isWeb ? 20 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1168,7 +1365,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Search Insurance',
+                'Search Insurance Users',
                 style: TextStyle(
                   fontSize: isLargeScreen ? 20 : 18,
                   fontWeight: FontWeight.bold,
@@ -1183,60 +1380,134 @@ class _AdminHomePageState extends State<AdminHomePage> {
           SizedBox(height: 16),
           TextField(
             decoration: InputDecoration(
-              labelText: 'Search by policy number or company name',
+              labelText: 'Search by policy number or insurance company',
               border: OutlineInputBorder(),
               suffixIcon: IconButton(
                 icon: Icon(Icons.search),
-                onPressed: _searchInsurance,
+                onPressed: () => _searchInsurance(setModalState, context),
               ),
-              contentPadding: EdgeInsets.symmetric(
-                vertical: 12,
-                horizontal: 12,
-              ),
+              contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             ),
             onChanged: (value) => _insuranceSearchQuery = value,
-            onSubmitted: (_) => _searchInsurance(),
+            onSubmitted: (value) {
+              _insuranceSearchQuery = value;
+              _searchInsurance(setModalState, context);
+            },
           ),
           SizedBox(height: 16),
-          if (_isLoadingInsurance)
-            Center(child: CircularProgressIndicator())
-          else if (_insuranceSearchError.isNotEmpty)
-            Text(_insuranceSearchError, style: TextStyle(color: Colors.red))
-          else if (_insuranceResults.isNotEmpty)
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.5,
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _insuranceResults.length,
-                itemBuilder: (context, index) {
-                  final insurance = _insuranceResults[index];
-                  return Card(
-                    margin: EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: Icon(Icons.verified, color: Colors.green),
-                      title: Text(
-                        insurance['policy_name'],
-                        style: TextStyle(fontSize: 14),
-                      ),
-                      subtitle: Text(
-                        insurance['description'],
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      trailing: Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
+          Builder(
+            builder: (context) {
+              if (_isLoadingInsurance) {
+                return Center(child: CircularProgressIndicator());
+              } else if (_insuranceSearchError.isNotEmpty) {
+                return Text(_insuranceSearchError, style: TextStyle(color: Colors.red));
+              } else if (_insuranceResults.isEmpty && _insuranceSearchQuery.isNotEmpty) {
+                return Text('No users found for "$_insuranceSearchQuery".');
+              } else {
+                return _buildInsuranceUserList(); // New user list widget
+              }
+            },
+          ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+Widget _buildInsuranceUserList() {
+  return ConstrainedBox(
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * 0.5,
+    ),
+    child: ListView.separated(
+      shrinkWrap: true,
+      itemCount: _insuranceResults.length,
+      separatorBuilder: (_, __) => SizedBox(height: 8),
+      itemBuilder: (context, index) {
+        final user = _insuranceResults[index];
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            leading: CircleAvatar(
+              backgroundColor: Colors.orange[100],
+              child: Icon(Icons.business, color: Colors.orange[800]),
+            ),
+            title: Text(
+              '${user['first_name']} ${user['last_name']}',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 4),
+                Text(user['email'], style: TextStyle(color: Colors.grey[700])),
+                Text('Role: ${user['role'] ?? 'insurance'}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              ],
+            ),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () => _showUserDetailsDialog(user),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+Widget _buildInsuranceList() {
+  return ConstrainedBox(
+    constraints: BoxConstraints(
+      maxHeight: MediaQuery.of(context).size.height * 0.5,
+    ),
+    child: ListView.builder(
+      shrinkWrap: true,
+      itemCount: _insuranceResults.length,
+      itemBuilder: (context, index) {
+        final insurance = _insuranceResults[index];
+        return Card(
+          margin: EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: Icon(Icons.verified, color: Colors.orange),
+            title: Text(insurance['policy_name'] ?? 'Unnamed Policy', style: TextStyle(fontSize: 14)),
+            subtitle: Text(insurance['description'] ?? 'No description', style: TextStyle(fontSize: 12)),
+            trailing: Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.pop(context);
+              _showInsuranceDetailsDialog(insurance);
+            },
+          ),
+        );
+      },
+    ),
+  );
+}
+
+void _showInsuranceDetailsDialog(Map<String, dynamic> insurance) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(insurance['policy_name'] ?? 'Insurance Details'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ID: ${insurance['id'] ?? 'N/A'}'),
+          SizedBox(height: 8),
+          Text('Description: ${insurance['description'] ?? 'N/A'}'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+
 
   void _showAnalytics() {
     final isWeb = kIsWeb;
@@ -1282,7 +1553,8 @@ class _AdminHomePageState extends State<AdminHomePage> {
 
   Widget _buildAnalyticsDashboard() {
     final isWeb = kIsWeb;
-    final isLargeScreen = MediaQuery.of(context).size.width > 600;
+      final screenWidth = MediaQuery.of(context).size.width;
+  final isLargeScreen = screenWidth > 1000;
 
     return Container(
       padding: EdgeInsets.all(isWeb ? 24.0 : 16.0),
@@ -1337,6 +1609,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                           'Total Users',
                           _quickStats['total_users'].toString(),
                           Colors.blue,
+                          isLargeScreen
                         ),
                       ),
                       Expanded(
@@ -1345,6 +1618,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                           'Admins',
                           _quickStats['total_admins'].toString(),
                           Colors.green,
+                          isLargeScreen
                         ),
                       ),
                       Expanded(
@@ -1353,6 +1627,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                           'Insurance',
                           _quickStats['total_insurance'].toString(),
                           Colors.orange,
+                          isLargeScreen
                         ),
                       ),
                     ],
@@ -1494,85 +1769,61 @@ class _AdminHomePageState extends State<AdminHomePage> {
     }
   }
 
-  void _searchUsers() async {
-    setState(() {
-      _isLoadingUsers = true;
-      _userSearchError = '';
-      _userResults = [];
+void _searchUsers([void Function(VoidCallback fn)? modalSetState, BuildContext? context]) async {
+  if (context != null) FocusScope.of(context).unfocus();
+   final setStateFn = modalSetState ?? setState;
+
+  setStateFn(() {
+    _isLoadingUsers = true;
+    _userSearchError = '';
+    _userResults = [];
+  });
+
+  try {
+    final results = await TripService.searchUsers(_userSearchQuery);
+    setStateFn(() {
+      _userResults = results;
     });
-
-    try {
-      final results = await TripService.searchUsers(_userSearchQuery);
-      setState(() {
-        _userResults = results;
-      });
-    } catch (e) {
-      setState(() {
-        _userSearchError = e.toString();
-      });
-    } finally {
-      setState(() {
-        _isLoadingUsers = false;
-      });
-    }
-  }
-
-  Future<void> _searchInsurance() async {
-    if (_insuranceSearchQuery.isEmpty) return;
-
-    setState(() {
-      _isLoadingInsurance = true;
-      _insuranceSearchError = '';
-      _insuranceResults = [];
+  } catch (e) {
+    setStateFn(() {
+      _userSearchError = e.toString();
     });
-
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('access_token');
-
-      if (token == null) {
-        throw Exception('No authentication token found');
-      }
-
-      final response = await http.get(
-        Uri.parse(
-          '${AppConfig.server}/insurance?policyNumber=$_insuranceSearchQuery',
-        ),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _insuranceResults = [
-            {
-              'id': data['id'],
-              'policy_name': data['policy_name'],
-              'description': data['description'],
-            },
-          ];
-        });
-      } else if (response.statusCode == 404) {
-        setState(() {
-          _insuranceResults = [];
-          _insuranceSearchError = 'No insurance found with that policy number';
-        });
-      } else {
-        throw Exception('Failed to search insurance: ${response.statusCode}');
-      }
-    } catch (e) {
-      setState(() {
-        _insuranceSearchError = 'Failed to search insurance: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoadingInsurance = false;
-      });
-    }
+  } finally {
+    setStateFn(() {
+      _isLoadingUsers = false;
+    });
   }
+}
+
+
+Future<void> _searchInsurance([void Function(VoidCallback fn)? modalSetState, BuildContext? context]) async {
+  if (context != null) FocusScope.of(context).unfocus();
+
+  final setStateFn = modalSetState ?? setState;
+
+  setStateFn(() {
+    _isLoadingInsurance = true;
+    _insuranceSearchError = '';
+    _insuranceResults = [];
+  });
+
+  try {
+    final results = await TripService.searchUsers(_insuranceSearchQuery);
+    setStateFn(() {
+      _insuranceResults = results;
+    });
+  } catch (e) {
+    setStateFn(() {
+      _insuranceSearchError = e.toString();
+    });
+  } finally {
+    setStateFn(() {
+      _isLoadingInsurance = false;
+    });
+  }
+}
+
+
 
   Future<void> _createAccount() async {
     if (!_createAccountFormKey.currentState!.validate()) {
