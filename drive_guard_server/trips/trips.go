@@ -111,7 +111,7 @@ func insertStartTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) error {
 			return err
 		}
 
-		err = endTrip(id, trip_id, db)
+		err = EndTrip(id, trip_id, db)
 		if err != nil {
 			return err
 		}
@@ -155,7 +155,7 @@ func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) erro
 			return err
 		}
 
-		err = endTrip(id, trip_id, db) 
+		err = EndTrip(id, trip_id, db) 
 		if err != nil {
 			return err
 		}
@@ -164,7 +164,7 @@ func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) erro
 	return nil
 }
 
-func endTrip(user_id, trip_id int, db *sql.DB) error {
+func EndTrip(user_id, trip_id int, db *sql.DB) error {
 	err := score.TripMetricsPasses(trip_id, db) 
 	if err != nil {
 		return err

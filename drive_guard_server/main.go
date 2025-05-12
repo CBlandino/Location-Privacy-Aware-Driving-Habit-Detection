@@ -28,6 +28,7 @@ var (
 	DB_USER string
 	DB_PASS string
 	DB_NAME string
+	UPDATE bool
 )
 
 func init() {
@@ -36,6 +37,7 @@ func init() {
 	flag.StringVar(&DB_USER, "dbuser", "dg_api", "database username")
 	flag.StringVar(&DB_PASS, "dbpass", "secure", "database user password")
 	flag.StringVar(&DB_NAME, "dbname", "dg_db", "database name")
+	flag.BoolVar(&UPDATE, "update", false, "update metrics and score on all stored trips on server startup")
 	flag.Parse()
 }
 
@@ -63,6 +65,11 @@ func main() {
 		log.Println(err)
 	} else {
 		log.Println(util.ANSI_GREEN_BACKGROUND + "DATABASE CONNECTION SUCCESSFUL" + util.ANSI_RESET)
+	}
+
+	// update all trips
+	if UPDATE {
+		updateAllTrips(db)
 	}
 
 	// Initialize the web server and handlers
@@ -149,4 +156,34 @@ func main() {
 		AdminInfo.HandleQuickStats(c, db)
 	})
 	server.Run(ADDR)
+}
+
+
+// possibly dangerous, trigger with care
+func updateAllTrips(db *sql.DB) {
+	tripsSet := func() []struct{uid, tid int} {
+		var trips []struct{uid, tid int}
+
+		tripResSet, err := db.Query("SELECT user_id, trip_id FROM trips")
+		if err != nil {
+			log.Println("UNABLE TO TRIGGER UPDATE ON ALL RECORDED TRIPS")
+			log.Fatal(err)
+		}
+		defer tripResSet.Close()
+
+		for tripResSet.Next() {
+			var u, i int 
+			if err := tripResSet.Scan(&u, &i); err != nil {
+				log.Println("unable to update trip in db")
+				log.Println(err)
+			}
+
+			trips = append(trips, struct{uid, tid int}{u, i })
+		}
+		return trips
+	}
+
+	for _, trip := range tripsSet() {
+		trips.EndTrip(trip.uid, trip.tid, db)
+	}
 }
