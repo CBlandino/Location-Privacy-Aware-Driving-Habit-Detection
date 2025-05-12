@@ -69,7 +69,9 @@ func main() {
 
 	// update all trips
 	if UPDATE {
+		log.Println("UPDATING ALL TRIPS")
 		updateAllTrips(db)
+		log.Println("TRIP UPDATE SUCCESSFUL")
 	}
 
 	// Initialize the web server and handlers
