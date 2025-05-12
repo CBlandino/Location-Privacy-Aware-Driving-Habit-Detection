@@ -49,7 +49,7 @@ func SearchUsers(c *gin.Context, db *sql.DB) {
 
 	// Check if query is numeric (potential ID)
 	var rows *sql.Rows
-	if id, err := strconv.Atoi(query); err == nil {
+	if id, errr := strconv.Atoi(query); errr == nil {
 		// Search by ID
 		rows, err = db.Query(`
 			SELECT user_id, first_name, last_name, email, class 
