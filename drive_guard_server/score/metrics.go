@@ -32,6 +32,8 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 
 	var tripMetrics metrics
 	var prevVelocity float64 = 0.0
+	var prevBearing float64 = 0.0 
+	var currentBearing float64 = 0.0
 
 	for _, point := range data {
 		if d := getDistance(&point, PkLat); d != math.NaN() {
@@ -43,6 +45,8 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 			tripMetrics.avg_velo += dvelocity
 			tripMetrics.brake_sev += getBrakingSev(dvelocity, prevVelocity)
 			tripMetrics.accel_sev += getAccelSev(dvelocity, prevVelocity)
+			prevBearing, currentBearing = currentBearing, getBearing(&point, PkLat)
+			tripMetrics.bearing_sev += getBearingSev(prevBearing, currentBearing)
 			prevVelocity = dvelocity
 		}
 		PkLat += point.Lat 
@@ -97,9 +101,36 @@ func getDistance(p *point, lati int) float64 {
 	return totalDist
 }
 
+func getBearing(p *point, lati int) float64 {
+	
+	latj := lati + p.Lat 
+
+	latiRad := (float64(lati) * 0.000001) * (math.Pi / 180.0) 
+	latjRad := (float64(latj) * 0.000001) * (math.Pi / 180.0) 
+	dlonijRad := (float64(p.Long) * 0.000001) * (math.Pi / 180.0)
+
+	alpha := math.Cos(latiRad) * math.Sin(latjRad) - math.Sin(latiRad) * math.Cos(latjRad) * math.Cos(dlonijRad) 
+
+	beta := math.Sin(dlonijRad) * math.Cos(latjRad)
+
+	theta := math.Atan2(alpha, beta)
+
+	return math.Abs(math.Mod((theta * (180.0 / math.Pi)), 360.0)) 
+}
+
+func getBearingSev(prev, current float64) int {
+	bearingDiff := math.Abs(prev - current) 
+	if bearingDiff > 100 {
+		return 2 
+	} else if bearingDiff > 80 {
+		return 1 
+	} else {
+		return 0
+	}
+}
 
 func getBrakingSev(velocity, prevVelocity float64) int {
-	decel := (prevVelocity - velocity) / 5 
+	decel := (prevVelocity - velocity) / 5.0
 	if decel >= 7 {
 		return 2 
 	} else if decel >= 5 {
@@ -110,7 +141,7 @@ func getBrakingSev(velocity, prevVelocity float64) int {
 }
 
 func getAccelSev(velocity, prevVelocity float64) int {
-	accel := (velocity - prevVelocity) / 5 
+	accel := (velocity - prevVelocity) / 5.0
 	if accel >= 8 {
 		return 2
 	} else if accel >= 6 {
@@ -144,6 +175,8 @@ type metrics struct {
 	brake_sev int 
 	// acceleration severity measurement
 	accel_sev int
+	// bearing severity 
+	bearing_sev int
 	// length of the trip in points
 	trip_length int 
 }

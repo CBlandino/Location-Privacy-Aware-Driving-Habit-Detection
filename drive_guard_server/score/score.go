@@ -131,7 +131,14 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 	}
 
 	p6v := func() float64 {
-		return 1.0
+		sev := tripMetrics.bearing_sev
+		length := tripMetrics.trip_length
+		
+		percentSev := float64(sev) / float64(length) 
+		if percentSev >= 1.0 {
+			return 0.0
+		}
+		return 1.0 - percentSev
 	}
 
 	pList := make([]subScore, 0)
