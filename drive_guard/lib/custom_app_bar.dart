@@ -148,28 +148,31 @@ Widget buildBottomNavBar(BuildContext context) {
     if (role == 'insurance') {
       switch (index) {
         case 0:
-          page = UserLookupPage(
-            onSearch: (query) {}, 
-            searchResults: [],
-            isLoading: false,
-            errorMessage: '',
-          );
+        page = HomePage(role: role);
+          // page = UserLookupPage(
+          //   onSearch: (query) {}, 
+          //   searchResults: [],
+          //   isLoading: false,
+          //   errorMessage: '',
+          // );
           break;
         case 1:
-          page = UserTripsPage(
-            userId: '',
-            trips: [],
-            isLoading: false,
-            errorMessage: '',
-          );
+        page = SettingsPage();
+          // page = UserTripsPage(
+          //   userId: '',
+          //   trips: [],
+          //   isLoading: false,
+          //   errorMessage: '',
+          // );
           break;
         case 2:
-          page = UserScorePage(
-            userId: '',
-            scoreData: null,
-            isLoading: false,
-            errorMessage: '',
-          );
+        page = SettingsPage();
+          // page = UserScorePage(
+          //   userId: '',
+          //   scoreData: null,
+          //   isLoading: false,
+          //   errorMessage: '',
+          // );
           break;
         case 3:
           page = SettingsPage();
