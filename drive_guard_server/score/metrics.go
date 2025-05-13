@@ -42,9 +42,13 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 			if tripMetrics.max_velo < dvelocity {
 				tripMetrics.max_velo = dvelocity
 			}
+			//accumulate velocity
 			tripMetrics.avg_velo += dvelocity
+			// accumulate brake severity
 			tripMetrics.brake_sev += getBrakingSev(dvelocity, prevVelocity)
+			// accumulate accel severity 
 			tripMetrics.accel_sev += getAccelSev(dvelocity, prevVelocity)
+			// calculate bearing angle for next point
 			prevBearing, currentBearing = currentBearing, getBearing(&point, PkLat)
 			tripMetrics.bearing_sev += getBearingSev(prevBearing, currentBearing)
 			prevVelocity = dvelocity
@@ -53,7 +57,9 @@ func TripMetricsPasses(tripID int, db *sql.DB) error {
 		PkLong += point.Long
 	}
 
+	// calculate average velocity
 	tripMetrics.avg_velo = (tripMetrics.distance / (5.0 * float64(len(data)))) * 3600
+	// save the length of the trip
 	tripMetrics.trip_length = len(data)
 
 	score, accel_score, brake_score := scoreTrip(&tripMetrics)
@@ -118,6 +124,17 @@ func getBearing(p *point, lati int) float64 {
 	return math.Abs(math.Mod((theta * (180.0 / math.Pi)), 360.0)) 
 }
 
+// the numbers in these functions that determine severity for a given metric,
+// are approximate estimates about what the measurements would be according to 
+// observations I made on data gathered on trips I took
+// 
+// basically if ur calculated acceleration for example is larger than 8 mph that particular interval gets marked
+// with the highest level of severity, 2 (BAD) if your acceleration is between 6 and 8 you get a severity rank of 
+// 1 on the point (MODERATE) anything below that gets a 0 severity (GOOD) 
+// it was recommended that we track based on windows ( for example if the previous window has a low severity and the next window has
+// a high severity, mark that window)
+// 
+// - Ryan
 func getBearingSev(prev, current float64) int {
 	bearingDiff := math.Abs(prev - current) 
 	if bearingDiff > 100 {

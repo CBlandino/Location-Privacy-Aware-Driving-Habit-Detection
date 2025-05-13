@@ -76,6 +76,11 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 	// p6 abrupt turns (coming soon)
 	const P6W float64 = 0.16
 
+	// same as in metrics, these scoring sub functions are based on approximate values that I 
+	// thought were suitable based on the data that I gathered from trips I have taken within the last month or so. 
+	// none of this is set in stone and we expect this to change upon sponser input about what a good scoring algo would look like
+	// 
+	// - Ryan
 	p1v := func() float64 {
 		avgv := tripMetrics.avg_velo
 		if avgv >= 60.0 {
@@ -141,6 +146,7 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 		return 1.0 - percentSev
 	}
 
+	// all scores are calculated and averaged in the linear weighted function
 	pList := make([]subScore, 0)
 	pList = append(pList, subScore{p1v(), P1W})
 	pList = append(pList, subScore{p2v(), P2W})
