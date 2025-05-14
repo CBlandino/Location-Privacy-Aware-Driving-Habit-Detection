@@ -48,49 +48,47 @@ func GetUserScore(c *gin.Context, db *sql.DB) {
 
 	// respond with score values
 	c.JSON(http.StatusOK, gin.H{
-		"totalScore": Score, 
-		"braking" : bScore, 
+		"totalScore":   Score,
+		"braking":      bScore,
 		"acceleration": aScore,
 	})
 }
 
-
-
-// takes metrics data for a trip and calculates 
-// tripScore float64 
-// accelScore float64 
+// takes metrics data for a trip and calculates
+// tripScore float64
+// accelScore float64
 // brakeScore float64
 func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 	log.Println("CALCULATING TRIP SCORE")
 	// WEIGHTS
 	// p1 = avergage speed
 	const P1W float64 = 0.16
-	// p2 = max speed 
+	// p2 = max speed
 	const P2W float64 = 0.16
 	// p3 = average daily distance (coming soon)
 	const P3W float64 = 0.16
 	// p4 = acceleration severity
 	const P4W float64 = 0.16
-	// p5 braking 
+	// p5 braking
 	const P5W float64 = 0.16
 	// p6 abrupt turns (coming soon)
 	const P6W float64 = 0.16
 
-	// same as in metrics, these scoring sub functions are based on approximate values that I 
-	// thought were suitable based on the data that I gathered from trips I have taken within the last month or so. 
+	// same as in metrics, these scoring sub functions are based on approximate values that I
+	// thought were suitable based on the data that I gathered from trips I have taken within the last month or so.
 	// none of this is set in stone and we expect this to change upon sponser input about what a good scoring algo would look like
-	// 
+	//
 	// - Ryan
 	p1v := func() float64 {
 		avgv := tripMetrics.avg_velo
 		if avgv >= 60.0 {
 			return 0.0
 		} else if 10.0 <= avgv && avgv <= 20.0 {
-			return 0.5 * (1.0 - math.Cos(math.Pi * (avgv - 10.0) / 10.0))
+			return 0.5 * (1.0 - math.Cos(math.Pi*(avgv-10.0)/10.0))
 		} else if 20.0 < avgv && avgv < 40.0 {
 			return 1.0
 		} else if 40.0 <= avgv && avgv <= 50.0 {
-			return 0.5 * (1.0 + math.Cos(math.Pi * (avgv - 40.0) / 10.0))
+			return 0.5 * (1.0 + math.Cos(math.Pi*(avgv-40.0)/10.0))
 		} else {
 			return 0.0
 		}
@@ -118,7 +116,7 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 		if percentSev >= 1.0 {
 			return 0.0
 		}
-		// invert the percentage 
+		// invert the percentage
 		return 1.0 - percentSev
 	}
 
@@ -131,15 +129,23 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 		if percentSev >= 1.0 {
 			return 0.0
 		}
-		// invert the percentage 
+		// invert the percentage
 		return 1.0 - percentSev
 	}
 
 	p6v := func() float64 {
+		// take into account current velocity with bearing
+		// what are the angles that are considered dangerous or normal
+		//
+		// In summary, an abrupt turn involves a sudden and sharp change in steering wheel angle, often exceeding a 30-degree turn,
+		// particularly in situations where speed and control are important.
+		//
+		// driving at a slower velocity with a sharp turn should not be considered dangerous.
+		//
 		sev := tripMetrics.bearing_sev
 		length := tripMetrics.trip_length
-		
-		percentSev := float64(sev) / float64(length) 
+
+		percentSev := float64(sev) / float64(length)
 		if percentSev >= 1.0 {
 			return 0.0
 		}
@@ -155,6 +161,7 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 	pList = append(pList, subScore{p5v(), P5W})
 	pList = append(pList, subScore{p6v(), P6W})
 
+	// for weights, which factors matter more. weights should reflect this
 	score := 0.0
 	for _, param := range pList {
 		score += (param.val * param.weight)
@@ -167,13 +174,16 @@ func scoreTrip(tripMetrics *metrics) (float64, float64, float64) {
 	return score, pList[3].val, pList[4].val
 }
 
+// this should be done on a weekly or monthly basis
+// monthly scores should also be stored.
+// similar to credit score
 func UpdateUserScore(user_id int, db *sql.DB) error {
 
 	log.Println("User Score update triggered: userID =", user_id)
 
 	// fetch all of the users trips from the db
-	qString := "SELECT brake_score, accel_score, trip_score FROM tripsmetrics JOIN trips ON trips.trip_id = tripsmetrics.trip_id WHERE trips.user_id = $1" 
-	rows, err := db.Query(qString, user_id) 
+	qString := "SELECT brake_score, accel_score, trip_score FROM tripsmetrics JOIN trips ON trips.trip_id = tripsmetrics.trip_id WHERE trips.user_id = $1"
+	rows, err := db.Query(qString, user_id)
 	if err != nil {
 		log.Println("failed to query all of a users trips!", err.Error())
 		return err
@@ -182,18 +192,18 @@ func UpdateUserScore(user_id int, db *sql.DB) error {
 
 	//accumulate all score values
 	rowsCount := 0
-	avgBrake := 0.0 
+	avgBrake := 0.0
 	avgAccel := 0.0
-	avgScore := 0.0 
+	avgScore := 0.0
 	for rows.Next() {
-		var b, a, s float64	
+		var b, a, s float64
 		if err := rows.Scan(&b, &a, &s); err != nil {
 			log.Println("failed to scan trip score values", err.Error())
 			return err
 		}
 
 		avgBrake += b
-		avgAccel += a 
+		avgAccel += a
 		avgScore += s
 		rowsCount++
 	}
@@ -216,6 +226,6 @@ func UpdateUserScore(user_id int, db *sql.DB) error {
 }
 
 type subScore struct {
-	val float64 
+	val    float64
 	weight float64
 }
