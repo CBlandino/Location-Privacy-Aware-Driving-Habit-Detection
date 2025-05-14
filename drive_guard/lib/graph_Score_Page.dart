@@ -2,6 +2,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 
+// TODO: make graph have options for: past week, month, year, etc
+
 
 class MiniScoreGraph extends StatelessWidget {
   // Possibly change to FlSPot instead of double
