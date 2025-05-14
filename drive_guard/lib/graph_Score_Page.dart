@@ -48,15 +48,15 @@ class MiniScoreGraph extends StatelessWidget {
           Expanded(
             child: LineChart(
               LineChartData(
-                minY: 0,
+                minY: 0,      // graphs range displayed is 0-100
                 maxY: 100,
-                titlesData: _buildFlTitlesData(),
-                borderData: _buildFlBorderData(),
-                gridData: _buildFlGridData(),
-                lineBarsData: [
+                titlesData: _buildFlTitlesData(),       // Title information in graph
+                borderData: _buildFlBorderData(),       // Border around the graph
+                gridData: _buildFlGridData(),           // Graph grid
+                lineBarsData: [                         // Controls actual function being displayed in graph (controls color, points, etc)
                   _buildLineChartBarData()
                 ],
-                lineTouchData: _buildLineTouchData(),
+                lineTouchData: _buildLineTouchData(),   // Controls data that pops up when you click on a point
               ),
             ),
           ),
@@ -66,13 +66,12 @@ class MiniScoreGraph extends StatelessWidget {
     );
   }
 
+  // data that appears when you touch a data point
   LineTouchData _buildLineTouchData() {
   return LineTouchData(
     enabled: true,
     handleBuiltInTouches: true,
     touchTooltipData: LineTouchTooltipData(
-      //decoration: BoxDecoration(),
-      //tooltipBgColor: Colors.black.withOpacity(0.8), // sleek dark background
       tooltipRoundedRadius: 12,
       tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       tooltipMargin: 16,
@@ -93,9 +92,10 @@ class MiniScoreGraph extends StatelessWidget {
 }
 
 
-
+  // allows for editing of title data
   FlTitlesData _buildFlTitlesData() {
 
+    // show title above graph, show none for all other sides
     return FlTitlesData(
       show: true,
       rightTitles: AxisTitles(
@@ -155,6 +155,7 @@ class MiniScoreGraph extends StatelessWidget {
   LineChartBarData _buildLineChartBarData() {
 
     return LineChartBarData(
+      // Turns score list into data points
       spots: scores
           .asMap()
           .entries
@@ -174,6 +175,7 @@ class MiniScoreGraph extends StatelessWidget {
           );
         },
       ),
+      // Creates a gradient for graph color
       belowBarData: BarAreaData(
         show: true,
         gradient: LinearGradient(
