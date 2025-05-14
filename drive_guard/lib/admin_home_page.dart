@@ -6,6 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'ipconfig.dart';
 import 'trip_helper.dart';
 
+// AdminHomePage is the main dashboard for administrators, providing:
+// - System statistics overview
+// - User and insurance company management
+// - Server status monitoring
+// - Account creation functionality
+// Responsively designed for both web and mobile platforms
 class AdminHomePage extends StatefulWidget {
   const AdminHomePage({Key? key}) : super(key: key);
 
@@ -14,7 +20,9 @@ class AdminHomePage extends StatefulWidget {
 }
 
 class _AdminHomePageState extends State<AdminHomePage> {
-  // Quick Stats State
+  // STATE MANAGEMENT SECTION
+  
+  // Quick Stats State - Tracks system-wide statistics
   Map<String, dynamic> _quickStats = {
     'total_users': 0,
     'total_admins': 0,
@@ -23,24 +31,24 @@ class _AdminHomePageState extends State<AdminHomePage> {
   bool _isLoadingStats = false;
   String _statsError = '';
 
-  // Server Info State
+  // Server Information State - Stores server configuration details
   Map<String, dynamic>? _serverInfo;
   bool _isLoadingServerInfo = false;
   String _serverInfoError = '';
 
-  // Insurance Search State
+  // Insurance Search State - Manages insurance company search functionality
   List<Map<String, dynamic>> _insuranceResults = [];
   bool _isLoadingInsurance = false;
   String _insuranceSearchError = '';
   String _insuranceSearchQuery = '';
 
-  // User Search State
+  // User Search State - Manages user search functionality
   List<Map<String, dynamic>> _userResults = [];
   bool _isLoadingUsers = false;
   String _userSearchError = '';
   String _userSearchQuery = '';
 
-  // Create Account State
+  // Account Creation State - Manages form state for new account creation
   final _createAccountFormKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -49,43 +57,50 @@ class _AdminHomePageState extends State<AdminHomePage> {
   final _adminIdController = TextEditingController();
   final _serverNumberController = TextEditingController();
 
-  String _selectedRole = 'user';
+  String _selectedRole = 'user'; // Default role selection
   bool _isCreatingAccount = false;
   String _createAccountError = '';
 
-  // Web-specific hover states
+  // Web-specific hover states for interactive elements
   bool _isHoveringCreateAccount = false;
   bool _isHoveringSearchUsers = false;
   bool _isHoveringSearchInsurance = false;
   bool _isHoveringAnalytics = false;
 
+  // LIFECYCLE METHODS
+
   @override
   void initState() {
     super.initState();
+    // Load initial data when widget is created
     _fetchQuickStats();
     _fetchServerInfo();
   }
 
   @override
   void dispose() {
+    // Clean up all controllers to prevent memory leaks
     _emailController.dispose();
     _passwordController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _adminIdController.dispose();
     _serverNumberController.dispose();
-
     super.dispose();
   }
 
+  // MAIN BUILD METHOD
+
   @override
   Widget build(BuildContext context) {
+    // Responsive layout calculations
     final isWeb = kIsWeb;
     final screenWidth = MediaQuery.of(context).size.width;
     final isLargeScreen = screenWidth > 1200;
     final isMediumScreen = screenWidth > 800;
 
     return Scaffold(
+      // Web-specific app bar
       appBar: isWeb ? _buildWebAppBar() : null,
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -100,15 +115,19 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Mobile-only welcome card
                     if (!isWeb) _buildWelcomeCard(isWeb: isWeb),
                     SizedBox(height: isLargeScreen ? 32 : 16),
+                    // Quick stats display
                     _buildQuickStatsRow(),
                     SizedBox(height: isLargeScreen ? 32 : 16),
+                    // Platform-specific dashboard layout
                     if (isWeb)
                       _buildWebDashboard(isLargeScreen, isMediumScreen)
                     else
                       _buildMobileDashboard(),
                     SizedBox(height: isLargeScreen ? 32 : 16),
+                    // Server status information
                     _buildServerStatusCard(isWeb: isWeb),
                   ],
                 ),
@@ -120,7 +139,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
-  // WEB-SPECIFIC WIDGETS
+  // WEB-SPECIFIC COMPONENTS SECTION
+
+  // Builds the web-specific app bar with admin controls
   AppBar _buildWebAppBar() {
     return AppBar(
       title: Row(
@@ -132,6 +153,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
       ),
       elevation: 4,
       actions: [
+        // Refresh data button
         IconButton(
           icon: Icon(Icons.refresh),
           onPressed: () {
@@ -140,6 +162,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           },
           tooltip: 'Refresh Data',
         ),
+        // Logout button
         IconButton(
           icon: Icon(Icons.logout),
           onPressed: _logout,
@@ -149,12 +172,14 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
+  // Builds the web dashboard layout with responsive grid
   Widget _buildWebDashboard(bool isLargeScreen, bool isMediumScreen) {
     final cardSpacing = isLargeScreen ? 24.0 : 16.0;
     final cardHeight = isLargeScreen ? 220.0 : 180.0;
 
     return Column(
       children: [
+        // Action cards grid
         GridView.count(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
@@ -172,9 +197,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               onTap: () => _showCreateAccountModal(),
               isWeb: true,
               isHovering: _isHoveringCreateAccount,
-              onHover:
-                  (hovering) =>
-                      setState(() => _isHoveringCreateAccount = hovering),
+              onHover: (hovering) => setState(() => _isHoveringCreateAccount = hovering),
               height: cardHeight,
             ),
             _buildAdminActionCard(
@@ -185,9 +208,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               onTap: () => _showUserSearch(),
               isWeb: true,
               isHovering: _isHoveringSearchUsers,
-              onHover:
-                  (hovering) =>
-                      setState(() => _isHoveringSearchUsers = hovering),
+              onHover: (hovering) => setState(() => _isHoveringSearchUsers = hovering),
               height: cardHeight,
             ),
             _buildAdminActionCard(
@@ -198,9 +219,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               onTap: () => _showInsuranceSearch(),
               isWeb: true,
               isHovering: _isHoveringSearchInsurance,
-              onHover:
-                  (hovering) =>
-                      setState(() => _isHoveringSearchInsurance = hovering),
+              onHover: (hovering) => setState(() => _isHoveringSearchInsurance = hovering),
               height: cardHeight,
             ),
             _buildAdminActionCard(
@@ -211,18 +230,19 @@ class _AdminHomePageState extends State<AdminHomePage> {
               onTap: () => _showAnalytics(),
               isWeb: true,
               isHovering: _isHoveringAnalytics,
-              onHover:
-                  (hovering) => setState(() => _isHoveringAnalytics = hovering),
+              onHover: (hovering) => setState(() => _isHoveringAnalytics = hovering),
               height: cardHeight,
             ),
           ],
         ),
+        // Additional data grid for large screens
         if (isLargeScreen) SizedBox(height: 32),
         if (isLargeScreen) _buildWebDataGrid(),
       ],
     );
   }
 
+  // Builds the detailed data grid for web view
   Widget _buildWebDataGrid() {
     return Card(
       elevation: 4,
@@ -245,6 +265,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
               height: 300,
               child: Row(
                 children: [
+                  // Recent activity panel
                   Expanded(
                     flex: 2,
                     child: Card(
@@ -265,17 +286,11 @@ class _AdminHomePageState extends State<AdminHomePage> {
                             Expanded(
                               child: ListView.builder(
                                 itemCount: 10,
-                                itemBuilder:
-                                    (context, index) => ListTile(
-                                      leading: Icon(
-                                        Icons.notification_important,
-                                        size: 20,
-                                      ),
-                                      title: Text('System update ${index + 1}'),
-                                      subtitle: Text(
-                                        '${index + 5} minutes ago',
-                                      ),
-                                    ),
+                                itemBuilder: (context, index) => ListTile(
+                                  leading: Icon(Icons.notification_important, size: 20),
+                                  title: Text('System update ${index + 1}'),
+                                  subtitle: Text('${index + 5} minutes ago'),
+                                ),
                               ),
                             ),
                           ],
@@ -284,6 +299,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     ),
                   ),
                   SizedBox(width: 16),
+                  // User distribution panel
                   Expanded(
                     flex: 3,
                     child: Card(
@@ -324,7 +340,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
-  // Improved Mobile Dashboard Layout
+  // MOBILE COMPONENTS SECTION
+
+  // Builds the mobile-optimized dashboard layout
   Widget _buildMobileDashboard() {
     return GridView.count(
       shrinkWrap: true,
@@ -338,6 +356,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
+  // Generates action cards for mobile view
   List<Widget> _buildActionCards() {
     return [
       _buildAdminActionCard(
@@ -375,7 +394,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
     ];
   }
 
-  // Enhanced Admin Action Card
+  // SHARED COMPONENTS SECTION
+
+  // Builds a reusable admin action card component
   Widget _buildAdminActionCard({
     required IconData icon,
     required String title,
@@ -404,17 +425,16 @@ class _AdminHomePageState extends State<AdminHomePage> {
             height: height,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color:
-                  isWeb && isHovering ? color.withOpacity(0.05) : Colors.white,
-              border:
-                  isWeb && isHovering
-                      ? Border.all(color: color.withOpacity(0.3), width: 1)
-                      : null,
+              color: isWeb && isHovering ? color.withOpacity(0.05) : Colors.white,
+              border: isWeb && isHovering
+                  ? Border.all(color: color.withOpacity(0.3), width: 1)
+                  : null,
             ),
             padding: EdgeInsets.all(isLargeScreen ? 20 : 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Icon container
                 Container(
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -424,6 +444,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   child: Icon(icon, color: color, size: 24),
                 ),
                 SizedBox(height: 12),
+                // Title text
                 Text(
                   title,
                   style: TextStyle(
@@ -434,6 +455,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 4),
+                // Description text
                 Expanded(
                   child: Text(
                     description,
@@ -445,6 +467,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                // Web-specific forward arrow indicator
                 if (isWeb) ...[
                   Align(
                     alignment: Alignment.bottomRight,
@@ -462,6 +485,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
+  // DATA DISPLAY COMPONENTS SECTION
+
+  // Builds the quick stats row showing system metrics
   Widget _buildQuickStatsRow() {
     if (_isLoadingStats) {
       return Card(
@@ -528,6 +554,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
+  // Builds the server status information card
   Widget _buildServerStatusCard({required bool isWeb}) {
     return Card(
       elevation: 4,
@@ -560,6 +587,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                 ],
               ),
             SizedBox(height: 16),
+            // Server status indicator
             FutureBuilder<bool>(
               future: _checkServerStatus(),
               builder: (context, snapshot) {
@@ -590,6 +618,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
+  // Builds the welcome card for mobile view
   Widget _buildWelcomeCard({required bool isWeb}) {
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
 
@@ -648,6 +677,9 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
+  // UTILITY COMPONENTS SECTION
+
+  // Builds a server info display row
   Widget _buildServerInfoItem(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -663,6 +695,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
+  // Builds a statistic display item with icon
   Widget _buildStatItem(
     IconData icon,
     String label,
@@ -677,6 +710,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Icon container
         Container(
           padding: EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -686,11 +720,13 @@ class _AdminHomePageState extends State<AdminHomePage> {
           child: Icon(icon, color: color, size: iconSize),
         ),
         SizedBox(height: 12),
+        // Value display
         Text(
           value,
           style: TextStyle(fontSize: numberSize, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 6),
+        // Label display
         Text(
           label,
           style: TextStyle(color: Colors.grey[600], fontSize: labelSize),
@@ -699,55 +735,55 @@ class _AdminHomePageState extends State<AdminHomePage> {
     );
   }
 
-  // MODAL DIALOGS
+  // MODAL DIALOGS SECTION
+
+  // Shows the account creation modal (platform-specific)
   void _showCreateAccountModal() {
     final isWeb = kIsWeb;
 
     if (isWeb) {
       showDialog(
         context: context,
-        builder:
-            (context) => Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 600,
-                  maxHeight: MediaQuery.of(context).size.height * 0.9,
-                ),
-                child: Dialog(
-                  insetPadding: EdgeInsets.all(20),
-                  child: _buildCreateAccountForm(),
-                ),
-              ),
+        builder: (context) => Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 600,
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
             ),
+            child: Dialog(
+              insetPadding: EdgeInsets.all(20),
+              child: _buildCreateAccountForm(),
+            ),
+          ),
+        ),
       );
     } else {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder:
-            (context) => Container(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.9,
-              ),
-              child: DraggableScrollableSheet(
-                expand: false,
-                initialChildSize: 0.7,
-                minChildSize: 0.5,
-                maxChildSize: 0.9,
-                builder: (context, scrollController) {
-                  return SingleChildScrollView(
-                    controller: scrollController,
-                    child: _buildCreateAccountForm(),
-                  );
-                },
-              ),
-            ),
+        builder: (context) => Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          child: DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.7,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            builder: (context, scrollController) {
+              return SingleChildScrollView(
+                controller: scrollController,
+                child: _buildCreateAccountForm(),
+              );
+            },
+          ),
+        ),
       );
     }
   }
 
-  // Enhanced Create Account Form
+  // Builds the account creation form with role-specific fields
   Widget _buildCreateAccountForm() {
     final isWeb = kIsWeb;
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
@@ -764,6 +800,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -782,7 +819,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
             ),
             SizedBox(height: 16),
 
-            // Role Selection
+            // Role selection dropdown
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -811,23 +848,24 @@ class _AdminHomePageState extends State<AdminHomePage> {
                     child: Text('Admin Account'),
                   ),
                 ],
-onChanged: (value) {
-  setState(() {
-    _selectedRole = value!;
-    // Reset form fields to avoid state mixing
-    _firstNameController.clear();
-    _lastNameController.clear();
-    _adminIdController.clear();
-    _serverNumberController.clear();
-  });
-},
+                onChanged: (value) {
+                  setState(() {
+                    _selectedRole = value!;
+                    // Clear form fields when role changes
+                    _firstNameController.clear();
+                    _lastNameController.clear();
+                    _adminIdController.clear();
+                    _serverNumberController.clear();
+                  });
+                },
               ),
             ),
             SizedBox(height: 16),
 
-            // Form Fields
+            // Dynamic form fields based on selected role
             Column(
               children: [
+                // Common fields (email and password)
                 _buildFormField(
                   controller: _emailController,
                   label: 'Email',
@@ -861,6 +899,7 @@ onChanged: (value) {
                 ),
                 SizedBox(height: 12),
 
+                // Role-specific fields
                 if (_selectedRole == 'user') ...[
                   _buildFormField(
                     controller: _firstNameController,
@@ -965,6 +1004,7 @@ onChanged: (value) {
             ),
             SizedBox(height: 16),
 
+            // Error message display
             if (_createAccountError.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0),
@@ -974,7 +1014,7 @@ onChanged: (value) {
                 ),
               ),
 
-            // Create Button
+            // Submit button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -986,24 +1026,23 @@ onChanged: (value) {
                   ),
                 ),
                 onPressed: _isCreatingAccount ? null : _createAccount,
-                child:
-                    _isCreatingAccount
-                        ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                        : Text(
-                          'Create Account',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                child: _isCreatingAccount
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
                         ),
+                      )
+                    : Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],
@@ -1012,6 +1051,7 @@ onChanged: (value) {
     );
   }
 
+  // Builds a reusable form field with consistent styling
   Widget _buildFormField({
     required TextEditingController controller,
     required String label,
@@ -1056,29 +1096,29 @@ onChanged: (value) {
     );
   }
 
+  // Shows the user search modal (platform-specific)
   void _showUserSearch() {
     final isWeb = kIsWeb;
 
     if (isWeb) {
       showDialog(
         context: context,
-        builder:
-            (context) => Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 600,
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                ),
-                child: Dialog(
-                  insetPadding: EdgeInsets.all(20),
-                  child: StatefulBuilder(
-                    builder: (context, setModalState) {
-                      return _buildUserSearchForm(setModalState);
-                    },
-                  ),
-                ),
+        builder: (context) => Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 600,
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            child: Dialog(
+              insetPadding: EdgeInsets.all(20),
+              child: StatefulBuilder(
+                builder: (context, setModalState) {
+                  return _buildUserSearchForm(setModalState);
+                },
               ),
             ),
+          ),
+        ),
       );
     } else {
       showModalBottomSheet(
@@ -1106,85 +1146,86 @@ onChanged: (value) {
     }
   }
 
+  // Shows detailed user information dialog
   void _showUserDetailsDialog(Map<String, dynamic> user) {
     final isWeb = kIsWeb;
     final maxDialogWidth = isWeb ? 500.0 : double.infinity;
 
     showDialog(
       context: context,
-      builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            insetPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxDialogWidth),
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        insetPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxDialogWidth),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // User header with avatar
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 28,
-                          backgroundColor: Colors.blue[100],
-                          child: Icon(
-                            Icons.person,
-                            color: Colors.blue[700],
-                            size: 30,
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            '${user['first_name'] ?? ''} ${user['last_name'] ?? ''}',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[900],
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.blue[100],
+                      child: Icon(
+                        Icons.person,
+                        color: Colors.blue[700],
+                        size: 30,
+                      ),
                     ),
-                    SizedBox(height: 16),
-                    Divider(),
-                    SizedBox(height: 8),
-                    _buildUserDetailRow('Email', user['email']),
-                    _buildUserDetailRow('Role', user['role']),
-                    _buildUserDetailRow('User ID', user['user_id']),
-                    if (user.containsKey('policy_number'))
-                      _buildUserDetailRow(
-                        'Policy Number',
-                        user['policy_number'],
-                      ),
-                    SizedBox(height: 20),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.check),
-                        label: Text('Close'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.blue[800],
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        '${user['first_name'] ?? ''} ${user['last_name'] ?? ''}',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[900],
                         ),
                       ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
-              ),
+                SizedBox(height: 16),
+                Divider(),
+                SizedBox(height: 8),
+                // User details rows
+                _buildUserDetailRow('Email', user['email']),
+                _buildUserDetailRow('Role', user['role']),
+                _buildUserDetailRow('User ID', user['user_id']),
+                if (user.containsKey('policy_number'))
+                  _buildUserDetailRow('Policy Number', user['policy_number']),
+                SizedBox(height: 20),
+                // Close button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.check),
+                    label: Text('Close'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.blue[800],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
+      ),
     );
   }
 
+  // Builds a user detail row for the details dialog
   Widget _buildUserDetailRow(String label, dynamic value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -1210,6 +1251,7 @@ onChanged: (value) {
     );
   }
 
+  // Builds the user search form with results display
   Widget _buildUserSearchForm([void Function(VoidCallback fn)? setModalState]) {
     final isWeb = kIsWeb;
     final isLargeScreen = MediaQuery.of(context).size.width > 600;
@@ -1228,6 +1270,7 @@ onChanged: (value) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1245,6 +1288,7 @@ onChanged: (value) {
               ],
             ),
             SizedBox(height: 16),
+            // Search input
             TextField(
               decoration: InputDecoration(
                 labelText: 'Search by name, email or ID',
@@ -1269,6 +1313,7 @@ onChanged: (value) {
               },
             ),
             SizedBox(height: 16),
+            // Results display
             Builder(
               builder: (context) {
                 if (_isLoadingUsers) {
@@ -1278,8 +1323,7 @@ onChanged: (value) {
                     _userSearchError,
                     style: TextStyle(color: Colors.red),
                   );
-                } else if (_userResults.isEmpty &&
-                    _userSearchQuery.isNotEmpty) {
+                } else if (_userResults.isEmpty && _userSearchQuery.isNotEmpty) {
                   return Text('No users found matching "$_userSearchQuery".');
                 } else {
                   return _buildUserList();
@@ -1292,6 +1336,7 @@ onChanged: (value) {
     );
   }
 
+  // Builds the list of user search results
   Widget _buildUserList() {
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -1344,29 +1389,29 @@ onChanged: (value) {
     );
   }
 
+  // Shows the insurance search modal (platform-specific)
   void _showInsuranceSearch() {
     final isWeb = kIsWeb;
 
     if (isWeb) {
       showDialog(
         context: context,
-        builder:
-            (context) => Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 600,
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                ),
-                child: Dialog(
-                  insetPadding: EdgeInsets.all(20),
-                  child: StatefulBuilder(
-                    builder: (context, setModalState) {
-                      return _buildInsuranceSearchForm(setModalState);
-                    },
-                  ),
-                ),
+        builder: (context) => Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 600,
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
+            ),
+            child: Dialog(
+              insetPadding: EdgeInsets.all(20),
+              child: StatefulBuilder(
+                builder: (context, setModalState) {
+                  return _buildInsuranceSearchForm(setModalState);
+                },
               ),
             ),
+          ),
+        ),
       );
     } else {
       showModalBottomSheet(
@@ -1394,6 +1439,7 @@ onChanged: (value) {
     }
   }
 
+  // Builds the insurance search form with results display
   Widget _buildInsuranceSearchForm([
     void Function(VoidCallback fn)? setModalState,
   ]) {
@@ -1414,6 +1460,7 @@ onChanged: (value) {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1431,6 +1478,7 @@ onChanged: (value) {
               ],
             ),
             SizedBox(height: 16),
+            // Search input
             TextField(
               decoration: InputDecoration(
                 labelText: 'Search by policy number or insurance company',
@@ -1451,6 +1499,7 @@ onChanged: (value) {
               },
             ),
             SizedBox(height: 16),
+            // Results display
             Builder(
               builder: (context) {
                 if (_isLoadingInsurance) {
@@ -1464,7 +1513,7 @@ onChanged: (value) {
                     _insuranceSearchQuery.isNotEmpty) {
                   return Text('No users found for "$_insuranceSearchQuery".');
                 } else {
-                  return _buildInsuranceUserList(); // New user list widget
+                  return _buildInsuranceUserList();
                 }
               },
             ),
@@ -1474,6 +1523,7 @@ onChanged: (value) {
     );
   }
 
+  // Builds the list of insurance search results
   Widget _buildInsuranceUserList() {
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -1526,107 +1576,47 @@ onChanged: (value) {
     );
   }
 
-  Widget _buildInsuranceList() {
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.5,
-      ),
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: _insuranceResults.length,
-        itemBuilder: (context, index) {
-          final insurance = _insuranceResults[index];
-          return Card(
-            margin: EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              leading: Icon(Icons.verified, color: Colors.orange),
-              title: Text(
-                insurance['policy_name'] ?? 'Unnamed Policy',
-                style: TextStyle(fontSize: 14),
-              ),
-              subtitle: Text(
-                insurance['description'] ?? 'No description',
-                style: TextStyle(fontSize: 12),
-              ),
-              trailing: Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.pop(context);
-                _showInsuranceDetailsDialog(insurance);
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showInsuranceDetailsDialog(Map<String, dynamic> insurance) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(insurance['policy_name'] ?? 'Insurance Details'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('ID: ${insurance['id'] ?? 'N/A'}'),
-                SizedBox(height: 8),
-                Text('Description: ${insurance['description'] ?? 'N/A'}'),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Close'),
-              ),
-            ],
-          ),
-    );
-  }
-
+  // Shows the analytics modal (platform-specific)
   void _showAnalytics() {
     final isWeb = kIsWeb;
-    final isLargeScreen = MediaQuery.of(context).size.width > 600;
 
     if (isWeb) {
       showDialog(
         context: context,
-        builder:
-            (context) => Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: 800,
-                  maxHeight: MediaQuery.of(context).size.height * 0.9,
-                ),
-                child: Dialog(
-                  insetPadding: EdgeInsets.all(20),
-                  child: _buildAnalyticsDashboard(),
-                ),
-              ),
+        builder: (context) => Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 800,
+              maxHeight: MediaQuery.of(context).size.height * 0.9,
             ),
+            child: Dialog(
+              insetPadding: EdgeInsets.all(20),
+              child: _buildAnalyticsDashboard(),
+            ),
+          ),
+        ),
       );
     } else {
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
-        builder:
-            (context) => DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: 0.7,
-              minChildSize: 0.5,
-              maxChildSize: 0.9,
-              builder: (context, scrollController) {
-                return SingleChildScrollView(
-                  controller: scrollController,
-                  child: _buildAnalyticsDashboard(),
-                );
-              },
-            ),
+        builder: (context) => DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: _buildAnalyticsDashboard(),
+            );
+          },
+        ),
       );
     }
   }
 
+  // Builds the analytics dashboard content
   Widget _buildAnalyticsDashboard() {
     final isWeb = kIsWeb;
     final screenWidth = MediaQuery.of(context).size.width;
@@ -1645,6 +1635,7 @@ onChanged: (value) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header section
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1662,6 +1653,7 @@ onChanged: (value) {
             ],
           ),
           SizedBox(height: isLargeScreen ? 24 : 16),
+          // User statistics card
           Card(
             elevation: 2,
             child: Padding(
@@ -1713,6 +1705,7 @@ onChanged: (value) {
             ),
           ),
           SizedBox(height: isLargeScreen ? 24 : 16),
+          // Activity overview card
           Card(
             elevation: 2,
             child: Padding(
@@ -1759,7 +1752,9 @@ onChanged: (value) {
     );
   }
 
-  // DATA METHODS
+  // DATA METHODS SECTION
+
+  // Fetches quick stats from the server
   Future<void> _fetchQuickStats() async {
     setState(() {
       _isLoadingStats = true;
@@ -1805,6 +1800,7 @@ onChanged: (value) {
     }
   }
 
+  // Fetches server information
   Future<void> _fetchServerInfo() async {
     setState(() {
       _isLoadingServerInfo = true;
@@ -1845,6 +1841,7 @@ onChanged: (value) {
     }
   }
 
+  // Searches for users based on query
   void _searchUsers([
     void Function(VoidCallback fn)? modalSetState,
     BuildContext? context,
@@ -1874,6 +1871,7 @@ onChanged: (value) {
     }
   }
 
+  // Searches for insurance users based on query
   Future<void> _searchInsurance([
     void Function(VoidCallback fn)? modalSetState,
     BuildContext? context,
@@ -1904,6 +1902,7 @@ onChanged: (value) {
     }
   }
 
+  // Creates a new account with form data
   Future<void> _createAccount() async {
     if (!_createAccountFormKey.currentState!.validate()) {
       return;
@@ -1928,6 +1927,7 @@ onChanged: (value) {
         'role': _selectedRole,
       };
 
+      // Add role-specific fields
       if (_selectedRole == 'user') {
         requestBody['first_name'] = _firstNameController.text;
         requestBody['last_name'] = _lastNameController.text;
@@ -1968,6 +1968,7 @@ onChanged: (value) {
     }
   }
 
+  // Clears the account creation form
   void _clearCreateAccountForm() {
     _emailController.clear();
     _passwordController.clear();
@@ -1978,6 +1979,7 @@ onChanged: (value) {
     });
   }
 
+  // Checks if the server is online
   Future<bool> _checkServerStatus() async {
     try {
       final response = await http.get(Uri.parse('${AppConfig.server}/ping'));
@@ -1987,6 +1989,7 @@ onChanged: (value) {
     }
   }
 
+  // Logs out the current admin user
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('access_token');

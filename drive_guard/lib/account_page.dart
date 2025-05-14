@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,38 +6,48 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 import 'privacy_page.dart';
 
+// AccountPage is a settings screen for user account management.
+// It includes profile picture management, privacy settings, and language selection.
 class AccountPage extends StatefulWidget {
-  static const keyLanguage = 'key-language';
-  static const keyPassword = 'key-password';
+  // Keys for SharedPreferences storage
 
+  // Key for storing language preference
+  static const keyLanguage = 'key-language'; 
+  // Key for storing password (unused in current implementation)
+  static const keyPassword = 'key-password'; 
   @override
   _AccountPageState createState() => _AccountPageState();
 }
 
 class _AccountPageState extends State<AccountPage> {
+  // Stores the user's profile image file
   File? _profileImage;
 
   @override
   void initState() {
     super.initState();
+    // Load saved profile image on initialization
     _loadProfileImage();
-     _checkAuthToken();
+    // Verify user is authenticated
+    _checkAuthToken();
   }
 
-// Function to check if a user is authenticated
-Future<void> _checkAuthToken() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('access_token');
+  // Checks if the user has a valid authentication token.
+  // If not, redirects to the login page.
+  Future<void> _checkAuthToken() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
 
-  if (token == null) {
-    Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(builder: (context) => LoginPageWidget()), // Redirect to login
-  );
+    if (token == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPageWidget()),
+      );
+    }
   }
-}
 
-  // Function to pick an image
+  // Opens image picker to select an image from gallery or camera.
+  // [source] specifies whether to use camera or gallery.
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
@@ -49,27 +58,31 @@ Future<void> _checkAuthToken() async {
     }
   }
 
-Future<void> _saveProfileImage(String imagePath) async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('access_token'); // Get user token
-  if (token != null) {
-    await prefs.setString('profile_image_$token', imagePath); // Store image with token key
-  }
-}
-
-Future<void> _loadProfileImage() async {
-  final prefs = await SharedPreferences.getInstance();
-  String? token = prefs.getString('auth_token');
-  if (token != null) {
-    final imagePath = prefs.getString('profile_image_$token'); // Load image for user
-    if (imagePath != null) {
-      setState(() {
-        _profileImage = File(imagePath);
-      });
+  // Saves the profile image path to SharedPreferences.
+  // The image is stored with a user-specific key using their auth token.
+  Future<void> _saveProfileImage(String imagePath) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+    if (token != null) {
+      await prefs.setString('profile_image_$token', imagePath);
     }
   }
-}
 
+  // Loads the profile image from SharedPreferences if it exists.
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('auth_token');
+    if (token != null) {
+      final imagePath = prefs.getString('profile_image_$token');
+      if (imagePath != null) {
+        setState(() {
+          _profileImage = File(imagePath);
+        });
+      }
+    }
+  }
+
+  // Shows a bottom sheet dialog for choosing image source (camera or gallery).
   void _showImagePickerDialog() {
     showModalBottomSheet(
       context: context,
@@ -113,7 +126,8 @@ Future<void> _loadProfileImage() async {
         ),
       );
 
-
+  // Builds the profile picture settings tile with circular avatar.
+  // Tapping opens the image picker dialog.
   Widget buildProfilePicture(BuildContext context) {
     return SimpleSettingsTile(
       title: 'Profile Picture',
@@ -133,7 +147,9 @@ Future<void> _loadProfileImage() async {
     );
   }
 
-  // Possible implement functionality in the future
+  // Builds the language selection dropdown.
+  // Currently non-functional (onChange is empty).
+  // TODO: Implement language change functionality
   Widget buildChooseLang() => DropDownSettingsTile(
         title: 'Language',
         settingKey: AccountPage.keyLanguage,
