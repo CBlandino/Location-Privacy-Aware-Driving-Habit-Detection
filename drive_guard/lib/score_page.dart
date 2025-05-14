@@ -25,15 +25,15 @@ class _ScorePage extends State<ScorePage> {
 
 
 
-
-  List<double> scores = [];
-  List<String> dates = [];
+  // Used for graph
+  List<double> scores = [];     // Will hold users all previous trip scores 
+  List<String> dates = [];      // Currently unfunctional, will hold all dates for corresponding scores
 
 
 
   Map<String, String> breakdown = {};   // Map receiving from backend. Key is the name of the habit, value is the severity
 
-
+  // Initialize states, load users info, and load trip data gor graph
  @override
   void initState() {
     super.initState();
@@ -41,6 +41,7 @@ class _ScorePage extends State<ScorePage> {
     loadTripData();
   }
 
+  // Loads the type of user (user, admin, service provider)
   Future<void> _loadUserInfo() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -94,6 +95,7 @@ class _ScorePage extends State<ScorePage> {
     }
   }
 
+  // loads a users scores and corresponding dates of a trip for graph
   Future<void> loadTripData() async {
   try {
     List<TripData> trips = await getPrevTripData();
@@ -111,7 +113,7 @@ class _ScorePage extends State<ScorePage> {
 }
 
 
-
+  // Will return different ratings depending on what final / metric score is given
   String _ratingLabel(num? value) {
     if (value == null) return "Unknown";
 
@@ -138,6 +140,7 @@ Widget build(BuildContext context) {
       backgroundColor: Colors.blue.shade700,
       elevation: 0,
     ),
+    // If user doesn't have a score (error) direct them to start a trip
     body: isLoading
         ? const Center(child: CircularProgressIndicator())
         : score == 0
@@ -147,6 +150,7 @@ Widget build(BuildContext context) {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // Creates circle score with score percent in the middle
                     CircularPercentIndicator(
                       radius: screenHeight *.1, 
                       lineWidth: 12.0,
@@ -167,9 +171,10 @@ Widget build(BuildContext context) {
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 30),
+                    // Graph
                     MiniScoreGraph(
-                      scores: convertScore(scores),   
-                      height: screenHeight *.22,
+                      scores: convertScore(scores),   // Converts scores from 0-1 to 0-100 
+                      height: screenHeight *.22,      // makes heigh of graph dynamic to size of screen
                       dates: dates
                     ),
                     const SizedBox(height: 30),
@@ -225,7 +230,7 @@ Widget build(BuildContext context) {
                           Center(
                             child: ElevatedButton(
                               onPressed: () {
-                                _showFullReportModal(context);
+                                _showFullReportModal(context);    // Method to expand description of individual driving habits
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.white,
@@ -247,6 +252,7 @@ Widget build(BuildContext context) {
               ),
     bottomNavigationBar: isLoading
         ? null
+        // Creates bottom nav bar (role dependent)
         : CustomAppBar(
             selectedIndex: _selectedIndex,
             onItemTapped: _onItemTapped,
@@ -255,7 +261,7 @@ Widget build(BuildContext context) {
   );
 }
 
-// Extracted method for cleaner code
+// Method to build View Full Report. Allows draggable scrollable sheet to view braking and acceleration
 void _showFullReportModal(BuildContext context) {
   showModalBottomSheet(
     context: context,
@@ -265,54 +271,65 @@ void _showFullReportModal(BuildContext context) {
     ),
     isScrollControlled: true,
     builder: (BuildContext context) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Full Driving Report",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            const Divider(),
-            ...breakdown.entries.map(
-              (entry) => ListTile(
-                leading: Icon(Icons.check_circle_outline, color: Colors.blue.shade700),
-                title: Text(entry.key),
-                trailing: Text(
-                  entry.value,
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _ratingColor(entry.value),
+      return DraggableScrollableSheet(
+        initialChildSize: 0.4, 
+        minChildSize: 0.3,     
+        maxChildSize: 0.9,    
+        expand: false,
+        builder: (context, scrollController) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
+            child: ListView(
+              controller: scrollController,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade700,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 16),
+                const Text(
+                  "Full Driving Report",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
                 ),
-              ),
+                const SizedBox(height: 12),
+                const Divider(),
+                ...breakdown.entries.map(
+                  (entry) => ListTile(
+                    leading: Icon(Icons.check_circle_outline, color: Colors.blue.shade700),
+                    title: Text(entry.key),
+                    trailing: Text(
+                      entry.value,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _ratingColor(entry.value),   // Returns 
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Close"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       );
     },
   );
@@ -355,40 +372,22 @@ void _showFullReportModal(BuildContext context) {
 
 
 
-
-
-
+  // Changes page depedning on what icon you click on bottom nav bar
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  Widget _buildScoreDetail(String category, String rating) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            category,
-            style: TextStyle(color: Colors.white, fontSize: 16),
-          ),
-          Text(
-            rating,
-            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // Creates color for score circle
   Color scoreColor(int score) {
-    if (score >= 90) return Colors.green;
+    if (score >= 80) return Colors.green;
     if (score >= 50) return Colors.orange;
     return Colors.red;
   }
 
+
+  // Used in View Full Report. Makes words correspond to colors
   Color _ratingColor(String rating) {
     switch (rating.toLowerCase()) {
       case "excellent":
@@ -428,7 +427,8 @@ void _showFullReportModal(BuildContext context) {
       // used for testing date and score
       print(counter.toString() + ") score: " + score.toString() + "    date: " + date.toString());
       
-
+      // If score and date are not null, add them to list
+      //
       // update to use actual date
       if (/*date != null &&*/ score != null) { 
         dateScoreList.add(TripData(date: "date", score: score));
