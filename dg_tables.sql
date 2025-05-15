@@ -1,4 +1,6 @@
 
+CREATE TYPE userclass AS ENUM ('user', 'admin', 'insurance');
+
 DROP TABLE IF EXISTS Users CASCADE;
 CREATE TABLE IF NOT EXISTS Users (
     user_id         SERIAL PRIMARY KEY,        
@@ -51,17 +53,3 @@ CREATE TABLE server_information (
     port VARCHAR(10) NOT NULL,      -- Port number as a string
     api_key VARCHAR(255) NOT NULL   -- API key for the server
 );
-
--- DO $$ 
--- BEGIN
---     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'dg_api') THEN
---         CREATE ROLE dg_api WITH LOGIN PASSWORD 'secure';
---     ELSE
---         RAISE NOTICE 'Role dg_api already exists, skipping.';
---     END IF;
--- END $$;
--- GRANT CONNECT ON DATABASE dg_db TO dg_api;
--- GRANT USAGE ON SCHEMA public TO dg_api;
--- GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO dg_api;
--- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO dg_api;
--- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT ON TABLES TO dg_api;
