@@ -104,10 +104,10 @@ static void showTripDetails(BuildContext context, Map<String, dynamic> trip) {
   // Parse the start time
   DateTime startTime;
   try {
-    if (trip['start_time'] is String) {
-      startTime = DateTime.parse(trip['start_time']);
-    } else if (trip['start_time'] is int) {
-      startTime = DateTime.fromMillisecondsSinceEpoch(trip['start_time'] * 1000);
+    if (trip['timestamp'] is String) {
+      startTime = DateTime.parse(trip['timestamp']);
+    } else if (trip['timestamp'] is int) {
+      startTime = DateTime.fromMillisecondsSinceEpoch(trip['timestamp'] * 1000);
     } else {
       startTime = DateTime.now();
     }
@@ -278,7 +278,7 @@ static Future<List<Map<String, dynamic>>> fetchPreviousTripsData() async {
         Map<String, dynamic> tripData = {
           'trip_id': trip['trip_id'],
           'user_id': trip['user_id'],
-          'start_time': trip['start_time'],
+          'timestamp': trip['timestamp'],
           'distance': (trip['distance'] ?? 0).toDouble(),
           'duration': (trip['duration'] ?? 0).toDouble(),
           'average_speed': (trip['average_speed'] ?? 0).toDouble(),
@@ -439,7 +439,7 @@ static Future<List<Map<String, dynamic>>> getUserTrips(String userId, {String? s
         return {
           'trip_id': trip['trip_id'],
           'user_id': trip['user_id'],
-          'start_time': trip['start_time'],
+          'timestamp': trip['timestamp'],
           'distance': (trip['distance'] ?? 0).toDouble(),
           'duration': (trip['duration'] ?? 0).toDouble(),
           'average_speed': (trip['average_speed'] ?? 0).toDouble(),
@@ -473,7 +473,9 @@ static String formatTimestamp(dynamic timestamp,{bool dateOnly = false}) {
     else if (timestamp is String) {
       // Try ISO 8601 format first (most common API format)
       if (timestamp.contains("T")) {
-        dateTime = DateTime.parse(timestamp).toLocal();
+        print("containts T");
+      final dateTime = DateTime.parse(timestamp).toUtc().toLocal();
+      return DateFormat('MM/dd/yyyy HH:mm').format(dateTime);
       } 
       // Try common alternate formats
       else if (timestamp.contains("/")) {
