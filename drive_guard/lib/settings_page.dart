@@ -53,7 +53,7 @@ Future<void> _loadUserInfo() async {
 
 @override
 Widget build(BuildContext context) {
-    return WillPopScope(
+  return WillPopScope(
     onWillPop: () async {
       // Navigate back to HomePage instead of the last screen
       Navigator.pushReplacement(
@@ -62,83 +62,84 @@ Widget build(BuildContext context) {
       );
       return false; // Prevent default back navigation
     },
+    
+    child: Scaffold(
+      appBar: isLoading
+          ? null
+          : CustomAppBar(
+        selectedIndex: 3, // Assuming index 3 is the "Settings" page
+        onItemTapped: _onItemTapped,
+        role: role,
+      ),
 
-  child: Scaffold(
-    appBar: isLoading
-        ? null
-        : CustomAppBar(
-      selectedIndex: 3, // Assuming index 3 is the "Settings" page
-      onItemTapped: _onItemTapped,
-      role: role,
-    ),
-
-    body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Stack(
-      children: [
-        SingleChildScrollView(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 600),
-              child: Container(
-                margin: const EdgeInsets.all(20),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Makes tiles same color as background
-                    Theme(
-                      data: Theme.of(context).copyWith(
-                        listTileTheme: ListTileThemeData(
-                          tileColor: Colors.white,
+      body: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : Stack(
+        children: [
+          SingleChildScrollView(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 600),
+                child: Container(
+                  margin: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Makes tiles same color as background
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          listTileTheme: ListTileThemeData(
+                            tileColor: Colors.white,
+                          ),
+                        ),
+                        child: SettingsGroup(
+                          title: 'SETTINGS',
+                          children: <Widget>[
+                            const SizedBox(height: 8),
+                            AccountPage(),
+                            NotificationsPage(),
+                            AppearancePage(),
+                            PrivSecPage(),
+                            HelpSupportPage(),
+                            AboutPage(),
+                            // buildReviewDriving(context),
+                            // buildReportBug(context),
+                            // buildsendFeedback(context),
+                            buildLogout(context),
+                          ],
                         ),
                       ),
-                      child: SettingsGroup(
-                        title: 'SETTINGS',
-                        children: <Widget>[
-                          const SizedBox(height: 8),
-                          AccountPage(),
-                          NotificationsPage(),
-                          AppearancePage(),
-                          PrivSecPage(),
-                          HelpSupportPage(),
-                          AboutPage(),
-                          // buildReviewDriving(context),
-                          // buildReportBug(context),
-                          // buildsendFeedback(context),
-                          buildLogout(context),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
 
-    // Bottom Navigation Bar from CustomAppBar
-    bottomNavigationBar: isLoading
-        ? null
-        : CustomAppBar(
-      selectedIndex: 3, // Keep this in sync with settings page index
-      onItemTapped: _onItemTapped,
-      role:role,
-    ).buildBottomNavBar(context),
-  ));
+      // Bottom Navigation Bar from CustomAppBar
+      bottomNavigationBar: isLoading
+          ? null
+          : CustomAppBar(
+        selectedIndex: 3, // Keep this in sync with settings page index
+        onItemTapped: _onItemTapped,
+        role:role,
+      ).buildBottomNavBar(context),
+    )
+  );
 }
 
 
