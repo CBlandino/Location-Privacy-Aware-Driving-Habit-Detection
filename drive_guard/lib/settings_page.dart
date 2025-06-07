@@ -1,4 +1,8 @@
 import 'dart:io';
+import 'package:drive_guard/about_page.dart';
+import 'package:drive_guard/appearance_page.dart';
+import 'package:drive_guard/helpSupport_page.dart';
+import 'package:drive_guard/privacySecurity_page.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +10,7 @@ import 'custom_app_bar.dart';
 import 'home_page.dart';
 import 'login_page.dart';
 import 'account_page.dart';
+import 'notifications_page.dart';
 
 class SettingsPage extends StatefulWidget {
 
@@ -71,8 +76,20 @@ Widget build(BuildContext context) {
           ? Center(child: CircularProgressIndicator())
           : Stack(
       children: [
-        Padding(
-          padding: EdgeInsets.all(24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -80,27 +97,24 @@ Widget build(BuildContext context) {
                 child: ListView(
                   children: [
                     SettingsGroup(
-                      title: 'GENERAL',
+                      title: 'SETTINGS',
                       children: <Widget>[
                         const SizedBox(height: 8),
                         AccountPage(),
+                        NotificationsPage(),
+                        AppearancePage(),
+                        PrivSecPage(), // (Put password in here)
+                        HelpSupportPage(), // (Put report a bug and send feedback)
+                        AboutPage(),
                         buildReviewDriving(context),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    SettingsGroup(
-                      title: 'FEEDBACK',
-                      children: <Widget>[
-                        const SizedBox(height: 8),
                         buildReportBug(context),
                         buildsendFeedback(context),
+                        buildLogout(context), 
                       ],
                     ),
                   ],
                 ),
               ),
-              buildLogout(context), 
-              SizedBox(height: 20), 
             ],
           ),
         ),

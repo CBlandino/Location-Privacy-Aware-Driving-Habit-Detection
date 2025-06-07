@@ -114,7 +114,7 @@ class _AccountPageState extends State<AccountPage> {
 
   @override
   Widget build(BuildContext context) => SimpleSettingsTile(
-        leading: Icon(Icons.person, color: Colors.blue[100]),
+        leading: Icon(Icons.person_2_outlined, color: Colors.black),
         title: 'Account Settings',
         subtitle: 'Privacy, Security, Language',
         child: SettingsScreen(
