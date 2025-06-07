@@ -192,6 +192,7 @@ Widget build(BuildContext context) {
                           ),
                         ],
                       ),
+                      // Score Breakdown Container
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

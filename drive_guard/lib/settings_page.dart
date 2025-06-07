@@ -76,46 +76,55 @@ Widget build(BuildContext context) {
           ? Center(child: CircularProgressIndicator())
           : Stack(
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: ListView(
+        SingleChildScrollView(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 600),
+              child: Container(
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SettingsGroup(
-                      title: 'SETTINGS',
-                      children: <Widget>[
-                        const SizedBox(height: 8),
-                        AccountPage(),
-                        NotificationsPage(),
-                        AppearancePage(),
-                        PrivSecPage(), // (Put password in here)
-                        HelpSupportPage(), // (Put report a bug and send feedback)
-                        AboutPage(),
-                        buildReviewDriving(context),
-                        buildReportBug(context),
-                        buildsendFeedback(context),
-                        buildLogout(context), 
-                      ],
+                    // Makes tiles same color as background
+                    Theme(
+                      data: Theme.of(context).copyWith(
+                        listTileTheme: ListTileThemeData(
+                          tileColor: Colors.white,
+                        ),
+                      ),
+                      child: SettingsGroup(
+                        title: 'SETTINGS',
+                        children: <Widget>[
+                          const SizedBox(height: 8),
+                          AccountPage(),
+                          NotificationsPage(),
+                          AppearancePage(),
+                          PrivSecPage(),
+                          HelpSupportPage(),
+                          AboutPage(),
+                          // buildReviewDriving(context),
+                          // buildReportBug(context),
+                          // buildsendFeedback(context),
+                          buildLogout(context),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ],
