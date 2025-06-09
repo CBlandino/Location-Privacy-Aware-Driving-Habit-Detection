@@ -117,6 +117,7 @@ class _AccountPageState extends State<AccountPage> {
         leading: Icon(Icons.person_2_outlined, color: Colors.black),
         title: 'Account Settings',
         child: SettingsScreen(
+          title: 'Account Settings',
           children: <Widget>[
             buildProfilePicture(context),
             //PrivacyPage(),

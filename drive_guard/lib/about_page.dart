@@ -41,6 +41,7 @@ class _AboutPageState extends State<AboutPage> {
     leading: Icon(Icons.question_mark_rounded, color: Colors.black),
     title: 'About',
     child: SettingsScreen(
+      title: 'About',
       children: <Widget>[
         SettingsGroup(
           title: 'About NoTrackDrive',

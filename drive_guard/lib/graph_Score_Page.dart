@@ -75,6 +75,7 @@ class MiniScoreGraph extends StatelessWidget {
       tooltipRoundedRadius: 12,
       tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       tooltipMargin: 16,
+      getTooltipColor: (TouchedSpot) => Color.fromARGB(255, 99, 185, 255),
       getTooltipItems: (touchedSpots) {
         return touchedSpots.map((spot) {
           return LineTooltipItem(
