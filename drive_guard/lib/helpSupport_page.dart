@@ -38,12 +38,54 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
   
    @override
   Widget build(BuildContext context) => SimpleSettingsTile(
-        leading: Icon(Icons.headphones_outlined, color: Colors.black),
-        title: 'Help & Support',
-        child: SettingsScreen(
-          children: <Widget>[
-            // build functionality here
+    leading: Icon(Icons.headphones_outlined, color: Colors.black),
+    title: 'Help & Support',
+    child: SettingsScreen(
+      title: 'Help & Support',
+      children: <Widget>[
+        SettingsGroup(
+          title: 'Support Options',
+          children: [
+            SimpleSettingsTile(
+              title: 'FAQs',
+              subtitle: 'Browse frequently asked questions',
+              leading: Icon(Icons.question_answer),
+              onTap: () {
+                // TODO: Navigate to FAQs screen or open a web page
+              },
+            ),
+            SimpleSettingsTile(
+              title: 'Contact Support',
+              subtitle: 'Get help from our team',
+              leading: Icon(Icons.support_agent),
+              onTap: () {
+                // TODO: Navigate to a contact form or open email intent
+              },
+            ),
           ],
         ),
-      );
+        SettingsGroup(
+          title: 'Feedback',
+          children: [
+            SimpleSettingsTile(
+              title: 'Report a Bug',
+              subtitle: 'Let us know about issues you’re facing',
+              leading: Icon(Icons.bug_report),
+              onTap: () {
+                // TODO: Navigate to bug report form
+              },
+            ),
+            SimpleSettingsTile(
+              title: 'Send Feedback',
+              subtitle: 'Help us improve your experience',
+              leading: Icon(Icons.feedback),
+              onTap: () {
+                // TODO: Navigate to feedback form
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }

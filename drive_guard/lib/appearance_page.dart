@@ -41,8 +41,52 @@ class _AppearancePageState extends State<AppearancePage> {
         leading: Icon(Icons.remove_red_eye_outlined, color: Colors.black),
         title: 'Appearance',
         child: SettingsScreen(
+          title: 'Appearance',
           children: <Widget>[
-            // build functionality here
+            SettingsGroup(
+              title: 'Display Options',
+              children: [
+                SwitchSettingsTile(
+                  settingKey: 'dark_mode',
+                  title: 'Dark Mode',
+                  subtitle: 'Reduce eye strain in low light',
+                  leading: Icon(Icons.dark_mode),
+                  defaultValue: false,
+                  onChange: (enabled) {
+                    // TODO: Toggle theme mode here if you're using a theme provider
+                  },
+                ),
+                DropDownSettingsTile(
+                  settingKey: 'font_size',
+                  title: 'Font Size',
+                  subtitle: 'Choose a comfortable font size',
+                  selected: 1,
+                  values: <int, String>{
+                    0: 'Small',
+                    1: 'Medium',
+                    2: 'Large',
+                  },
+                  onChange: (value) {
+                    // TODO: Apply font size change
+                  },
+                ),
+                DropDownSettingsTile(
+                  settingKey: 'accent_color',
+                  title: 'Accent Color',
+                  subtitle: 'Customize the app color',
+                  selected: 'Blue',
+                  values: <String, String>{
+                    'Blue': 'Blue',
+                    'Green': 'Green',
+                    'Purple': 'Purple',
+                    'Red': 'Red',
+                  },
+                  onChange: (value) {
+                    // TODO: Update accent color
+                  },
+                ),
+              ],
+            ),
           ],
         ),
       );

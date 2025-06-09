@@ -116,11 +116,10 @@ class _AccountPageState extends State<AccountPage> {
   Widget build(BuildContext context) => SimpleSettingsTile(
         leading: Icon(Icons.person_2_outlined, color: Colors.black),
         title: 'Account Settings',
-        subtitle: 'Privacy, Security, Language',
         child: SettingsScreen(
           children: <Widget>[
             buildProfilePicture(context),
-            PrivacyPage(),
+            //PrivacyPage(),
             buildChooseLang(),
           ],
         ),

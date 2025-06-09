@@ -5,6 +5,26 @@ import 'login_page.dart';
 import 'account_page.dart';
 import 'package:geolocator/geolocator.dart';
 
+
+
+
+
+
+
+// CURRENTLY UNUSED
+
+
+
+
+
+
+
+
+
+
+
+
+
 class PrivacyPage extends StatefulWidget {
   const PrivacyPage({super.key});
 
@@ -174,7 +194,7 @@ class ChangePasswordPage extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context);
+                // TODO: change password functionality
               },
               child: Text("Save"),
             ),
