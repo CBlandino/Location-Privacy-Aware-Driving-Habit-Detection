@@ -29,6 +29,8 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
   bool _isProcessing = false;
   final String _selectedRole = 'user';
   bool _isSignupMode = false;
+
+  bool _showOptionalInfo = false;
   
 
   // Controllers
@@ -41,7 +43,13 @@ class _LoginPageWidgetState extends State<LoginPageWidget>
   final serverNumberController = TextEditingController();
   final idController = TextEditingController();
   final _adminIdController = TextEditingController();
-final _serverNumberController = TextEditingController();
+  final _serverNumberController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _licenseController = TextEditingController();
+  final TextEditingController _stateFieldController = TextEditingController(); 
+  final TextEditingController _cityController = TextEditingController();
+  final TextEditingController _zipController = TextEditingController();
+
 
 
   late TabController _tabController;
@@ -69,6 +77,12 @@ final _serverNumberController = TextEditingController();
     serverNumberController.dispose();
     idController.dispose();
     _tabController.dispose();
+
+    _phoneController.dispose();
+    _licenseController.dispose();
+    _stateFieldController.dispose();
+    _cityController.dispose();
+    _zipController.dispose();
     
     super.dispose();
   }
@@ -138,14 +152,20 @@ final _serverNumberController = TextEditingController();
       'role': _selectedRole,
     };
 
-    if (_selectedRole == 'user') {
-      if (_isSignupMode) {
-        data.addAll({
-          'first_name': firstNameController.text,
-          'last_name': lastNameController.text,
-        });
-      }
-    } 
+  if (_selectedRole == 'user') {
+    if (_isSignupMode) {
+      data.addAll({
+        'first_name': firstNameController.text,
+        'last_name': lastNameController.text,
+        'phone': _phoneController.text,
+        'license': _licenseController.text,
+        'state': _stateFieldController.text,
+        'city': _cityController.text,
+        'zip': _zipController.text,
+      });
+    }
+  }
+ 
     else if (_selectedRole == 'admin') {
       if (_isSignupMode) {
         data.addAll({
@@ -330,17 +350,40 @@ Widget _buildTabBar() {
   List<Widget> _buildRoleSpecificFields() {
     final fields = <Widget>[];
     
-    if (_selectedRole == 'user') {
-      if (_isSignupMode) {
-        fields.addAll([
-          _buildTextField('First Name', firstNameController, Icons.person),
-          const SizedBox(height: 16),
-          _buildTextField('Last Name', lastNameController, Icons.person),
-          const SizedBox(height: 16),
-        ]);
-      }
-      fields.add(_buildTextField('Password', passwordController, Icons.lock));
-    } 
+if (_selectedRole == 'user') {
+  if (_isSignupMode) {
+    fields.addAll([
+      _buildTextField('First Name', firstNameController, Icons.person),
+      const SizedBox(height: 16),
+      _buildTextField('Last Name', lastNameController, Icons.person),
+      const SizedBox(height: 16),
+      _buildTextField('Phone Number', _phoneController, Icons.phone),
+      const SizedBox(height: 16),
+ExpansionTile(
+  title: Text(
+    'Optional Info',
+    style: TextStyle(fontWeight: FontWeight.bold, color: _showOptionalInfo ? primaryBlue : grey),
+  ),
+  initiallyExpanded: _showOptionalInfo,
+  onExpansionChanged: (expanded) => setState(() => _showOptionalInfo = expanded),
+  children: [
+    const SizedBox(height: 8),
+    _buildTextField('License Number', _licenseController, Icons.credit_card),
+    const SizedBox(height: 16),
+    _buildTextField('State', _stateFieldController, Icons.map),
+    const SizedBox(height: 16),
+    _buildTextField('City', _cityController, Icons.location_city),
+    const SizedBox(height: 16),
+    _buildTextField('ZIP Code', _zipController, Icons.markunread_mailbox),
+    const SizedBox(height: 8),
+  ],
+),
+
+    ]);
+  }
+  fields.add(_buildTextField('Password', passwordController, Icons.lock));
+}
+
     else if (_selectedRole == 'insurance') {
       if (_isSignupMode) {
         fields.addAll([

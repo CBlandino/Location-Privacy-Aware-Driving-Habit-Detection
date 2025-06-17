@@ -50,6 +50,16 @@ Widget build(BuildContext context) {
   );
 }
 
+Widget buildAlerts(List<String> alerts) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: alerts.map((alert) => ListTile(
+      leading: Icon(Icons.warning_amber, color: Colors.orange[800]),
+      title: Text(alert),
+    )).toList(),
+  );
+}
+
 
 Widget _buildWebLayout(BoxConstraints constraints) {
   return Row(

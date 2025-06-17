@@ -14,12 +14,12 @@ import (
 
 	"context"
 
+	"drive_guard_server/AdminInfo"
 	"drive_guard_server/auth"
 	"drive_guard_server/insurance"
 	"drive_guard_server/score"
 	"drive_guard_server/trips"
 	"drive_guard_server/util"
-	"drive_guard_server/AdminInfo"
 )
 
 var (
@@ -28,7 +28,7 @@ var (
 	DB_USER string
 	DB_PASS string
 	DB_NAME string
-	UPDATE bool
+	UPDATE  bool
 )
 
 func init() {
@@ -134,6 +134,13 @@ func main() {
 		log.Println(util.ANSI_BLUE + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
 	})
 
+	server.GET("/insurance/status", func(c *gin.Context) {
+		log.Println(util.ANSI_BLUE + "USER OPTIONAL INFO REQ---------------------------------------------------------------------------------------------" + util.ANSI_RESET)
+		insurance.CheckInsuranceStatus(c, db)
+		log.Println(util.ANSI_BLUE + "-------------------------------------------------------------------------------------------------------------" + util.ANSI_RESET)
+
+	})
+
 	// Add routes for Ping Server
 	server.GET("/ping", AdminInfo.HandlePing)
 
@@ -160,11 +167,10 @@ func main() {
 	server.Run(ADDR)
 }
 
-
 // possibly dangerous, trigger with care
 func updateAllTrips(db *sql.DB) {
-	tripsSet := func() []struct{uid, tid int} {
-		var trips []struct{uid, tid int}
+	tripsSet := func() []struct{ uid, tid int } {
+		var trips []struct{ uid, tid int }
 
 		tripResSet, err := db.Query("SELECT user_id, trip_id FROM trips")
 		if err != nil {
@@ -174,13 +180,13 @@ func updateAllTrips(db *sql.DB) {
 		defer tripResSet.Close()
 
 		for tripResSet.Next() {
-			var u, i int 
+			var u, i int
 			if err := tripResSet.Scan(&u, &i); err != nil {
 				log.Println("unable to update trip in db")
 				log.Println(err)
 			}
 
-			trips = append(trips, struct{uid, tid int}{u, i })
+			trips = append(trips, struct{ uid, tid int }{u, i})
 		}
 		return trips
 	}
