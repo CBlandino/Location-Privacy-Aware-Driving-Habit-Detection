@@ -6,6 +6,7 @@ import (
 	"flag"
 	"log"
 	"time"
+	"os"
 
 	_ "github.com/lib/pq"
 
@@ -34,10 +35,10 @@ var (
 
 func init() {
 	flag.StringVar(&ADDR, "addr", ":8080", "address to run the server on")
-	flag.StringVar(&DB_HOST, "dbaddr", "", "address of database")
-	flag.StringVar(&DB_USER, "dbuser", "dg_api", "database username")
-	flag.StringVar(&DB_PASS, "dbpass", "secure", "database user password")
-	flag.StringVar(&DB_NAME, "dbname", "dg_db", "database name")
+	flag.StringVar(&DB_HOST, "dbaddr", os.Getenv("DB_HOST"), "address of database")
+	flag.StringVar(&DB_USER, "dbuser", os.Getenv("DB_USER"), "database username")
+	flag.StringVar(&DB_PASS, "dbpass", os.Getenv("DB_PASS"), "database user password")
+	flag.StringVar(&DB_NAME, "dbname", os.Getenv("DB_NAME"), "database name")
 	flag.BoolVar(&UPDATE, "update", false, "update metrics and score on all stored trips on server startup")
 	flag.Parse()
 }
