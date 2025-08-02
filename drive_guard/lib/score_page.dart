@@ -8,7 +8,7 @@ import 'custom_app_bar.dart';
 import 'current_trip_page.dart';
 import 'graph_Score_Page.dart';
 import 'trip_helper.dart';
-
+import 'ipconfig.dart';
 
 
 class ScorePage extends StatefulWidget {
@@ -21,6 +21,8 @@ class _ScorePage extends State<ScorePage> {
   int _selectedIndex = 2;
   late String role;
   bool isLoading = true;
+
+  final String server = AppConfig.server;
 
 
 
@@ -50,12 +52,13 @@ class _ScorePage extends State<ScorePage> {
     final token = prefs.getString('access_token');
 
     final responseScore = await http.get(
-      Uri.parse('http://18.191.9.236:8080/ca1cd3c3055991bf20499ee86739f7e2'), 
+      Uri.parse('$server/ca1cd3c3055991bf20499ee86739f7e2'), 
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
+
 
     // TODO Replace breakdown with correct names in database
     if (responseScore.statusCode == 200) {
@@ -66,8 +69,8 @@ class _ScorePage extends State<ScorePage> {
             final rawScore = data['totalScore'] ?? 0.0;
             final roundedScore = double.parse(rawScore.toStringAsFixed(2));
 
-            score = (roundedScore * 100).toInt();
-          print('User Score : ${data['totalScore']}');
+            this.score = (roundedScore * 100).toInt();
+          print('User Score : ${score}');
           breakdown = {
             "Braking": _ratingLabel(data['braking']),
             "Acceleration": _ratingLabel(data['acceleration']),
@@ -82,7 +85,7 @@ class _ScorePage extends State<ScorePage> {
 
 
     final responsePrevTrips = await http.get(
-        Uri.parse('http://18.191.9.236:8080/55a4a318d8473bd5b80cea42331e473c'), 
+        Uri.parse('$server/55a4a318d8473bd5b80cea42331e473c'), 
         headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',
