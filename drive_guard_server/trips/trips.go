@@ -120,6 +120,10 @@ func insertStartTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) error {
 	return nil
 }
 
+func UpdatePoints(c *gin.Context, db *sql.DB) {
+	c.Status(http.StatusInternalServerError)
+}
+
 func updateExistingTrip(set *pointSet, claims *util.UserClaims, db *sql.DB) error {
 	log.Println("UPDATING TRIP. END?:", set.End)
 	id, err := util.GetUserID(claims.Email, db)

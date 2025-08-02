@@ -88,19 +88,22 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	r.POST("/7d2abf2d0fa7c3a0c13236910f30bc43", func(c *gin.Context) {
+	r.POST("/signup", func(c *gin.Context) {
 		auth.SignupUser(c, db)
 	})
-	r.POST("/d56b699830e77ba53855679cb1d252da", func(c *gin.Context) {
+	r.POST("/login", func(c *gin.Context) {
 		auth.LoginUser(c, db)
 	})
-	r.POST("/2d13f826de6251aef204690750c1da99", func(c *gin.Context) {
+	r.POST("/points", func(c *gin.Context) {
 		trips.TransmitPoints(c, db)
 	})
-	r.GET("/55a4a318d8473bd5b80cea42331e473c", func(c *gin.Context) {
+	r.PUT("/points", func(c *gin.Context) {
+		trips.UpdatePoints(c, db)
+	})
+	r.GET("/previoustrips", func(c *gin.Context) {
 		trips.Previous_trips(c, db)
 	})
-	r.GET("/ca1cd3c3055991bf20499ee86739f7e2", func(c *gin.Context) {
+	r.GET("/score", func(c *gin.Context) {
 		score.GetUserScore(c, db)
 	})
 	r.GET("/userLookup", func(c *gin.Context) {
