@@ -52,7 +52,7 @@ class _ScorePage extends State<ScorePage> {
     final token = prefs.getString('access_token');
 
     final responseScore = await http.get(
-      Uri.parse('$server/ca1cd3c3055991bf20499ee86739f7e2'), 
+      Uri.parse('$server/score'), 
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ class _ScorePage extends State<ScorePage> {
 
 
     final responsePrevTrips = await http.get(
-        Uri.parse('$server/55a4a318d8473bd5b80cea42331e473c'), 
+        Uri.parse('$server/previoustrips'), 
         headers: {
             'Authorization': 'Bearer $token',
             'Content-Type': 'application/json',

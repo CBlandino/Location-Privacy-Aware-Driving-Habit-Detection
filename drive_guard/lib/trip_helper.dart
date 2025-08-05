@@ -39,7 +39,7 @@ static Future<List<Map<String, dynamic>>> searchInsurance(String query) async {
     required String serverNumber,
   }) async {
     final response = await http.post(
-      Uri.parse('${AppConfig.server}/7d2abf2d0fa7c3a0c13236910f30bc43'),
+      Uri.parse('${AppConfig.server}/signup'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'email': email,
@@ -60,7 +60,7 @@ static Future<List<Map<String, dynamic>>> searchInsurance(String query) async {
     required String lastName,
   }) async {
     final response = await http.post(
-      Uri.parse('${AppConfig.server}/7d2abf2d0fa7c3a0c13236910f30bc43'),
+      Uri.parse('${AppConfig.server}/signup'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'email': email,
@@ -83,7 +83,7 @@ static Future<List<Map<String, dynamic>>> searchInsurance(String query) async {
     required String state,
   }) async {
     final response = await http.post(
-      Uri.parse('${AppConfig.server}/7d2abf2d0fa7c3a0c13236910f30bc43'),
+      Uri.parse('${AppConfig.server}/signup'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'email': email,
@@ -256,7 +256,7 @@ static Widget _buildDetailRow(BuildContext context, IconData icon, String label,
 }
 
 static Future<List<Map<String, dynamic>>> fetchPreviousTripsData() async {
-  final String url = '$server/55a4a318d8473bd5b80cea42331e473c';
+  final String url = '$server/previoustrips';
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? token = prefs.getString('access_token');
 
@@ -308,7 +308,7 @@ static Future<List<Map<String, dynamic>>> fetchPreviousTripsData() async {
 }
 
   static Future<List<dynamic>> fetchPreviousTrips() async {
-    final String url = '$server/55a4a318d8473bd5b80cea42331e473c';
+    final String url = '$server/previoustrips';
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 

@@ -314,7 +314,7 @@ class CurrentTripPageState extends State<CurrentTripPage> {
   }
 
   Future<void> sendTripData() async {
-    final String url = '$server/2d13f826de6251aef204690750c1da99';
+    final String url = '$server/points';
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 

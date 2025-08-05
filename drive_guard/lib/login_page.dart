@@ -96,7 +96,7 @@ final _serverNumberController = TextEditingController();
   }
 
   Future<void> _signup() async {
-    final url = '$server/7d2abf2d0fa7c3a0c13236910f30bc43';
+    final url = '$server/signup';
     final data = _buildAuthData();
 
     final response = await http.post(
@@ -114,7 +114,7 @@ final _serverNumberController = TextEditingController();
   }
 
   Future<void> _login() async {
-    final url = '$server/d56b699830e77ba53855679cb1d252da';
+    final url = '$server/login';
     final data = _buildAuthData();
 
     final response = await http.post(
